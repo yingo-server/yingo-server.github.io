@@ -89,16 +89,37 @@ layout: default
   {% endif %}
 </div>
 
-<!--不算子网站访客统计-->
-<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
-</script>
-<!-- pv的方式，单个用户连续点击n篇文章，记录n次访问量 -->
-<div align="center">
-	<span id="busuanzi_container_site_pv" style="font-family:Consolas;color:Silver;font-size:12px;">
-		View:<span id="busuanzi_value_site_pv" style="font-family:Consolas;color:Silver;font-size:12px;"></span>
-	</span>
-	<!-- uv的方式，单个用户连续点击n篇文章，只记录1次访客数 -->
-	<span id="busuanzi_container_site_uv" style="font-family:Consolas;color:Silver;font-size:12px;">
-		User:<span id="busuanzi_value_site_uv" style="font-family:Consolas;color:Silver;font-size:12px;"></span>
-	</span>
-</div>
+<style>
+body {
+  background-image: url('https://tc.alcy.cc/i/2025/07/29/6887a9cde61d3.webp');
+  background-attachment: fixed; 
+  background-size: cover;
+}
+</style>
+
+                <!--添加一个访问量-->
+                <span>
+                    本"<span style="color: rgb(13, 109, 252); font-weight: bold;"><a href="#">目录</a></span>"访问量 <span id="busuanzi_page_pv" style="color: rgb(13, 109, 252); font-weight: bold;"></span> 次 本站总访问量 <span id="busuanzi_site_pv" style="color: rgb(13, 109, 252); font-weight: bold;"></span>                次 本站总访客数 <span id="busuanzi_site_uv" style="color: rgb(13, 109, 252); font-weight: bold;"></span> 人
+                </span>
+                <br />
+
+        <br />
+        <center class="dibu">
+            <div style=" line-height: 20px;font-size: 9pt;font-weight: bold;">
+                <span>
+                    "
+                    <span style="color: rgb(13, 109, 252); font-weight: bold;" id="hitokoto">
+                        <a href="#" id="hitokoto_text">
+                            "人生最大的遗憾,就是在最无能为力的时候遇到一个想要保护一生的人."
+                        </a>
+                    </span> "
+                </span>
+                <p style="margin-left: 10rem;font-size: 8pt;">
+                    <small>
+                        —— Anwen's Cloud
+                    </small>
+                </p>
+            </div>
+
+    <!--一言API-->
+    <script src="https://v1.hitokoto.cn/?encode=js&select=%23hitokoto" defer></script>
