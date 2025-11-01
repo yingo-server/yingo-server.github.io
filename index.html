@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D三体运动模拟</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            touch-action: none;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .reset-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            z-index: 100;
+            display: none;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="info-panel">
+        <p></p>
+        <p></p>
+        <p></p>
+    </div>
+    <div class="reset-indicator" id="resetIndicator">长按重置</div>
+
+    <script>
+        // 初始化Canvas和WebGL上下文
+        const canvas = document.getElementById('canvas');
+        const gl = canvas.getContext('webgl');
+        
+        if (!gl) {
+            alert('您的浏览器不支持WebGL，无法运行此模拟。');
+        }
+        
+        // 设置Canvas大小为窗口大小
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // 编译着色器程序
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('着色器编译错误:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            
+            return shader;
+        }
+        
+        function createProgram(gl, vertexShader, fragmentShader) {
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('程序链接错误:', gl.getProgramInfoLog(program));
+                return null;
+            }
+            
+            return program;
+        }
+        
+        // 顶点着色器
+        const vertexShaderSource = `
+            attribute vec3 aPosition;
+            attribute vec3 aColor;
+            
+            uniform mat4 uModelViewMatrix;
+            uniform mat4 uProjectionMatrix;
+            
+            varying vec3 vColor;
+            
+            void main() {
+                gl_Position = uProjectionMatrix * uModelViewMatrix * vec4(aPosition, 1.0);
+                vColor = aColor;
+                gl_PointSize = 10.0;
+            }
+        `;
+        
+        // 片段着色器
+        const fragmentShaderSource = `
+            precision mediump float;
+            
+            varying vec3 vColor;
+            
+            void main() {
+                float dist = length(gl_PointCoord - vec2(0.5));
+                if (dist > 0.5) {
+                    discard;
+                }
+                
+                // 添加发光效果
+                float glow = 1.0 - dist * 2.0;
+                vec3 finalColor = vColor + vec3(0.5) * glow;
+                
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        `;
+        
+        // 轨迹着色器程序
+        const trailVertexShaderSource = `
+            attribute vec3 aPosition;
+            attribute vec3 aColor;
+            
+            uniform mat4 uModelViewMatrix;
+            uniform mat4 uProjectionMatrix;
+            
+            varying vec3 vColor;
+            
+            void main() {
+                gl_Position = uProjectionMatrix * uModelViewMatrix * vec4(aPosition, 1.0);
+                vColor = aColor;
+            }
+        `;
+        
+        const trailFragmentShaderSource = `
+            precision mediump float;
+            
+            varying vec3 vColor;
+            
+            void main() {
+                gl_FragColor = vec4(vColor, 0.7);
+            }
+        `;
+        
+        // 编译着色器并创建程序
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+        const program = createProgram(gl, vertexShader, fragmentShader);
+        
+        // 编译轨迹着色器并创建程序
+        const trailVertexShader = createShader(gl, gl.VERTEX_SHADER, trailVertexShaderSource);
+        const trailFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, trailFragmentShaderSource);
+        const trailProgram = createProgram(gl, trailVertexShader, trailFragmentShader);
+        
+        // 获取属性位置
+        const positionAttributeLocation = gl.getAttribLocation(program, "aPosition");
+        const colorAttributeLocation = gl.getAttribLocation(program, "aColor");
+        const modelViewMatrixUniformLocation = gl.getUniformLocation(program, "uModelViewMatrix");
+        const projectionMatrixUniformLocation = gl.getUniformLocation(program, "uProjectionMatrix");
+        
+        // 轨迹程序的属性位置
+        const trailPositionAttributeLocation = gl.getAttribLocation(trailProgram, "aPosition");
+        const trailColorAttributeLocation = gl.getAttribLocation(trailProgram, "aColor");
+        const trailModelViewMatrixUniformLocation = gl.getUniformLocation(trailProgram, "uModelViewMatrix");
+        const trailProjectionMatrixUniformLocation = gl.getUniformLocation(trailProgram, "uProjectionMatrix");
+        
+        // 启用深度测试
+        gl.enable(gl.DEPTH_TEST);
+        
+        // 天体类
+        class Body {
+            constructor(x, y, z, vx, vy, vz, mass, color) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                this.vx = vx;
+                this.vy = vy;
+                this.vz = vz;
+                this.mass = mass;
+                this.color = color;
+                this.trail = [];
+                
+                /* ========== 可调整参数：天体大小 ========== */
+                // 修改系数可以调整天体大小与质量的关系
+                // 当前系数为0.2，增大系数会使天体更大，减小系数会使天体更小
+                // 例如：改为0.5会使天体更大，改为0.1会使天体更小
+                this.radius = Math.max(5, Math.sqrt(mass) * 0.2);
+            }
+            
+            updatePosition() {
+                // 更新位置
+                this.x += this.vx * timestep;
+                this.y += this.vy * timestep;
+                this.z += this.vz * timestep;
+                
+                /* ========== 可调整参数：边界反弹阻尼 ========== */
+                // 值越小，天体碰到边界时速度损失越大
+                // 当前值为0.85，设为1表示完全弹性碰撞，设为0.5表示较大能量损失
+                const bounceDamping = 0.85;
+                
+                if (this.x < -boundary || this.x > boundary) this.vx *= -bounceDamping;
+                if (this.y < -boundary || this.y > boundary) this.vy *= -bounceDamping;
+                if (this.z < -boundary || this.z > boundary) this.vz *= -bounceDamping;
+                
+                // 添加当前点到轨迹
+                this.trail.push({x: this.x, y: this.y, z: this.z});
+                
+                // 限制轨迹长度
+                if (this.trail.length > trailLength) {
+                    this.trail.shift();
+                }
+            }
+            
+            attract(otherBody) {
+                // 计算两个天体之间的距离
+                const dx = otherBody.x - this.x;
+                const dy = otherBody.y - this.y;
+                const dz = otherBody.z - this.z;
+                const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                
+                // 避免距离为零的情况
+                const minDistance = this.radius + otherBody.radius;
+                if (distance < minDistance) return 0;
+                
+                /* ========== 可调整参数：引力强度 ========== */
+                // 增大此值会增加引力强度，减小则减弱引力
+                // 当前值为2.5，设为5会使引力更强，设为1会使引力更弱
+                const force = gravityConstant * this.mass * otherBody.mass / (distance * distance);
+                
+                // 分解为x、y和z分量
+                const fx = force * dx / distance;
+                const fy = force * dy / distance;
+                const fz = force * dz / distance;
+                
+                /* ========== 可调整参数：时间步长 ========== */
+                // 增大此值会加速模拟，减小会使模拟更慢更精确
+                // 当前值为0.45，设为1会使模拟更快，设为0.1会使模拟更慢
+                this.vx += fx / this.mass * timestep;
+                this.vy += fy / this.mass * timestep;
+                this.vz += fz / this.mass * timestep;
+                otherBody.vx -= fx / otherBody.mass * timestep;
+                otherBody.vy -= fy / otherBody.mass * timestep;
+                otherBody.vz -= fz / otherBody.mass * timestep;
+                
+                return force;
+            }
+        }
+        
+        /* ========== 主要可调整参数区域 ========== */
+        
+        // 引力常数 - 调整引力强度
+        // 增大此值会增加引力强度，减小则减弱引力
+        // 当前值为2.5，设为5会使引力更强，设为1会使引力更弱
+        const gravityConstant = 2.5;
+        
+        // 时间步长 - 调整模拟速度
+        // 增大此值会加速模拟，减小会使模拟更慢更精确
+        // 当前值为0.45，设为1会使模拟更快，设为0.1会使模拟更慢
+        const timestep = 0.45;
+        
+        // 轨迹长度 - 调整轨迹显示长度
+        // 增大此值会使轨迹更长，减小会使轨迹更短
+        // 当前值为500，设为1000会使轨迹更长，设为100会使轨迹更短
+        const trailLength = 500;
+        
+        // 天体数量 - 调整模拟中天体的数量
+        // 当前值为3，可以增加或减少此值
+        // 注意：增加天体会显著增加计算复杂度
+        const bodyCount = 3;
+        
+        // 天体颜色 - 调整天体的颜色
+        // 使用RGB格式，每个颜色分量范围0-1.0
+        // 可以添加更多颜色或修改现有颜色
+        const colors = [
+            [1.0, 0.4, 0.4], // 红色
+            [0.3, 0.8, 0.8], // 青色
+            [1.0, 0.8, 0.4]  // 黄色
+        ];
+        
+        // 边界大小 - 调整模拟空间的边界
+        // 增大此值会使天体在更大的空间中运动
+        // 当前值为100，设为200会使空间更大，设为50会使空间更小
+        const boundary = 100;
+        
+        /* ========== 随机初始化参数区域 ========== */
+        
+        // 质量范围 - 调整天体质量范围
+        // 修改minMass和maxMass可以改变天体的质量范围
+        // 当前范围是400-1000，设为100-500会使天体更轻，设为1000-2000会使天体更重
+        const minMass = 400;
+        const maxMass = 1000;
+        
+        // 初始位置范围 - 调整天体初始分布范围
+        // 值越小天体初始位置越集中，值越大分布越广
+        // 当前值为0.5，设为0.2会使天体更集中，设为1会使天体分布更广
+        const positionRange = 0.5;
+        
+        // 初始速度范围 - 调整天体初始速度范围
+        // 增大此值会使天体初始速度更快
+        // 当前值为3，设为1会使初始速度更慢，设为5会使初始速度更快
+        const maxInitialSpeed = 3;
+        
+        /* ========== 其他参数 ========== */
+        
+        let bodies = [];
+        
+        // 视角控制变量
+        let rotationX = 0;
+        let rotationY = 0;
+        
+        /* ========== 可调整参数：初始缩放级别 ========== */
+        // 增大此值会使视角更近，减小会使视角更远
+        // 当前值为1.0，设为2.0会使视角更近，设为0.5会使视角更远
+        let zoom = 1.0;
+        
+        let isMouseDown = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        
+        // 长按重置变量
+        let resetStartTime = 0;
+        let isResetting = false;
+        let resetInterval;
+        
+        // 双指缩放变量
+        let initialPinchDistance = 0;
+        
+        // 初始化天体 - 随机参数
+        function initBodies() {
+            bodies = [];
+            
+            for (let i = 0; i < bodyCount; i++) {
+                // 随机位置（在3D空间中心区域）
+                const x = (Math.random() - 0.5) * boundary * positionRange;
+                const y = (Math.random() - 0.5) * boundary * positionRange;
+                const z = (Math.random() - 0.5) * boundary * positionRange;
+                
+                // 随机速度向量
+                const vx = (Math.random() - 0.5) * maxInitialSpeed;
+                const vy = (Math.random() - 0.5) * maxInitialSpeed;
+                const vz = (Math.random() - 0.5) * maxInitialSpeed;
+                
+                // 随机质量
+                const mass = minMass + Math.random() * (maxMass - minMass);
+                
+                // 使用循环颜色
+                const color = colors[i % colors.length];
+                
+                bodies.push(new Body(x, y, z, vx, vy, vz, mass, color));
+            }
+        }
+        
+        // 创建顶点数据
+        function createVertexData() {
+            const positions = [];
+            const colors = [];
+            
+            // 添加天体位置
+            for (const body of bodies) {
+                positions.push(body.x, body.y, body.z);
+                colors.push(body.color[0], body.color[1], body.color[2]);
+            }
+            
+            return {
+                positions: new Float32Array(positions),
+                colors: new Float32Array(colors)
+            };
+        }
+        
+        // 创建轨迹顶点数据
+        function createTrailVertexData() {
+            const positions = [];
+            const trailColors = [];
+            
+            // 添加轨迹点
+            for (const body of bodies) {
+                if (body.trail.length > 1) {
+                    // 为轨迹创建连续线条
+                    for (let i = 0; i < body.trail.length; i++) {
+                        const point = body.trail[i];
+                        positions.push(point.x, point.y, point.z);
+                        
+                        /* ========== 可调整参数：轨迹颜色亮度 ========== */
+                        // 减小系数会使轨迹颜色更暗，增大系数会使轨迹颜色更亮
+                        // 当前系数为0.7，设为1.0会使轨迹颜色与天体相同，设为0.5会使轨迹更暗
+                        const alpha = i / body.trail.length;
+                        trailColors.push(
+                            body.color[0] * 0.7,
+                            body.color[1] * 0.7,
+                            body.color[2] * 0.7
+                        );
+                    }
+                }
+            }
+            
+            return {
+                positions: new Float32Array(positions),
+                colors: new Float32Array(trailColors)
+            };
+        }
+        
+        // 绘制场景
+        function drawScene() {
+            // 清除屏幕
+            /* ========== 可调整参数：背景颜色 ========== */
+            // 修改这三个数值可以改变背景颜色
+            // 当前为深蓝色(0.05, 0.05, 0.1)，设为(0,0,0)是纯黑，设为(0.1,0,0.2)是深紫色
+            gl.clearColor(0.05, 0.05, 0.1, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            
+            // 创建模型视图矩阵
+            const modelViewMatrix = mat4.create();
+            mat4.translate(modelViewMatrix, modelViewMatrix, [0, 0, -boundary * 2 * zoom]);
+            mat4.rotateX(modelViewMatrix, modelViewMatrix, rotationX);
+            mat4.rotateY(modelViewMatrix, modelViewMatrix, rotationY);
+            
+            // 创建投影矩阵
+            const projectionMatrix = mat4.create();
+            /* ========== 可调整参数：视野角度 ========== */
+            // 修改Math.PI/4可以改变视野角度
+            // 当前为45度(Math.PI/4)，设为Math.PI/3(60度)会使视野更广，设为Math.PI/6(30度)会使视野更窄
+            mat4.perspective(projectionMatrix, Math.PI/4, canvas.width/canvas.height, 0.1, 1000.0);
+            
+            // 绘制轨迹
+            gl.useProgram(trailProgram);
+            
+            // 设置轨迹矩阵uniform
+            gl.uniformMatrix4fv(trailModelViewMatrixUniformLocation, false, modelViewMatrix);
+            gl.uniformMatrix4fv(trailProjectionMatrixUniformLocation, false, projectionMatrix);
+            
+            // 获取轨迹顶点数据
+            const trailVertexData = createTrailVertexData();
+            
+            if (trailVertexData.positions.length > 0) {
+                // 创建轨迹位置缓冲区
+                const trailPositionBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, trailPositionBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, trailVertexData.positions, gl.DYNAMIC_DRAW);
+                gl.enableVertexAttribArray(trailPositionAttributeLocation);
+                gl.vertexAttribPointer(trailPositionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+                
+                // 创建轨迹颜色缓冲区
+                const trailColorBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, trailColorBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, trailVertexData.colors, gl.DYNAMIC_DRAW);
+                gl.enableVertexAttribArray(trailColorAttributeLocation);
+                gl.vertexAttribPointer(trailColorAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+                
+                // 绘制轨迹线
+                for (const body of bodies) {
+                    if (body.trail.length > 1) {
+                        gl.drawArrays(gl.LINE_STRIP, 
+                            getTrailStartIndex(body), 
+                            body.trail.length);
+                    }
+                }
+            }
+            
+            // 绘制天体
+            gl.useProgram(program);
+            
+            // 设置矩阵uniform
+            gl.uniformMatrix4fv(modelViewMatrixUniformLocation, false, modelViewMatrix);
+            gl.uniformMatrix4fv(projectionMatrixUniformLocation, false, projectionMatrix);
+            
+            // 获取顶点数据
+            const vertexData = createVertexData();
+            
+            // 创建位置缓冲区
+            const positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, vertexData.positions, gl.DYNAMIC_DRAW);
+            gl.enableVertexAttribArray(positionAttributeLocation);
+            gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+            
+            // 创建颜色缓冲区
+            const colorBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, vertexData.colors, gl.DYNAMIC_DRAW);
+            gl.enableVertexAttribArray(colorAttributeLocation);
+            gl.vertexAttribPointer(colorAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+            
+            // 绘制天体
+            gl.drawArrays(gl.POINTS, 0, bodies.length);
+        }
+        
+        // 获取轨迹起始索引
+        function getTrailStartIndex(body) {
+            let index = 0;
+            for (const b of bodies) {
+                if (b === body) break;
+                index += b.trail.length;
+            }
+            return index;
+        }
+        
+        // 主要动画循环
+        function animate() {
+            // 计算相互引力
+            for (let i = 0; i < bodies.length; i++) {
+                for (let j = i + 1; j < bodies.length; j++) {
+                    bodies[i].attract(bodies[j]);
+                }
+            }
+            
+            // 更新天体位置
+            for (const body of bodies) {
+                body.updatePosition();
+            }
+            
+            // 绘制场景
+            drawScene();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // 鼠标和触摸事件处理
+        function handleMouseDown(event) {
+            isMouseDown = true;
+            resetStartTime = Date.now();
+            isResetting = true;
+            
+            // 显示重置指示器
+            const resetIndicator = document.getElementById('resetIndicator');
+            resetIndicator.style.display = 'block';
+            
+            // 开始重置计时
+            clearInterval(resetInterval);
+            resetInterval = setInterval(() => {
+                const elapsed = Date.now() - resetStartTime;
+                if (elapsed >= 1000 && isResetting) {
+                    initBodies();
+                    resetIndicator.style.display = 'none';
+                    clearInterval(resetInterval);
+                }
+            }, 100);
+            
+            if (event.type === 'mousedown') {
+                lastMouseX = event.clientX;
+                lastMouseY = event.clientY;
+            } else {
+                lastMouseX = event.touches[0].clientX;
+                lastMouseY = event.touches[0].clientY;
+                
+                // 如果是双指触摸，记录初始距离
+                if (event.touches.length === 2) {
+                    isResetting = false;
+                    resetIndicator.style.display = 'none';
+                    initialPinchDistance = getPinchDistance(event.touches[0], event.touches[1]);
+                }
+            }
+        }
+        
+        function handleMouseUp() {
+            isMouseDown = false;
+            
+            // 隐藏重置指示器
+            const resetIndicator = document.getElementById('resetIndicator');
+            resetIndicator.style.display = 'none';
+            
+            clearInterval(resetInterval);
+            isResetting = false;
+        }
+        
+        function handleMouseMove(event) {
+            if (!isMouseDown) return;
+            
+            let clientX, clientY;
+            
+            if (event.type === 'mousemove') {
+                clientX = event.clientX;
+                clientY = event.clientY;
+            } else {
+                // 处理双指缩放
+                if (event.touches.length === 2) {
+                    const touch1 = event.touches[0];
+                    const touch2 = event.touches[1];
+                    const currentDistance = getPinchDistance(touch1, touch2);
+                    
+                    // 计算缩放比例
+                    const scaleFactor = currentDistance / initialPinchDistance;
+                    
+                    /* ========== 可调整参数：缩放范围 ========== */
+                    // 修改这两个值可以调整缩放的最小和最大限制
+                    // 当前范围为0.5到3，设为0.2到5可以允许更大的缩放范围
+                    zoom = Math.max(0.5, Math.min(3, zoom / scaleFactor));
+                    
+                    initialPinchDistance = currentDistance;
+                    return;
+                }
+                
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
+            }
+            
+            // 计算鼠标移动距离
+            const deltaX = clientX - lastMouseX;
+            const deltaY = clientY - lastMouseY;
+            
+            // 更新旋转角度
+            /* ========== 可调整参数：旋转灵敏度 ========== */
+            // 修改系数可以调整旋转的灵敏度
+            // 当前系数为0.01，设为0.02会使旋转更快，设为0.005会使旋转更慢
+            rotationY += deltaX * 0.01;
+            rotationX += deltaY * 0.01;
+            
+            // 限制X轴旋转角度
+            rotationX = Math.max(-Math.PI/2, Math.min(Math.PI/2, rotationX));
+            
+            // 更新最后鼠标位置
+            lastMouseX = clientX;
+            lastMouseY = clientY;
+            
+            // 如果移动了鼠标，则取消重置
+            if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+                isResetting = false;
+                const resetIndicator = document.getElementById('resetIndicator');
+                resetIndicator.style.display = 'none';
+            }
+        }
+        
+        // 计算双指距离
+        function getPinchDistance(touch1, touch2) {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+        
+        // 添加事件监听器
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+        
+        canvas.addEventListener('touchstart', handleMouseDown);
+        canvas.addEventListener('touchmove', handleMouseMove);
+        window.addEventListener('touchend', handleMouseUp);
+        
+        // 初始化矩阵库
+        const mat4 = {
+            create: function() {
+                return new Float32Array([
+                    1, 0, 0, 0,
+                    0, 1, 0, 0,
+                    0, 0, 1, 0,
+                    0, 0, 0, 1
+                ]);
+            },
+            
+            perspective: function(out, fovy, aspect, near, far) {
+                const f = 1.0 / Math.tan(fovy / 2);
+                out[0] = f / aspect;
+                out[1] = 0;
+                out[2] = 0;
+                out[3] = 0;
+                out[4] = 0;
+                out[5] = f;
+                out[6] = 0;
+                out[7] = 0;
+                out[8] = 0;
+                out[9] = 0;
+                out[11] = -1;
+                out[12] = 0;
+                out[13] = 0;
+                out[15] = 0;
+                
+                if (far !== null && far !== Infinity) {
+                    const nf = 1 / (near - far);
+                    out[10] = (far + near) * nf;
+                    out[14] = 2 * far * near * nf;
+                } else {
+                    out[10] = -1;
+                    out[14] = -2 * near;
+                }
+                
+                return out;
+            },
+            
+            translate: function(out, a, v) {
+                const x = v[0], y = v[1], z = v[2];
+                
+                if (a === out) {
+                    out[12] = a[0] * x + a[4] * y + a[8] * z + a[12];
+                    out[13] = a[1] * x + a[5] * y + a[9] * z + a[13];
+                    out[14] = a[2] * x + a[6] * y + a[10] * z + a[14];
+                    out[15] = a[3] * x + a[7] * y + a[11] * z + a[15];
+                } else {
+                    const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
+                    const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
+                    const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+                    
+                    out[0] = a00; out[1] = a01; out[2] = a02; out[3] = a03;
+                    out[4] = a10; out[5] = a11; out[6] = a12; out[7] = a13;
+                    out[8] = a20; out[9] = a21; out[10] = a22; out[11] = a23;
+                    
+                    out[12] = a00 * x + a10 * y + a20 * z + a[12];
+                    out[13] = a01 * x + a11 * y + a21 * z + a[13];
+                    out[14] = a02 * x + a12 * y + a22 * z + a[14];
+                    out[15] = a03 * x + a13 * y + a23 * z + a[15];
+                }
+                
+                return out;
+            },
+            
+            rotateX: function(out, a, rad) {
+                const s = Math.sin(rad);
+                const c = Math.cos(rad);
+                const a10 = a[4];
+                const a11 = a[5];
+                const a12 = a[6];
+                const a13 = a[7];
+                const a20 = a[8];
+                const a21 = a[9];
+                const a22 = a[10];
+                const a23 = a[11];
+                
+                if (a !== out) {
+                    out[0] = a[0];
+                    out[1] = a[1];
+                    out[2] = a[2];
+                    out[3] = a[3];
+                    out[12] = a[12];
+                    out[13] = a[13];
+                    out[14] = a[14];
+                    out[15] = a[15];
+                }
+                
+                out[4] = a10 * c + a20 * s;
+                out[5] = a11 * c + a21 * s;
+                out[6] = a12 * c + a22 * s;
+                out[7] = a13 * c + a23 * s;
+                out[8] = a20 * c - a10 * s;
+                out[9] = a21 * c - a11 * s;
+                out[10] = a22 * c - a12 * s;
+                out[11] = a23 * c - a13 * s;
+                
+                return out;
+            },
+            
+            rotateY: function(out, a, rad) {
+                const s = Math.sin(rad);
+                const c = Math.cos(rad);
+                const a00 = a[0];
+                const a01 = a[1];
+                const a02 = a[2];
+                const a03 = a[3];
+                const a20 = a[8];
+                const a21 = a[9];
+                const a22 = a[10];
+                const a23 = a[11];
+                
+                if (a !== out) {
+                    out[4] = a[4];
+                    out[5] = a[5];
+                    out[6] = a[6];
+                    out[7] = a[7];
+                    out[12] = a[12];
+                    out[13] = a[13];
+                    out[14] = a[14];
+                    out[15] = a[15];
+                }
+                
+                out[0] = a00 * c - a20 * s;
+                out[1] = a01 * c - a21 * s;
+                out[2] = a02 * c - a22 * s;
+                out[3] = a03 * c - a23 * s;
+                out[8] = a00 * s + a20 * c;
+                out[9] = a01 * s + a21 * c;
+                out[10] = a02 * s + a22 * c;
+                out[11] = a03 * s + a23 * c;
+                
+                return out;
+            }
+        };
+        
+        // 初始化并启动动画
+        initBodies();
+        animate();
+    </script>
+</body>
+</html>
