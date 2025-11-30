@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正在跳转...</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            opacity: 0;
+            animation: fadeIn 0.3s ease-out 0.2s forwards;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        p {
+            margin-bottom: 30px;
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #e0e0e0;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            animation: spin 1s linear infinite;
+        }
+        
+        .link-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .link-button:hover {
+            background-color: #2980b9;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h1>正在为您跳转...</h1>
+        <p>请稍候，系统正在自动为您跳转到目标页面。</p>
+        <p>如果长时间没有跳转，请点击下方按钮：</p>
+        <a href="https://ctryvzcn.sealosbja.site/@login" class="link-button">手动访问目标页面</a>
+    </div>
+
+    <script>
+        // 主要跳转方法
+        function redirect() {
+            window.location.replace("https://ctryvzcn.sealosbja.site/@login");
+        }
+        
+        // 页面加载后立即跳转
+        window.addEventListener('DOMContentLoaded', function() {
+            // 设置一个极短的延迟，确保页面内容完全加载
+            setTimeout(redirect, 100);
+        });
+        
+        // 备用跳转方法
+        setTimeout(function() {
+            if (window.location.href.indexOf('@login') === -1) {
+                redirect();
+            }
+        }, 2000);
+    </script>
+    
+    <!-- 备用meta刷新，以防JavaScript被禁用 -->
+    <noscript>
+        <meta http-equiv="refresh" content="0;url=https://ctryvzcn.sealosbja.site/@login">
+    </noscript>
+</body>
+</html>
