@@ -12,7 +12,7 @@
  */
 const PROJECTS = [
     // 实际项目（有URL的）
-    { name: "home", url: "https://yingo.netlify.app/home.html", icon: "fas fa-rocket" },
+    { name: "home", url: "https://uegov.worldl", icon: "fas fa-rocket" },
     { name: "我的三体", url: "https://yingo.netlify.app/3d", icon: "fas fa-gamepad" },
     { name: "三体2", url: "https://yingo.netlify.app/2d", icon: "fas fa-palette" },
     { name: "永远的单摆", url: "https://yingo.netlify.app/bai/dev", icon: "fas fa-cube" },
