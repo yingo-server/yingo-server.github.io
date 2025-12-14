@@ -1,0 +1,337 @@
+/* ============================================
+   项目入口页面样式表
+   设计特点：毛玻璃效果、可调节参数、响应式布局
+   ============================================ */
+
+/* ========== CSS自定义属性（可调节参数） ========== */
+:root {
+    /* 1. 毛玻璃效果参数 */
+    --glass-blur: 20px;                /* 背景模糊度：范围5-30像素 */
+    
+    /* 2. 透明度设置 */
+    --panel-opacity: 0.25;             /* 面板透明度：范围0.1-0.5 */
+    --button-opacity: 0.3;             /* 按钮透明度：范围0.2-0.5 */
+    --button-hover-opacity: 0.4;       /* 按钮悬停透明度：范围0.3-0.6 */
+    --border-opacity: 0.15;            /* 边框透明度：范围0.1-0.3 */
+    --shadow-intensity: 0.3;           /* 阴影强度：范围0.2-0.5 */
+    
+    /* 3. 颜色系统 */
+    --primary-color: rgba(76, 175, 80, 0.7);   /* 主色调（绿色） */
+    --secondary-color: rgba(100, 100, 100, 0.3); /* 次要色调（灰色） */
+    --text-color: rgba(255, 255, 255, 0.9);     /* 文字颜色 */
+    --text-secondary-color: rgba(255, 255, 255, 0.7); /* 次要文字颜色 */
+    
+    /* 按钮颜色（基于透明度变量） */
+    --button-bg-color: rgba(100, 100, 100, var(--button-opacity));
+    --button-hover-color: rgba(130, 130, 130, var(--button-hover-opacity));
+    --border-color: rgba(255, 255, 255, var(--border-opacity));
+    
+    /* 进度条颜色 */
+    --progress-color: rgba(76, 175, 80, 0.7);   /* 播放进度条颜色 */
+    --volume-color: rgba(255, 255, 255, 0.7);   /* 音量条颜色 */
+    
+    /* 4. 尺寸与间距 */
+    --border-radius: 20px;             /* 主面板圆角：范围10-25像素 */
+    --button-radius: 12px;             /* 按钮圆角：范围8-15像素 */
+    --grid-min-width: 150px;           /* 按钮最小宽度：范围100px-200px */
+    --grid-gap: 15px;                  /* 按钮间距：范围10-20px */
+    --button-height: 100px;            /* 按钮高度：范围80-120px */
+    
+    /* 5. 字体与图标 */
+    --icon-size: 24px;                 /* 按钮图标大小：范围20-30px */
+    --button-font-size: 14px;          /* 按钮文字大小：范围12-16px */
+    
+    /* 6. 播放器专用尺寸 */
+    --music-player-padding: 20px;      /* 播放器内边距：范围15-30px */
+    --control-btn-size: 40px;          /* 控制按钮大小：范围35-45px */
+    --play-btn-size: 45px;             /* 播放按钮大小：范围40-50px */
+}
+
+/* ========== 基础样式重置 ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ========== 页面主体样式 ========== */
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: url('http://yingo.netlify.app/image/ha.jpeg') no-repeat center center fixed;
+    background-size: cover;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    color: var(--text-color);
+}
+
+/* ========== 毛玻璃主面板样式 ========== */
+.glass-panel {
+    width: 90%;
+    max-width: 1000px;
+    background: rgba(40, 40, 40, var(--panel-opacity));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 40px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, var(--shadow-intensity));
+}
+
+/* ========== 项目按钮网格布局 ========== */
+.buttons-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width), 1fr));
+    gap: var(--grid-gap);
+    margin-bottom: 40px;
+}
+
+/* ========== 项目按钮样式 ========== */
+.project-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--button-height);
+    padding: 20px 10px;
+    background: var(--button-bg-color);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--button-radius);
+    color: var(--text-color);
+    font-size: var(--button-font-size);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    gap: 8px;
+}
+
+/* 项目按钮悬停效果 */
+.project-btn:hover {
+    background: var(--button-hover-color);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 项目按钮图标 */
+.project-btn i {
+    font-size: var(--icon-size);
+    margin-bottom: 5px;
+}
+
+/* 隐藏按钮（用于空URL的项目） */
+.project-btn.hidden {
+    display: none;
+}
+
+/* 调试模式：显示隐藏的按钮 */
+/* .project-btn.hidden {
+    opacity: 0.3;
+    pointer-events: none;
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+} */
+
+/* ========== 音乐播放器样式 ========== */
+.music-player {
+    background: rgba(60, 60, 60, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: var(--music-player-padding);
+    color: var(--text-color);
+    margin-top: 30px;
+}
+
+/* 播放器头部 */
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.player-header h3 {
+    font-weight: 400;
+    font-size: 1.2rem;
+}
+
+/* 歌曲信息区域 */
+.track-info {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.track-title {
+    font-size: 1rem;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-color);
+}
+
+.track-details {
+    font-size: 0.85rem;
+    color: var(--text-secondary-color);
+}
+
+/* 进度条容器 */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+/* 时间显示 */
+.time {
+    font-size: 0.8rem;
+    color: var(--text-secondary-color);
+    min-width: 35px;
+    text-align: center;
+}
+
+/* 进度条样式 */
+.progress-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+}
+
+/* 进度条填充部分 */
+.progress {
+    height: 100%;
+    background: var(--progress-color);
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+/* 播放控制区域 */
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+/* 控制按钮 */
+.control-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+    width: var(--control-btn-size);
+    height: var(--control-btn-size);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 控制按钮悬停效果 */
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+}
+
+/* 播放/暂停按钮 */
+.control-btn.play-pause {
+    background: var(--primary-color);
+    width: var(--play-btn-size);
+    height: var(--play-btn-size);
+}
+
+.control-btn.play-pause:hover {
+    background: rgba(76, 175, 80, 0.8);
+}
+
+/* 音量控制区域 */
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 150px;
+}
+
+/* 音量滑块 */
+.volume-slider {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+}
+
+/* 音量滑块填充部分 */
+.volume-slider .progress {
+    background: var(--volume-color);
+    width: 70%; /* 初始音量70% */
+}
+
+/* ========== 响应式设计 ========== */
+
+/* 平板设备 */
+@media (max-width: 768px) {
+    .glass-panel {
+        padding: 25px;
+    }
+    
+    .buttons-container {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+}
+
+/* 手机设备 */
+@media (max-width: 480px) {
+    .buttons-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .music-player {
+        padding: 15px;
+    }
+    
+    .player-controls {
+        gap: 10px;
+    }
+    
+    .control-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+    
+    .control-btn.play-pause {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .volume-control {
+        width: 120px;
+    }
+}
+
+/* 超小屏幕设备 */
+@media (max-width: 360px) {
+    .buttons-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .glass-panel {
+        padding: 15px;
+    }
+}
