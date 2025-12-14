@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目入口</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- 毛玻璃主面板容器 -->
+    <div class="glass-panel">
+        <!-- 项目按钮容器 -->
+        <div class="buttons-container" id="buttons-container"></div>
+        
+        <!-- 音乐播放器区域 -->
+        <div class="music-player">
+            <!-- 播放器头部信息 -->
+            <div class="player-header">
+                <h3><i class="fas fa-music"></i> 音乐播放器</h3>
+                <span id="file-count">0 首歌曲</span>
+            </div>
+            
+            <!-- 歌曲信息显示 -->
+            <div class="track-info">
+                <div class="track-title" id="track-title">选择一首歌曲开始播放</div>
+                <div class="track-details">
+                    <span id="track-artist">在虚无中永存</span> · 
+                    <span id="track-album">未知专辑</span>
+                </div>
+            </div>
+            
+            <!-- 播放进度条 -->
+            <div class="progress-container">
+                <div class="time" id="current-time">0:00</div>
+                <div class="progress-bar" id="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+                <div class="time" id="duration">0:00</div>
+            </div>
+            
+            <!-- 播放控制按钮 -->
+            <div class="player-controls">
+                <button class="control-btn" id="prev-btn" title="上一首">
+                    <i class="fas fa-step-backward"></i>
+                </button>
+                <button class="control-btn play-pause" id="play-pause-btn" title="播放/暂停">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="control-btn" id="next-btn" title="下一首">
+                    <i class="fas fa-step-forward"></i>
+                </button>
+                
+                <!-- 音量控制 -->
+                <div class="volume-control">
+                    <i class="fas fa-volume-down"></i>
+                    <div class="volume-slider" id="volume-slider">
+                        <div class="progress" id="volume-progress"></div>
+                    </div>
+                    <i class="fas fa-volume-up"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 隐藏的音频播放器 -->
+    <audio id="audio-player"></audio>
+
+    <!-- 外部JavaScript文件 -->
+    <script src="app.js"></script>
+</body>
+</html>
