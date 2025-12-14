@@ -3,137 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>项目入口</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>跳转中...</title>
     <style>
+        /* 全局样式 - 全屏黑色背景 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            min-height: 100vh;
+            background-color: #000; /* 背景颜色 - 可修改为其他颜色 */
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: url('http://yingo.netlify.app/image/ha.jpeg') no-repeat center center fixed;
-            background-size: cover;
-            padding: 20px;
+            overflow: hidden;
+            font-family: Arial, sans-serif; /* 字体样式 - 可修改 */
         }
-
-        .glass-panel {
-            width: 90%;
-            max-width: 1000px;
-            background: rgba(40, 40, 40, 0.25);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-        }
-
-        .buttons-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .project-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100px;
-            padding: 20px 10px;
-            background: rgba(100, 100, 100, 0.3);
+        
+        /* 手动跳转按钮 - 初始状态为隐藏 */
+        #manualRedirectBtn {
+            position: fixed;
+            bottom: 40px; /* 按钮距离底部的距离 - 可修改 */
+            padding: 15px 40px; /* 按钮内边距 - 可修改 */
+            background-color: #333; /* 按钮背景色 - 可修改 */
+            color: #fff; /* 按钮文字颜色 - 可修改 */
             border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 14px;
-            text-decoration: none;
+            border-radius: 50px; /* 按钮圆角 - 可修改 */
+            font-size: 16px; /* 按钮文字大小 - 可修改 */
             cursor: pointer;
-            transition: all 0.3s ease;
-            gap: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* 按钮阴影 - 可修改 */
         }
-
-        .project-btn:hover {
-            background: rgba(130, 130, 130, 0.4);
-            transform: translateY(-3px);
+        
+        /* 按钮显示时的样式 */
+        #manualRedirectBtn.show {
+            opacity: 0.9;
+            visibility: visible;
         }
-
-        .project-btn i {
-            font-size: 24px;
-            margin-bottom: 5px;
+        
+        /* 按钮悬停效果 */
+        #manualRedirectBtn:hover {
+            transform: translateY(-3px); /* 悬停上移距离 - 可修改 */
+            background-color: #555; /* 悬停背景色 - 可修改 */
         }
-
-        .project-btn.hidden {
-            display: none;
+        
+        /* 加载动画 - 在跳转过程中显示 */
+        .loading-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px; /* 加载动画大小 - 可修改 */
+            height: 50px; /* 加载动画大小 - 可修改 */
+            border: 3px solid rgba(255, 255, 255, 0.1); /* 加载动画边框颜色 - 可修改 */
+            border-top-color: #fff; /* 加载动画顶部颜色 - 可修改 */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            opacity: 0.7;
         }
-
-        @media (max-width: 768px) {
-            .glass-panel {
-                padding: 25px;
-            }
-            .buttons-container {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            }
-        }
-
-        @media (max-width: 480px) {
-            .buttons-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <div class="glass-panel">
-        <div class="buttons-container" id="buttons-container"></div>
-    </div>
-
+    <!-- 加载动画 -->
+    <div class="loading-spinner" id="loadingSpinner"></div>
+    
+    <!-- 手动跳转按钮 -->
+    <button id="manualRedirectBtn">点击跳转</button>
+    
     <script>
-        // 项目配置：共15个项目，填写url的按钮显示，留空的隐藏
-        const projects = [
-            { name: "home", url: "https://yingo.netlify.app/home.html", icon: "fas fa-rocket" },
-            { name: "我的三体", url: "https://yingo.netlify.app/3d", icon: "fas fa-gamepad" },
-            { name: "三体2", url: "https://yingo.netlify.app/2d", icon: "fas fa-palette" },
-            { name: "永远的单摆", url: "https://yingo.netlify.app/bai/dev", icon: "fas fa-cube" },
-            { name: "单摆", url: "https://yingo.netlify.app/bai", icon: "fas fa-chart-line" },
-            { name: "项目 6", url: "", icon: "fas fa-music" },
-            { name: "项目 7", url: "", icon: "fas fa-video" },
-            { name: "项目 8", url: "", icon: "fas fa-robot" },
-            { name: "项目 9", url: "", icon: "fas fa-globe" },
-            { name: "项目 10", url: "", icon: "fas fa-database" },
-            { name: "项目 11", url: "", icon: "fas fa-mobile-alt" },
-            { name: "项目 12", url: "", icon: "fas fa-cloud" },
-            { name: "项目 13", url: "", icon: "fas fa-code" },
-            { name: "项目 14", url: "", icon: "fas fa-lock" },
-            { name: "项目 15", url: "", icon: "fas fa-star" }
-        ];
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const container = document.getElementById('buttons-container');
+        // 跳转配置区域 - 这里可以修改跳转目标
+        const REDIRECT_URL = "https://yingo.netlify.app/door"; // 目标网址 - 请修改为您要跳转的网址
+        const REDIRECT_TIMEOUT = 3000; // 跳转超时时间(毫秒) - 可修改，当前为3秒
+        const USE_METHOD1 = true; // 是否使用方法1跳转 - 可修改为false禁用
+        const USE_METHOD2 = true; // 是否使用方法2跳转 - 可修改为false禁用
+        
+        // 获取DOM元素
+        const manualRedirectBtn = document.getElementById('manualRedirectBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        
+        // 记录跳转是否成功
+        let redirectSuccess = false;
+        
+        // 方法1: 使用window.location.replace跳转 (不会在历史记录中留下当前页面)
+        function redirectMethod1() {
+            if (!USE_METHOD1) return false;
             
-            // 生成15个按钮，只显示有url的
-            projects.forEach(project => {
-                const btn = document.createElement('a');
-                
-                if (project.url) {
-                    btn.href = project.url;
-                    btn.target = "_blank";
-                    btn.className = "project-btn";
-                    btn.innerHTML = `
-                        <i class="${project.icon}"></i>
-                        <span>${project.name}</span>
-                    `;
-                } else {
-                    btn.className = "project-btn hidden";
+            try {
+                console.log('尝试使用方法1跳转...');
+                window.location.replace(REDIRECT_URL);
+                return true;
+            } catch (error) {
+                console.error('方法1跳转失败:', error);
+                return false;
+            }
+        }
+        
+        // 方法2: 使用window.location.href跳转 (标准跳转方法)
+        function redirectMethod2() {
+            if (!USE_METHOD2) return false;
+            
+            try {
+                console.log('尝试使用方法2跳转...');
+                window.location.href = REDIRECT_URL;
+                return true;
+            } catch (error) {
+                console.error('方法2跳转失败:', error);
+                return false;
+            }
+        }
+        
+        // 显示手动跳转按钮
+        function showManualRedirectButton() {
+            console.log('显示手动跳转按钮');
+            manualRedirectBtn.classList.add('show');
+            // 可以调整加载动画的显示状态
+            loadingSpinner.style.opacity = '0.3';
+        }
+        
+        // 手动跳转函数
+        function manualRedirect() {
+            console.log('手动跳转中...');
+            // 尝试使用方法2进行手动跳转
+            window.location.href = REDIRECT_URL;
+        }
+        
+        // 主跳转函数
+        function startRedirect() {
+            console.log('开始跳转流程...');
+            
+            // 先使用方法1跳转
+            if (USE_METHOD1) {
+                redirectMethod1();
+            }
+            
+            // 延迟使用方法2跳转，增加成功率
+            setTimeout(() => {
+                if (USE_METHOD2 && !redirectSuccess) {
+                    redirectMethod2();
                 }
-                
-                container.appendChild(btn);
-            });
+            }, 100); // 方法2延迟时间(毫秒) - 可修改
+            
+            // 设置超时检测，如果指定时间后还未跳转成功，显示手动跳转按钮
+            setTimeout(() => {
+                if (!redirectSuccess) {
+                    showManualRedirectButton();
+                }
+            }, REDIRECT_TIMEOUT);
+        }
+        
+        // 页面加载完成后开始跳转
+        document.addEventListener('DOMContentLoaded', startRedirect);
+        
+        // 为手动跳转按钮添加点击事件
+        manualRedirectBtn.addEventListener('click', manualRedirect);
+        
+        // 添加一个页面可见性变化的检测，以防跳转被浏览器阻止
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') {
+                // 页面被隐藏，可能跳转成功
+                redirectSuccess = true;
+                console.log('页面已隐藏，可能跳转成功');
+            }
+        });
+        
+        // 添加beforeunload事件，检测页面是否开始跳转
+        window.addEventListener('beforeunload', function() {
+            redirectSuccess = true;
+            console.log('页面开始卸载，跳转可能成功');
         });
     </script>
 </body>
