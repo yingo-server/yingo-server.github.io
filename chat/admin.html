@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台</title>
+    <style>
+        /* 极简黑底白线风格 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .admin-container {
+            width: 100%;
+            max-width: 500px;
+            background: #000000;
+            border: 1px solid #333333;
+        }
+        
+        .admin-header {
+            padding: 20px;
+            border-bottom: 1px solid #333333;
+            text-align: center;
+        }
+        
+        .admin-header h1 {
+            font-size: 20px;
+            font-weight: 300;
+            color: #ffffff;
+        }
+        
+        .admin-header .subtitle {
+            font-size: 12px;
+            color: #888888;
+            margin-top: 5px;
+        }
+        
+        .admin-content {
+            padding: 25px;
+        }
+        
+        /* 登录表单 */
+        .login-form {
+            display: block;
+        }
+        
+        .login-form.hidden {
+            display: none;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #cccccc;
+            font-size: 14px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333333;
+            background: #000000;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .form-input:focus {
+            border-color: #666666;
+        }
+        
+        .form-input.error {
+            border-color: #ff4444;
+        }
+        
+        .error-message {
+            color: #ff4444;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        .login-btn {
+            width: 100%;
+            background: #000000;
+            color: #ffffff;
+            border: 1px solid #333333;
+            padding: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .login-btn:hover {
+            background: #111111;
+            border-color: #666666;
+        }
+        
+        .login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 管理面板 */
+        .admin-panel {
+            display: none;
+        }
+        
+        .admin-panel.show {
+            display: block;
+        }
+        
+        .stats-card {
+            border: 1px solid #333333;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: #000000;
+        }
+        
+        .stats-title {
+            font-size: 12px;
+            color: #888888;
+            margin-bottom: 8px;
+        }
+        
+        .stats-value {
+            font-size: 24px;
+            color: #ffffff;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .danger-zone {
+            border: 1px solid #333333;
+            padding: 20px;
+            margin-top: 20px;
+            background: #000000;
+        }
+        
+        .danger-title {
+            color: #ff4444;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .danger-text {
+            color: #888888;
+            font-size: 12px;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        
+        .danger-btn {
+            background: #000000;
+            color: #ff4444;
+            border: 1px solid #ff4444;
+            padding: 12px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        
+        .danger-btn:hover {
+            background: #1a0000;
+        }
+        
+        /* 消息列表 */
+        .message-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+            border: 1px solid #333333;
+            padding: 10px;
+            background: #000000;
+        }
+        
+        .message-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #222222;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .message-item:last-child {
+            border-bottom: none;
+        }
+        
+        .message-user {
+            font-size: 13px;
+            color: #ffffff;
+            margin-bottom: 3px;
+        }
+        
+        .message-text {
+            color: #cccccc;
+            font-size: 13px;
+        }
+        
+        .message-time {
+            color: #666666;
+            font-size: 11px;
+            margin-left: 10px;
+            white-space: nowrap;
+        }
+        
+        /* 操作反馈 */
+        .feedback {
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid;
+            display: none;
+        }
+        
+        .feedback.show {
+            display: block;
+        }
+        
+        .feedback.success {
+            color: #00cc00;
+            border-color: #00cc00;
+        }
+        
+        .feedback.error {
+            color: #ff4444;
+            border-color: #ff4444;
+        }
+        
+        /* 返回链接 */
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #333333;
+        }
+        
+        .back-link a {
+            color: #666666;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        
+        .back-link a:hover {
+            color: #ffffff;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+        
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #333333;
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 锁定时长提示 */
+        .lockout-timer {
+            color: #ff4444;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .lockout-timer.show {
+            display: block;
+        }
+        
+        /* 滚动条样式 */
+        .message-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        
+        .message-list::-webkit-scrollbar-track {
+            background: #000000;
+        }
+        
+        .message-list::-webkit-scrollbar-thumb {
+            background: #333333;
+        }
+        
+        @media (max-width: 768px) {
+            .admin-container {
+                border: none;
+            }
+            
+            .admin-content {
+                padding: 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>管理后台</h1>
+            <div class="subtitle">慎用</div>
+        </div>
+        
+        <div class="admin-content">
+            <!-- 登录表单 -->
+            <div class="login-form" id="loginForm">
+                <div class="feedback error" id="loginError"></div>
+                
+                <div class="form-group">
+                    <label class="form-label">管理密码</label>
+                    <input type="password" 
+                           class="form-input" 
+                           id="passwordInput" 
+                           placeholder="请输入密码"
+                           autocomplete="off">
+                    <div class="error-message" id="passwordError">密码错误</div>
+                    <div class="lockout-timer" id="lockoutTimer"></div>
+                </div>
+                
+                <button class="login-btn" id="loginBtn">登录</button>
+            </div>
+            
+            <!-- 管理面板 -->
+            <div class="admin-panel" id="adminPanel">
+                <div class="feedback success" id="successFeedback"></div>
+                <div class="feedback error" id="errorFeedback"></div>
+                
+                <div class="stats-grid">
+                    <div class="stats-card">
+                        <div class="stats-title">消息总数</div>
+                        <div class="stats-value" id="totalMessages">0</div>
+                    </div>
+                    
+                    <div class="stats-card">
+                        <div class="stats-title">用户数量</div>
+                        <div class="stats-value" id="uniqueUsers">0</div>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="stats-title">今日消息</div>
+                    <div class="stats-value" id="todayMessages">0</div>
+                </div>
+                
+                <div class="danger-zone">
+                    <div class="danger-title">危险操作</div>
+                    <div class="danger-text">
+                        清空所有聊天记录，操作不可撤销。
+                    </div>
+                    <button class="danger-btn" id="clearChatBtn">清空记录</button>
+                </div>
+                
+                <!-- 消息列表 -->
+                <div class="stats-card">
+                    <div class="stats-title">最近消息</div>
+                    <div class="message-list" id="messageList">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="back-link">
+                    <a href="index.html">返回聊天室</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ==================== 管理配置 ====================
+        const ADMIN_CONFIG = {
+            // 管理密码
+            PASSWORD: '00000000',
+            
+            // Gitee配置（应与index.html中的配置保持一致）
+            ACCESS_TOKEN: 'e823c3a1265e30f429305ddebc27f855',
+            OWNER: 'yingo-server',
+            REPO: 'yingo',
+            FILE_PATH: 'message.json',
+            API_BASE: 'https://gitee.com/api/v5',
+            
+            // 安全配置
+            MAX_LOGIN_ATTEMPTS: 5,
+            LOCKOUT_DURATION: 15 * 60 * 1000, // 15分钟
+            CLEAR_CONFIRM: true,
+            
+            // 显示配置
+            RECENT_MESSAGES_COUNT: 10,
+            AUTO_REFRESH_INTERVAL: 10000
+        };
+
+        // ==================== 管理应用类 ====================
+        class AdminApp {
+            constructor() {
+                this.isAuthenticated = false;
+                this.loginAttempts = 0;
+                this.isLocked = false;
+                this.lockoutTime = null;
+                this.messages = [];
+                this.sha = null;
+                this.stats = {
+                    totalMessages: 0,
+                    uniqueUsers: 0,
+                    todayMessages: 0
+                };
+                
+                this.init();
+            }
+            
+            // 初始化
+            init() {
+                this.checkLockout();
+                this.setupEventListeners();
+                this.autoRefresh();
+            }
+            
+            // 检查是否被锁定
+            checkLockout() {
+                const lockoutEnd = localStorage.getItem('admin_lockout_end');
+                if (lockoutEnd) {
+                    const endTime = parseInt(lockoutEnd);
+                    if (Date.now() < endTime) {
+                        this.isLocked = true;
+                        this.lockoutTime = endTime;
+                        this.updateLockoutTimer();
+                    } else {
+                        localStorage.removeItem('admin_lockout_end');
+                        localStorage.removeItem('admin_login_attempts');
+                    }
+                }
+                
+                this.loginAttempts = parseInt(localStorage.getItem('admin_login_attempts') || '0');
+            }
+            
+            // 更新锁定计时器
+            updateLockoutTimer() {
+                if (!this.isLocked) return;
+                
+                const remaining = Math.ceil((this.lockoutTime - Date.now()) / 1000);
+                if (remaining <= 0) {
+                    this.isLocked = false;
+                    localStorage.removeItem('admin_lockout_end');
+                    document.getElementById('lockoutTimer').classList.remove('show');
+                    document.getElementById('passwordInput').disabled = false;
+                    return;
+                }
+                
+                const minutes = Math.floor(remaining / 60);
+                const seconds = remaining % 60;
+                
+                const timerElement = document.getElementById('lockoutTimer');
+                timerElement.textContent = `锁定中，请${minutes}分${seconds}秒后再试`;
+                timerElement.classList.add('show');
+                
+                setTimeout(() => this.updateLockoutTimer(), 1000);
+            }
+            
+            // 处理登录
+            handleLogin() {
+                if (this.isLocked) {
+                    this.showLoginError('账户已锁定，请稍后再试');
+                    return;
+                }
+                
+                const passwordInput = document.getElementById('passwordInput');
+                const password = passwordInput.value;
+                
+                if (!password) {
+                    this.showLoginError('请输入密码');
+                    return;
+                }
+                
+                if (password === ADMIN_CONFIG.PASSWORD) {
+                    this.loginSuccess();
+                } else {
+                    this.loginFailure();
+                }
+            }
+            
+            // 登录成功
+            loginSuccess() {
+                this.isAuthenticated = true;
+                this.loginAttempts = 0;
+                localStorage.removeItem('admin_login_attempts');
+                localStorage.removeItem('admin_lockout_end');
+                
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('adminPanel').classList.add('show');
+                
+                this.loadMessages();
+                this.showFeedback('登录成功', 'success');
+                
+                // 清空密码输入框
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordError').classList.remove('show');
+            }
+            
+            // 登录失败
+            loginFailure() {
+                this.loginAttempts++;
+                localStorage.setItem('admin_login_attempts', this.loginAttempts.toString());
+                
+                const errorElement = document.getElementById('passwordError');
+                errorElement.classList.add('show');
+                
+                if (this.loginAttempts >= ADMIN_CONFIG.MAX_LOGIN_ATTEMPTS) {
+                    this.lockAccount();
+                } else {
+                    const remaining = ADMIN_CONFIG.MAX_LOGIN_ATTEMPTS - this.loginAttempts;
+                    this.showLoginError(`密码错误，还剩${remaining}次尝试`);
+                }
+            }
+            
+            // 锁定账户
+            lockAccount() {
+                this.isLocked = true;
+                this.lockoutTime = Date.now() + ADMIN_CONFIG.LOCKOUT_DURATION;
+                localStorage.setItem('admin_lockout_end', this.lockoutTime.toString());
+                
+                const passwordInput = document.getElementById('passwordInput');
+                passwordInput.disabled = true;
+                
+                this.updateLockoutTimer();
+                this.showLoginError('尝试次数过多，账户已锁定15分钟');
+            }
+            
+            // 从Gitee加载消息
+            async loadMessages() {
+                try {
+                    const apiUrl = `${ADMIN_CONFIG.API_BASE}/repos/${ADMIN_CONFIG.OWNER}/${ADMIN_CONFIG.REPO}/contents/${ADMIN_CONFIG.FILE_PATH}?access_token=${ADMIN_CONFIG.ACCESS_TOKEN}`;
+                    
+                    const response = await fetch(apiUrl);
+                    
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            this.messages = [];
+                            this.sha = null;
+                            this.loadStatistics();
+                            this.renderMessageList();
+                            return;
+                        } else if (response.status === 401 || response.status === 403) {
+                            throw new Error('访问令牌无效或权限不足');
+                        } else {
+                            throw new Error(`API访问失败: ${response.status}`);
+                        }
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (!data.content) {
+                        this.messages = [];
+                        this.sha = null;
+                    } else {
+                        const content = this.decodeBase64(data.content);
+                        try {
+                            this.messages = JSON.parse(content || '[]');
+                        } catch (e) {
+                            console.error('JSON解析失败:', e);
+                            this.messages = [];
+                        }
+                        this.sha = data.sha;
+                    }
+                    
+                    this.loadStatistics();
+                    this.renderMessageList();
+                    
+                } catch (error) {
+                    console.error('加载消息失败:', error);
+                    this.showFeedback('加载失败: ' + error.message, 'error');
+                }
+            }
+            
+            // Base64解码（修复：使用与index.html相同的解码方法）
+            decodeBase64(str) {
+                try {
+                    return decodeURIComponent(escape(atob(str)));
+                } catch (error) {
+                    console.error('Base64解码失败:', error);
+                    return atob(str);
+                }
+            }
+            
+            // Base64编码（修复：使用与index.html相同的编码方法）
+            encodeBase64(str) {
+                try {
+                    return btoa(unescape(encodeURIComponent(str)));
+                } catch (error) {
+                    console.error('Base64编码失败:', error);
+                    return btoa(str);
+                }
+            }
+            
+            // 加载统计信息
+            loadStatistics() {
+                if (!this.messages || !this.messages.length) {
+                    this.stats.totalMessages = 0;
+                    this.stats.uniqueUsers = 0;
+                    this.stats.todayMessages = 0;
+                    this.updateStatsDisplay();
+                    return;
+                }
+                
+                this.stats.totalMessages = this.messages.length;
+                
+                const userIds = new Set();
+                const today = new Date().toDateString();
+                let todayCount = 0;
+                
+                this.messages.forEach(msg => {
+                    if (msg.userId && msg.type !== 'system') {
+                        userIds.add(msg.userId);
+                        
+                        // 统计今日消息
+                        if (msg.timestamp) {
+                            const msgDate = new Date(msg.timestamp).toDateString();
+                            if (msgDate === today) {
+                                todayCount++;
+                            }
+                        }
+                    }
+                });
+                
+                this.stats.uniqueUsers = userIds.size;
+                this.stats.todayMessages = todayCount;
+                
+                this.updateStatsDisplay();
+            }
+            
+            // 更新统计显示
+            updateStatsDisplay() {
+                document.getElementById('totalMessages').textContent = this.stats.totalMessages;
+                document.getElementById('uniqueUsers').textContent = this.stats.uniqueUsers;
+                document.getElementById('todayMessages').textContent = this.stats.todayMessages;
+            }
+            
+            // 渲染消息列表
+            renderMessageList() {
+                const messageList = document.getElementById('messageList');
+                
+                if (!this.messages || this.messages.length === 0) {
+                    messageList.innerHTML = '<div class="message-item" style="justify-content: center; color: #666;">暂无消息</div>';
+                    return;
+                }
+                
+                const userMessages = this.messages.filter(msg => msg.type !== 'system');
+                
+                if (userMessages.length === 0) {
+                    messageList.innerHTML = '<div class="message-item" style="justify-content: center; color: #666;">暂无用户消息</div>';
+                    return;
+                }
+                
+                const recentMessages = userMessages
+                    .slice(-ADMIN_CONFIG.RECENT_MESSAGES_COUNT)
+                    .reverse();
+                
+                messageList.innerHTML = '';
+                
+                recentMessages.forEach(msg => {
+                    const messageItem = document.createElement('div');
+                    messageItem.className = 'message-item';
+                    
+                    const time = msg.time || this.formatTime(new Date(msg.timestamp));
+                    const username = msg.username || '匿名用户';
+                    const text = msg.text || '';
+                    
+                    messageItem.innerHTML = `
+                        <div style="flex: 1; overflow: hidden;">
+                            <div class="message-user">${this.escapeHtml(username)}</div>
+                            <div class="message-text">${this.escapeHtml(text)}</div>
+                        </div>
+                        <div class="message-time">${time}</div>
+                    `;
+                    
+                    messageList.appendChild(messageItem);
+                });
+            }
+            
+            // 清空聊天记录（修复：正确获取和更新SHA）
+            async clearChatHistory() {
+                if (ADMIN_CONFIG.CLEAR_CONFIRM) {
+                    const confirmed = confirm('确定要清空所有聊天记录吗？此操作不可撤销！');
+                    if (!confirmed) return;
+                }
+                
+                try {
+                    // 先尝试获取文件SHA
+                    let sha = this.sha;
+                    
+                    if (!sha) {
+                        const apiUrl = `${ADMIN_CONFIG.API_BASE}/repos/${ADMIN_CONFIG.OWNER}/${ADMIN_CONFIG.REPO}/contents/${ADMIN_CONFIG.FILE_PATH}?access_token=${ADMIN_CONFIG.ACCESS_TOKEN}`;
+                        const getResponse = await fetch(apiUrl);
+                        
+                        if (getResponse.ok) {
+                            const data = await getResponse.json();
+                            sha = data.sha;
+                        } else if (getResponse.status !== 404) {
+                            throw new Error('获取文件信息失败');
+                        }
+                    }
+                    
+                    const emptyMessages = [];
+                    const content = JSON.stringify(emptyMessages, null, 2);
+                    const encodedContent = this.encodeBase64(content);
+                    
+                    const apiUrl = `${ADMIN_CONFIG.API_BASE}/repos/${ADMIN_CONFIG.OWNER}/${ADMIN_CONFIG.REPO}/contents/${ADMIN_CONFIG.FILE_PATH}?access_token=${ADMIN_CONFIG.ACCESS_TOKEN}`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: `清空记录 - ${new Date().toISOString()}`,
+                            content: encodedContent,
+                            sha: sha // 如果sha为null，Gitee API会自动创建文件
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error('清空失败:', errorData);
+                        throw new Error(`清空失败: ${response.status}`);
+                    }
+                    
+                    // 更新本地数据
+                    const data = await response.json();
+                    this.sha = data.content.sha;
+                    this.messages = [];
+                    this.loadStatistics();
+                    this.renderMessageList();
+                    
+                    this.showFeedback('聊天记录已清空', 'success');
+                    
+                } catch (error) {
+                    console.error('清空失败:', error);
+                    this.showFeedback('清空失败: ' + error.message, 'error');
+                }
+            }
+            
+            // 自动刷新
+            autoRefresh() {
+                if (this.isAuthenticated) {
+                    setInterval(() => {
+                        this.loadMessages();
+                    }, ADMIN_CONFIG.AUTO_REFRESH_INTERVAL);
+                }
+            }
+            
+            // 设置事件监听器
+            setupEventListeners() {
+                const loginBtn = document.getElementById('loginBtn');
+                const passwordInput = document.getElementById('passwordInput');
+                const clearChatBtn = document.getElementById('clearChatBtn');
+                
+                loginBtn.addEventListener('click', () => {
+                    this.handleLogin();
+                });
+                
+                passwordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.handleLogin();
+                    }
+                });
+                
+                clearChatBtn.addEventListener('click', () => {
+                    this.clearChatHistory();
+                });
+                
+                // 清除错误提示
+                passwordInput.addEventListener('input', () => {
+                    document.getElementById('passwordError').classList.remove('show');
+                    document.getElementById('loginError').classList.remove('show');
+                });
+            }
+            
+            // 显示反馈消息
+            showFeedback(message, type = 'success') {
+                const feedbackElement = type === 'success' 
+                    ? document.getElementById('successFeedback')
+                    : document.getElementById('errorFeedback');
+                
+                feedbackElement.textContent = message;
+                feedbackElement.classList.add('show');
+                
+                setTimeout(() => {
+                    feedbackElement.classList.remove('show');
+                }, 3000);
+            }
+            
+            // 显示登录错误消息
+            showLoginError(message) {
+                const errorElement = document.getElementById('loginError');
+                errorElement.textContent = message;
+                errorElement.classList.add('show');
+                
+                setTimeout(() => {
+                    errorElement.classList.remove('show');
+                }, 3000);
+            }
+            
+            // 格式化时间
+            formatTime(date) {
+                return date.toLocaleTimeString('zh-CN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+            }
+            
+            // HTML转义
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+        
+        // 初始化管理应用
+        document.addEventListener('DOMContentLoaded', () => {
+            window.adminApp = new AdminApp();
+        });
+    </script>
+</body>
+</html>
