@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>墨谭</title>
+    <style>
+        /* 全局样式 - 极简黑底白线 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #333333;
+            background: #000000;
+            height: 97vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 头部样式 */
+        .header {
+            padding: 15px;
+            border-bottom: 1px solid #333333;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: #ffffff;
+        }
+        
+        .header .subtitle {
+            font-size: 12px;
+            color: #888888;
+            margin-top: 4px;
+        }
+        
+        .user-info {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            color: #ffffff;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .user-info:hover {
+            color: #0099ff;
+        }
+        
+        /* 消息区域样式 */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #000000;
+        }
+        
+        .message {
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #222222;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .username {
+            font-weight: 500;
+            color: #ffffff;
+            font-size: 13px;
+        }
+        
+        .message-time {
+            color: #666666;
+            font-size: 11px;
+        }
+        
+        .message-text {
+            color: #cccccc;
+            line-height: 1.4;
+            font-size: 14px;
+            word-break: break-word;
+        }
+        
+        .message.own {
+            border-left: 2px solid #ffffff;
+            padding-left: 10px;
+        }
+        
+        /* 系统消息样式 */
+        .system-message {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 12px;
+            color: #666666;
+            border: none;
+            padding: 5px;
+        }
+        
+        /* 输入区域样式 */
+        .input-area {
+            padding: 15px;
+            border-top: 1px solid #333333;
+            background: #000000;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #333333;
+            border-radius: 0;
+            background: #000000;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .message-input:focus {
+            border-color: #666666;
+        }
+        
+        .send-btn {
+            background: #000000;
+            color: #ffffff;
+            border: 1px solid #333333;
+            padding: 0 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .send-btn:hover {
+            background: #111111;
+            border-color: #666666;
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 状态指示器 */
+        .status-indicator {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: #000000;
+            color: #ffffff;
+            padding: 5px 10px;
+            border: 1px solid #333333;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #00ff00;
+        }
+        
+        .status-dot.offline {
+            background: #ff0000;
+        }
+        
+        .status-dot.error {
+            background: #ff9900;
+            animation: pulse 1s infinite;
+        }
+        
+        /* 错误提示 */
+        .error-message {
+            text-align: center;
+            color: #ff4444;
+            padding: 10px;
+            font-size: 12px;
+            border: 1px solid #ff4444;
+            margin: 10px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        /* 滚动条样式 */
+        .chat-container::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .chat-container::-webkit-scrollbar-track {
+            background: #000000;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #333333;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: #555555;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* 加载动画 */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666666;
+        }
+        
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #333333;
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                height: 100vh;
+                border: none;
+            }
+            
+            .header {
+                padding: 12px;
+            }
+            
+            .user-info {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-top: 8px;
+                display: inline-block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>墨谭</h1>
+            <div class="subtitle">极简 · 私密</div>
+            <div class="user-info" id="userInfo">
+                <span id="username">加载中...</span>
+            </div>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="loading">正在连接...</div>
+        </div>
+        
+        <div class="input-area">
+            <input type="text" 
+                   class="message-input" 
+                   id="messageInput" 
+                   placeholder="输入消息..."
+                   maxlength="500"
+                   autocomplete="off">
+            <button class="send-btn" id="sendBtn" disabled>发送</button>
+        </div>
+    </div>
+    
+    <div class="status-indicator">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">连接中</span>
+    </div>
+    
+    <script>
+        // ==================== Gitee配置 ====================
+        const GITEE_CONFIG = {
+            // Gitee访问令牌
+            ACCESS_TOKEN: 'e823c3a1265e30f429305ddebc27f855',
+            // 仓库所有者
+            OWNER: 'yingo-server',
+            // 仓库名称
+            REPO: 'yingo',
+            // 存储消息的文件名
+            FILE_PATH: 'message.json',
+            // API基础URL
+            API_BASE: 'https://gitee.com/api/v5',
+            // 最大重试次数
+            MAX_RETRIES: 3
+        };
+
+        // 应用配置
+        const APP_CONFIG = {
+            REFRESH_INTERVAL: 2000,
+            MAX_MESSAGES: 300,
+            SHOW_TIMESTAMP: true
+        };
+
+        // 用户配置
+        const USER_CONFIG = {
+            USERNAME_LIST: [
+                '访客一', '访客二', '访客三', '访客四', '访客五'
+            ],
+            DEFAULT_USERNAME: '匿名用户'
+        };
+
+        // ==================== 核心功能 ====================
+        class GiteeChat {
+            constructor() {
+                this.messages = [];
+                this.userId = this.getOrCreateUserId();
+                this.username = this.getOrCreateUsername();
+                this.sha = null;
+                this.isLoading = false;
+                this.isOnline = true;
+                this.retryCount = 0;
+                this.lastUpdateTime = 0;
+                this.debugMode = true;
+                
+                this.init();
+            }
+            
+            // 初始化
+            async init() {
+                this.displayUsername();
+                this.setupEventListeners();
+                await this.loadMessages();
+                this.startAutoRefresh();
+                this.updateStatus('在线');
+            }
+            
+            // 获取或创建用户ID
+            getOrCreateUserId() {
+                let userId = localStorage.getItem('chat_userId');
+                if (!userId) {
+                    // 生成唯一用户ID
+                    userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('chat_userId', userId);
+                    this.logDebug('生成新用户ID:', userId);
+                }
+                return userId;
+            }
+            
+            // 获取或创建用户名
+            getOrCreateUsername() {
+                let username = localStorage.getItem('chat_username');
+                if (!username) {
+                    const randomIndex = Math.floor(Math.random() * USER_CONFIG.USERNAME_LIST.length);
+                    username = USER_CONFIG.USERNAME_LIST[randomIndex];
+                    localStorage.setItem('chat_username', username);
+                    
+                    // 显示欢迎消息
+                    setTimeout(() => {
+                        this.addSystemMessage(`欢迎 ${username} 加入聊天室`);
+                    }, 1000);
+                }
+                return username;
+            }
+            
+            // 显示用户名
+            displayUsername() {
+                document.getElementById('username').textContent = this.username;
+            }
+            
+            // 从Gitee加载消息
+            async loadMessages() {
+                if (this.isLoading) return;
+                
+                this.isLoading = true;
+                this.updateStatus('加载中...');
+                
+                try {
+                    // 构建API URL
+                    const apiUrl = `${GITEE_CONFIG.API_BASE}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/${GITEE_CONFIG.FILE_PATH}?access_token=${GITEE_CONFIG.ACCESS_TOKEN}`;
+                    
+                    this.logDebug('请求URL:', apiUrl);
+                    
+                    const response = await fetch(apiUrl, {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            // 文件不存在，创建空消息数组
+                            this.messages = [];
+                            this.sha = null;
+                            this.renderMessages();
+                            this.updateStatus('在线');
+                            this.enableInput();
+                            return;
+                        } else if (response.status === 403 || response.status === 401) {
+                            throw new Error('访问令牌无效或权限不足');
+                        } else {
+                            throw new Error(`HTTP错误: ${response.status}`);
+                        }
+                    }
+                    
+                    const data = await response.json();
+                    this.logDebug('API响应:', data);
+                    
+                    // 解码Base64内容
+                    let content = '';
+                    try {
+                        if (data.content) {
+                            // Gitee返回的content已经是Base64编码的字符串
+                            content = this.decodeBase64(data.content);
+                            this.logDebug('解码后的内容:', content);
+                        } else {
+                            throw new Error('文件内容为空');
+                        }
+                    } catch (e) {
+                        this.logError('Base64解码失败:', e);
+                        throw new Error('文件格式错误，无法解码');
+                    }
+                    
+                    this.sha = data.sha;
+                    
+                    // 解析JSON
+                    try {
+                        this.messages = JSON.parse(content || '[]');
+                        this.logDebug('解析的消息数:', this.messages.length);
+                    } catch (e) {
+                        this.logError('JSON解析失败:', e);
+                        this.messages = [];
+                    }
+                    
+                    // 限制消息数量
+                    if (this.messages.length > APP_CONFIG.MAX_MESSAGES) {
+                        this.messages = this.messages.slice(-APP_CONFIG.MAX_MESSAGES);
+                    }
+                    
+                    this.renderMessages();
+                    this.retryCount = 0;
+                    this.updateStatus('在线');
+                    this.enableInput();
+                    this.hideError();
+                    
+                } catch (error) {
+                    this.logError('加载消息失败:', error);
+                    this.retryCount++;
+                    
+                    if (this.retryCount <= GITEE_CONFIG.MAX_RETRIES) {
+                        this.updateStatus(`重试中 (${this.retryCount}/${GITEE_CONFIG.MAX_RETRIES})`);
+                        this.showError(`加载失败，正在重试... (${this.retryCount}/${GITEE_CONFIG.MAX_RETRIES})`);
+                        
+                        // 延迟重试
+                        setTimeout(() => this.loadMessages(), 2000 * this.retryCount);
+                    } else {
+                        this.updateStatus('离线', 'error');
+                        this.showError('连接失败，请检查网络或配置');
+                        this.disableInput();
+                    }
+                } finally {
+                    this.isLoading = false;
+                }
+            }
+            
+            // 保存消息到Gitee
+            async saveMessages() {
+                try {
+                    const content = JSON.stringify(this.messages, null, 2);
+                    const encodedContent = this.encodeBase64(content);
+                    
+                    const apiUrl = `${GITEE_CONFIG.API_BASE}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/${GITEE_CONFIG.FILE_PATH}?access_token=${GITEE_CONFIG.ACCESS_TOKEN}`;
+                    
+                    const body = {
+                        content: encodedContent,
+                        message: `更新消息 - ${new Date().toISOString()}`,
+                        sha: this.sha
+                    };
+                    
+                    this.logDebug('保存请求:', body);
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(body)
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        this.logError('保存失败:', errorData);
+                        
+                        // 如果是SHA冲突，重新加载获取最新的SHA
+                        if (response.status === 409) {
+                            await this.loadMessages();
+                            return await this.saveMessages(); // 重试
+                        }
+                        
+                        throw new Error(`保存失败: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    this.sha = data.content.sha;
+                    this.logDebug('保存成功，新SHA:', this.sha);
+                    return true;
+                    
+                } catch (error) {
+                    this.logError('保存消息失败:', error);
+                    return false;
+                }
+            }
+            
+            // 发送消息
+            async sendMessage(text) {
+                if (!text.trim()) return false;
+                
+                // 截断过长的消息
+                if (text.length > 500) {
+                    text = text.substring(0, 500) + '...';
+                }
+                
+                const message = {
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    userId: this.userId,
+                    username: this.username,
+                    text: text.trim(),
+                    timestamp: Date.now(),
+                    time: this.formatTime(new Date())
+                };
+                
+                // 临时显示消息
+                this.messages.push(message);
+                this.renderMessages();
+                this.scrollToBottom();
+                
+                // 保存到Gitee
+                const sendBtn = document.getElementById('sendBtn');
+                const originalText = sendBtn.textContent;
+                sendBtn.textContent = '发送中...';
+                sendBtn.disabled = true;
+                
+                const success = await this.saveMessages();
+                
+                sendBtn.textContent = originalText;
+                sendBtn.disabled = false;
+                
+                if (success) {
+                    // 发送成功后立即刷新一次
+                    setTimeout(() => this.loadMessages(), 500);
+                } else {
+                    this.showError('发送失败，请稍后重试');
+                }
+                
+                return success;
+            }
+            
+            // 添加系统消息
+            addSystemMessage(text) {
+                const message = {
+                    id: 'system_' + Date.now(),
+                    type: 'system',
+                    text: text,
+                    timestamp: Date.now(),
+                    time: this.formatTime(new Date())
+                };
+                
+                const chatContainer = document.getElementById('chatContainer');
+                const systemMsg = document.createElement('div');
+                systemMsg.className = 'system-message';
+                systemMsg.textContent = text;
+                chatContainer.appendChild(systemMsg);
+                this.scrollToBottom();
+            }
+            
+            // 渲染消息
+            renderMessages() {
+                const chatContainer = document.getElementById('chatContainer');
+                
+                // 移除加载提示
+                const loadingElements = chatContainer.querySelectorAll('.loading, .system-message:first-child');
+                loadingElements.forEach(el => {
+                    if (el.textContent.includes('正在连接') || el.textContent.includes('暂无消息')) {
+                        el.remove();
+                    }
+                });
+                
+                // 清空现有消息
+                chatContainer.innerHTML = '';
+                
+                if (this.messages.length === 0) {
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'system-message';
+                    emptyMsg.textContent = '还没有消息，快来说点什么吧~';
+                    chatContainer.appendChild(emptyMsg);
+                    return;
+                }
+                
+                this.messages.forEach(msg => {
+                    if (msg.type === 'system') {
+                        const systemMsg = document.createElement('div');
+                        systemMsg.className = 'system-message';
+                        systemMsg.textContent = msg.text;
+                        chatContainer.appendChild(systemMsg);
+                    } else {
+                        const isOwn = msg.userId === this.userId;
+                        const messageElement = document.createElement('div');
+                        messageElement.className = `message ${isOwn ? 'own' : ''}`;
+                        
+                        messageElement.innerHTML = `
+                            <div class="message-header">
+                                <div class="username">${this.escapeHtml(msg.username)}</div>
+                                <div class="message-time">${msg.time || this.formatTime(new Date(msg.timestamp))}</div>
+                            </div>
+                            <div class="message-text">${this.escapeHtml(msg.text)}</div>
+                        `;
+                        
+                        chatContainer.appendChild(messageElement);
+                    }
+                });
+                
+                this.scrollToBottom();
+            }
+            
+            // 滚动到底部
+            scrollToBottom() {
+                const chatContainer = document.getElementById('chatContainer');
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            // 开始自动刷新
+            startAutoRefresh() {
+                // 初始随机延迟，避免所有用户同时请求
+                const initialDelay = Math.random() * 3000;
+                
+                setTimeout(() => {
+                    setInterval(() => {
+                        this.loadMessages();
+                    }, APP_CONFIG.REFRESH_INTERVAL);
+                    
+                    this.logDebug('自动刷新已启动，间隔:', APP_CONFIG.REFRESH_INTERVAL + 'ms');
+                }, initialDelay);
+            }
+            
+            // 更新连接状态
+            updateStatus(status, type = 'online') {
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+                
+                statusText.textContent = status;
+                
+                if (type === 'online') {
+                    statusDot.className = 'status-dot';
+                } else if (type === 'error') {
+                    statusDot.className = 'status-dot error';
+                } else {
+                    statusDot.className = 'status-dot offline';
+                }
+            }
+            
+            // 启用输入框
+            enableInput() {
+                document.getElementById('sendBtn').disabled = false;
+                document.getElementById('messageInput').disabled = false;
+                document.getElementById('messageInput').placeholder = '输入消息...';
+            }
+            
+            // 禁用输入框
+            disableInput() {
+                document.getElementById('sendBtn').disabled = true;
+                document.getElementById('messageInput').disabled = true;
+                document.getElementById('messageInput').placeholder = '连接已断开...';
+            }
+            
+            // 显示错误
+            showError(message) {
+                const errorElement = document.getElementById('errorMessage');
+                errorElement.textContent = message;
+                errorElement.classList.add('show');
+            }
+            
+            // 隐藏错误
+            hideError() {
+                const errorElement = document.getElementById('errorMessage');
+                errorElement.classList.remove('show');
+            }
+            
+            // Base64编码
+            encodeBase64(str) {
+                try {
+                    // 使用btoa进行Base64编码
+                    return btoa(unescape(encodeURIComponent(str)));
+                } catch (error) {
+                    this.logError('Base64编码失败:', error);
+                    // 备用方案
+                    return btoa(str);
+                }
+            }
+            
+            // Base64解码
+            decodeBase64(str) {
+                try {
+                    // 使用atob进行Base64解码
+                    return decodeURIComponent(escape(atob(str)));
+                } catch (error) {
+                    this.logError('Base64解码失败:', error);
+                    // 备用方案：直接解码
+                    return atob(str);
+                }
+            }
+            
+            // 设置事件监听器
+            setupEventListeners() {
+                const sendBtn = document.getElementById('sendBtn');
+                const messageInput = document.getElementById('messageInput');
+                const userInfo = document.getElementById('userInfo');
+                
+                // 发送按钮点击事件
+                sendBtn.addEventListener('click', () => {
+                    const text = messageInput.value.trim();
+                    if (text) {
+                        this.sendMessage(text);
+                        messageInput.value = '';
+                        messageInput.focus();
+                    }
+                });
+                
+                // 输入框回车事件
+                messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendBtn.click();
+                    }
+                });
+                
+                // 双击用户名可以更改
+                userInfo.addEventListener('dblclick', () => {
+                    const newName = prompt('请输入新的用户名（不超过10个字符）:', this.username);
+                    if (newName && newName.trim() && newName.trim().length <= 10) {
+                        const oldName = this.username;
+                        this.username = newName.trim();
+                        localStorage.setItem('chat_username', this.username);
+                        this.displayUsername();
+                        this.addSystemMessage(`${oldName} 更名为 ${this.username}`);
+                    }
+                });
+                
+                // 页面可见性变化时刷新
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) {
+                        this.loadMessages();
+                    }
+                });
+                
+                // 网络状态变化
+                window.addEventListener('online', () => {
+                    this.updateStatus('重新连接中...');
+                    this.loadMessages();
+                });
+                
+                window.addEventListener('offline', () => {
+                    this.updateStatus('离线', 'error');
+                    this.showError('网络连接已断开');
+                });
+            }
+            
+            // 格式化时间
+            formatTime(date) {
+                return date.toLocaleTimeString('zh-CN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+            }
+            
+            // HTML转义
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            // 调试日志
+            logDebug(...args) {
+                if (this.debugMode) {
+                    console.log('[DEBUG]', ...args);
+                }
+            }
+            
+            // 错误日志
+            logError(...args) {
+                console.error('[ERROR]', ...args);
+            }
+        }
+        
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                window.chatApp = new GiteeChat();
+                console.log('聊天室已启动，用户ID:', window.chatApp.userId);
+            } catch (error) {
+                console.error('聊天室启动失败:', error);
+                document.getElementById('errorMessage').textContent = '聊天室启动失败: ' + error.message;
+                document.getElementById('errorMessage').classList.add('show');
+                document.getElementById('statusDot').className = 'status-dot error';
+                document.getElementById('statusText').textContent = '启动失败';
+            }
+        });
+    </script>
+</body>
+</html>
