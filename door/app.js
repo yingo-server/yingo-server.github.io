@@ -22,7 +22,7 @@ const PROJECTS = [
     { name: "Github主页", url: "http://bgithub.xyz/yingo-server", icon: "fas fa-music" },
     { name: "网站后台", url: "https://yingo2.netlify.app", icon: "fas fa-video" },
     { name: "openlist", url: "/cloud", icon: "fas fa-robot" },
-    { name: "项目 9", url: "", icon: "fas fa-globe" },
+    { name: "聊天室", url: "/chat", icon: "fas fa-globe" },
     { name: "项目 10", url: "", icon: "fas fa-database" },
     { name: "项目 11", url: "", icon: "fas fa-mobile-alt" },
     { name: "项目 12", url: "", icon: "fas fa-cloud" },
