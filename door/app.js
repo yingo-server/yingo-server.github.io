@@ -1,3 +1,5 @@
+[file name]: app.js
+[file content begin]
 /**
  * 项目入口页面 - JavaScript主文件
  * 功能：项目按钮生成、音乐播放器控制、交互处理
@@ -34,44 +36,208 @@ const PROJECTS = [
 /**
  * 音乐文件配置数组
  * 格式：{ name: "歌曲名", url: "歌曲链接", artist: "歌手名", album: "专辑名" }
- * 注意：这里保留了30个位置，对应原代码中的所有音频文件
+ * 注意：这里从filelist.txt中提取所有.mp3文件
  */
 const MUSIC_FILES = [
-    // 第1-10首歌曲
-    { name: "歌曲 1", url: "https://yingo3.netlify.app/0/1/1.mp3", artist: "在虚无中永存", album: "目录0/1" },
-    { name: "歌曲 2", url: "https://yingo3.netlify.app/0/2/1.mp3", artist: "在虚无中永存", album: "目录0/2" },
-    { name: "歌曲 3", url: "https://yingo3.netlify.app/0/2/3.mp3", artist: "在虚无中永存", album: "目录0/2" },
-    { name: "歌曲 4", url: "https://yingo3.netlify.app/0/3/1.mp3", artist: "在虚无中永存", album: "目录0/3" },
-    { name: "歌曲 5", url: "https://yingo3.netlify.app/0/4/4.1/1.mp3", artist: "在虚无中永存", album: "目录0/4/4.1" },
-    { name: "歌曲 6", url: "https://yingo3.netlify.app/0/4/4.2/1.mp3", artist: "在虚无中永存", album: "目录0/4/4.2" },
-    { name: "歌曲 7", url: "https://yingo3.netlify.app/0/4/4.3/1.mp3", artist: "在虚无中永存", album: "目录0/4/4.3" },
-    { name: "歌曲 8", url: "https://yingo3.netlify.app/0/5/5.1/1.mp3", artist: "在虚无中永存", album: "目录0/5/5.1" },
-    { name: "歌曲 9", url: "https://yingo3.netlify.app/0/5/5.2/1.mp3", artist: "在虚无中永存", album: "目录0/5/5.2" },
-    { name: "歌曲 10", url: "https://yingo3.netlify.app/0/5/5.3/1.mp3", artist: "在虚无中永存", album: "目录0/5/5.3" },
-    
-    // 第11-20首歌曲
-    { name: "歌曲 11", url: "https://yingo3.netlify.app/0/5/5.4/1.mp3", artist: "在虚无中永存", album: "目录0/5/5.4" },
-    { name: "歌曲 12", url: "https://yingo3.netlify.app/0/5/5.5/1.mp3", artist: "在虚无中永存", album: "目录0/5/5.5" },
-    { name: "歌曲 13", url: "https://yingo3.netlify.app/0/5/5.6/1.mp3", artist: "在虚无中永存", album: "目录0/5/5.6" },
-    { name: "歌曲 14", url: "https://yingo3.netlify.app/0/5/5.7/1.mp3", artist: "在虚无中永存", album: "目录0/5/5.7" },
-    { name: "歌曲 15", url: "https://yingo3.netlify.app/0/5/5.8/1.mp3", artist: "在虚无中永存", album: "目录0/5/5.8" },
-    { name: "歌曲 16", url: "https://yingo3.netlify.app/0/6/6.1/1.mp3", artist: "在虚无中永存", album: "目录0/6/6.1" },
-    { name: "歌曲 17", url: "https://yingo3.netlify.app/0/6/6.2/1.mp3", artist: "在虚无中永存", album: "目录0/6/6.2" },
-    { name: "歌曲 18", url: "https://yingo3.netlify.app/0/6/6.3/1.mp3", artist: "在虚无中永存", album: "目录0/6/6.3" },
-    { name: "歌曲 19", url: "https://yingo3.netlify.app/0/7/7.1/1.mp3", artist: "在虚无中永存", album: "目录0/7/7.1" },
-    { name: "歌曲 20", url: "https://yingo3.netlify.app/0/7/7.2/1.mp3", artist: "在虚无中永存", album: "目录0/7/7.2" },
-    
-    // 第21-30首歌曲（预留位置）
-    { name: "歌曲 21", url: "https://yingo3.netlify.app/0/7/7.3/1.mp3", artist: "在虚无中永存", album: "目录0/7/7.3" },
-    { name: "歌曲 22", url: "https://yingo3.netlify.app/0/7/7.4/1.mp3", artist: "在虚无中永存", album: "目录0/7/7.4" },
-    { name: "歌曲 23", url: "https://yingo3.netlify.app/0/7/7.5/1.mp3", artist: "在虚无中永存", album: "目录0/7/7.5" },
-    { name: "歌曲 24", url: "https://yingo3.netlify.app/0/7/7.6/1.mp3", artist: "在虚无中永存", album: "目录0/7/7.6" },
-    { name: "歌曲 25", url: "https://yingo3.netlify.app/0/7/7.7/1.mp3", artist: "在虚无中永存", album: "目录0/7/7.7" },
-    { name: "歌曲 26", url: "https://yingo3.netlify.app/0/7/7.8/1.mp3", artist: "在虚无中永存", album: "目录0/7/7.8" },
-    { name: "歌曲 27", url: "https://yingo3.netlify.app/0/7/7.9/1.mp3", artist: "在虚无中永存", album: "目录0/7/7.9" },
-    { name: "歌曲 28", url: "https://yingo3.netlify.app/0/7/7.10/1.mp3", artist: "在虚无中永存", album: "目录0/7/7.10" },
-    { name: "歌曲 29", url: "https://yingo3.netlify.app/0/7/7.11/1.mp3", artist: "在虚无中永存", album: "目录0/7/7.11" },
-    { name: "歌曲 30", url: "https://yingo3.netlify.app/0/7/7.12/1.mp3", artist: "在虚无中永存", album: "目录0/7/7.12" }
+    // 从filelist.txt中提取的MP3文件
+    { 
+        name: "未命名星系𝔘𝔫𝔱𝔦𝔱𝔩𝔢𝔡 𝔊𝔞𝔩𝔞𝔵𝔶_星尘原创_奥莉安多幻想曲", 
+        url: "https://yingo6.netlify.app/%E2%80%9C%E6%9C%AA%E5%91%BD%E5%90%8D%E6%98%9F%E7%B3%BB%F0%9D%94%98%F0%9D%94%8D%F0%9D%94%9D%F0%9D%94%A1%F0%9D%94%9D%F0%9D%94%84%F0%9D%94%9D%F0%9D%94%8A%F0%9D%94%85%E2%80%9D/%E2%80%9C%E6%9C%AA%E5%91%BD%E5%90%8D%E6%98%9F%E7%B3%BB%F0%9D%94%98%F0%9D%94%8D%F0%9D%94%9D%F0%9D%94%A1%F0%9D%94%9D%F0%9D%94%84%F0%9D%94%9D%F0%9D%94%8A%F0%9D%94%85%E2%80%9D_%E6%98%9F%E5%B0%98%E5%8E%9F%E5%88%9B_%E5%A5%A5%E8%8E%89%E5%AE%89%E5%A4%9A%E5%B9%BB%E6%83%B3%E6%9B%B2.mp3", 
+        artist: "在虚无中永存", 
+        album: "未命名星系" 
+    },
+    { 
+        name: "oc角色曲合集", 
+        url: "https://yingo6.netlify.app/%E6%82%A6%E7%81%B5%E9%9F%B3/oc%E8%A7%92%E8%89%B2%E6%9B%B2%E5%90%88%E9%9B%86_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "悦灵音" 
+    },
+    { 
+        name: "oc角色曲合集", 
+        url: "https://yingo6.netlify.app/%E6%82%A6%E7%81%B5%E9%9F%B3/oc%E8%A7%92%E8%89%B2%E6%9B%B2%E5%90%88%E9%9B%86_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98%20(1).mp3", 
+        artist: "在虚无中永存", 
+        album: "悦灵音" 
+    },
+    { 
+        name: "【纯音乐手风琴改编】死别", 
+        url: "https://yingo6.netlify.app/%E6%AD%BB%E5%88%AB/%E3%80%90%E7%BA%AF%E9%9F%B3%E4%B9%90%E6%89%8B%E9%A3%8E%E7%90%B4%E6%94%B9%E7%BC%96%E3%80%91%E6%AD%BB%E5%88%AB_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "死别" 
+    },
+    { 
+        name: "【诗岸】幸福安定剂", 
+        url: "https://yingo6.netlify.app/%E6%B7%B7%E6%B2%8C%EF%BC%8C%E8%99%9A%E6%97%A0%E4%B8%8E%E7%BA%AF%E7%9C%9F%E4%B9%8B%E6%AD%8C/%E3%80%90%E8%AF%97%E5%B2%B8%E3%80%91%E5%B9%B8%E7%A6%8F%E5%AE%89%E5%AE%9A%E5%89%82/%E3%80%90%E8%AF%97%E5%B2%B8%E3%80%91%E5%B9%B8%E7%A6%8F%E5%AE%89%E5%AE%9A%E5%89%82_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "混沌，虚无与纯真之歌" 
+    },
+    { 
+        name: "【诗岸】日记「2025.02.25」", 
+        url: "https://yingo6.netlify.app/%E6%B7%B7%E6%B2%8C%EF%BC%8C%E8%99%9A%E6%97%A0%E4%B8%8E%E7%BA%AF%E7%9C%9F%E4%B9%8B%E6%AD%8C/%E3%80%90%E8%AF%97%E5%B2%B8%E3%80%91%E6%97%A5%E8%AE%B0%E3%80%8C2025.02.25%E3%80%8D/%E3%80%90%E8%AF%97%E5%B2%B8%E3%80%91%E6%97%A5%E8%AE%B0%E3%80%8C2025.02.25%E3%80%8D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "混沌，虚无与纯真之歌" 
+    },
+    { 
+        name: "【诗岸】演绎", 
+        url: "https://yingo6.netlify.app/%E6%B7%B7%E6%B2%8C%EF%BC%8C%E8%99%9A%E6%97%A0%E4%B8%8E%E7%BA%AF%E7%9C%9F%E4%B9%8B%E6%AD%8C/%E3%80%90%E8%AF%97%E5%B2%B8%E3%80%91%E6%BC%94%E7%BB%8E/%E3%80%90%E8%AF%97%E5%B2%B8%E3%80%91%E6%BC%94%E7%BB%8E_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "混沌，虚无与纯真之歌" 
+    },
+    { 
+        name: "序章_「新叶词」", 
+        url: "https://yingo6.netlify.app/%E7%BA%AF%E4%B8%8E%E6%B2%8C/%E5%BA%8F%E7%AB%A0_%E3%80%8C%E6%96%B0%E5%8F%B6%E8%AF%8D%E3%80%8D/%E5%BA%8F%E7%AB%A0_%E3%80%8C%E6%96%B0%E5%8F%B6%E8%AF%8D%E3%80%8D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "纯与沌" 
+    },
+    { 
+        name: "第一章_「自由之爱」", 
+        url: "https://yingo6.netlify.app/%E7%BA%AF%E4%B8%8E%E6%B2%8C/%E7%AC%AC%E4%B8%80%E7%AB%A0_%E3%80%8C%E8%87%AA%E7%94%B1%E4%B9%8B%E7%88%B1%E3%80%8D/%E7%AC%AC%E4%B8%80%E7%AB%A0_%E3%80%8C%E8%87%AA%E7%94%B1%E4%B9%8B%E7%88%B1%E3%80%8D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "纯与沌" 
+    },
+    { 
+        name: "第七章_【皑如山上雪】", 
+        url: "https://yingo6.netlify.app/%E7%BA%AF%E4%B8%8E%E6%B2%8C/%E7%AC%AC%E4%B8%83%E7%AB%A0_%E3%80%90%E7%9A%91%E5%A6%82%E5%B1%B1%E4%B8%8A%E9%9B%AA%E3%80%91/%E7%AC%AC%E4%B8%83%E7%AB%A0_%E3%80%90%E7%9A%91%E5%A6%82%E5%B1%B1%E4%B8%8A%E9%9B%AA%E3%80%91_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "纯与沌" 
+    },
+    { 
+        name: "第三章_「未完待续」", 
+        url: "https://yingo6.netlify.app/%E7%BA%AF%E4%B8%8E%E6%B2%8C/%E7%AC%AC%E4%B8%89%E7%AB%A0_%E3%80%8C%E6%9C%AA%E5%AE%8C%E5%BE%85%E7%BB%AD%E3%80%8D/%E7%AC%AC%E4%B8%89%E7%AB%A0_%E3%80%8C%E6%9C%AA%E5%AE%8C%E5%BE%85%E7%BB%AD%E3%80%8D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "纯与沌" 
+    },
+    { 
+        name: "第二章_「于是你再一次盛开」", 
+        url: "https://yingo6.netlify.app/%E7%BA%AF%E4%B8%8E%E6%B2%8C/%E7%AC%AC%E4%BA%8C%E7%AB%A0_%E3%80%8C%E4%BA%8E%E6%98%AF%E4%BD%A0%E5%86%8D%E4%B8%80%E6%AC%A1%E7%9B%9B%E5%BC%80%E3%80%8D/%E7%AC%AC%E4%BA%8C%E7%AB%A0_%E3%80%8C%E4%BA%8E%E6%98%AF%E4%BD%A0%E5%86%8D%E4%B8%80%E6%AC%A1%E7%9B%9B%E5%BC%80%E3%80%8D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "纯与沌" 
+    },
+    { 
+        name: "第五章_【夜之声】", 
+        url: "https://yingo6.netlify.app/%E7%BA%AF%E4%B8%8E%E6%B2%8C/%E7%AC%AC%E4%BA%94%E7%AB%A0_%E3%80%90%E5%A4%9C%E4%B9%8B%E5%A3%B0%E3%80%91/%E7%AC%AC%E4%BA%94%E7%AB%A0_%E3%80%90%E5%A4%9C%E4%B9%8B%E5%A3%B0%E3%80%91_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "纯与沌" 
+    },
+    { 
+        name: "第六章_【长生树】", 
+        url: "https://yingo6.netlify.app/%E7%BA%AF%E4%B8%8E%E6%B2%8C/%E7%AC%AC%E5%85%AD%E7%AB%A0_%E3%80%90%E9%95%BF%E7%94%9F%E6%A0%91%E3%80%91/%E7%AC%AC%E5%85%AD%E7%AB%A0_%E3%80%90%E9%95%BF%E7%94%9F%E6%A0%91%E3%80%91_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "纯与沌" 
+    },
+    { 
+        name: "第四章_「无畏之心」", 
+        url: "https://yingo6.netlify.app/%E7%BA%AF%E4%B8%8E%E6%B2%8C/%E7%AC%AC%E5%9B%9B%E7%AB%A0_%E3%80%8C%E6%97%A0%E7%95%8F%E4%B9%8B%E5%BF%83%E3%80%8D/%E7%AC%AC%E5%9B%9B%E7%AB%A0_%E3%80%8C%E6%97%A0%E7%95%8F%E4%B9%8B%E5%BF%83%E3%80%8D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "纯与沌" 
+    },
+    { 
+        name: "英雄主义", 
+        url: "https://yingo6.netlify.app/%E8%8B%B1%E9%9B%84%E4%B8%BB%E4%B9%89/1.%E2%80%9C%E8%8B%B1%E9%9B%84%E4%B8%BB%E4%B9%89%E2%80%9D/1.%E2%80%9C%E8%8B%B1%E9%9B%84%E4%B8%BB%E4%B9%89%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "英雄主义" 
+    },
+    { 
+        name: "英雄主义pt.2", 
+        url: "https://yingo6.netlify.app/%E8%8B%B1%E9%9B%84%E4%B8%BB%E4%B9%89/%E8%8B%B1%E9%9B%84%E4%B8%BB%E4%B9%89pt.2/%E8%8B%B1%E9%9B%84%E4%B8%BB%E4%B9%89pt.2_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "英雄主义" 
+    },
+    { 
+        name: "英雄主义【完整版】", 
+        url: "https://yingo6.netlify.app/%E8%8B%B1%E9%9B%84%E4%B8%BB%E4%B9%89/%E8%8B%B1%E9%9B%84%E4%B8%BB%E4%B9%89%E3%80%90%E5%AE%8C%E6%95%B4%E7%89%88%E3%80%91/%E8%8B%B1%E9%9B%84%E4%B8%BB%E4%B9%89%E3%80%90%E5%AE%8C%E6%95%B4%E7%89%88%E3%80%91_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "英雄主义" 
+    },
+    { 
+        name: "英雄主义", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/1.%E2%80%9C%E8%8B%B1%E9%9B%84%E4%B8%BB%E4%B9%89%E2%80%9D/1.%E2%80%9C%E8%8B%B1%E9%9B%84%E4%B8%BB%E4%B9%89%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "再见？", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/10.%E2%80%9C%E5%86%8D%E8%A7%81%EF%BC%9F%E2%80%9D/10.%E2%80%9C%E5%86%8D%E8%A7%81%EF%BC%9F%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "你与我的最终曲", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/11.%E2%80%9C%E4%BD%A0%E4%B8%8E%E6%88%91%E7%9A%84%E6%9C%80%E7%BB%88%E6%9B%B2%E2%80%9D/11.%E2%80%9C%E4%BD%A0%E4%B8%8E%E6%88%91%E7%9A%84%E6%9C%80%E7%BB%88%E6%9B%B2%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "向花朵祈愿", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/12.%E2%80%9C%E5%90%91%E8%8A%B1%E6%9C%B5%E7%A5%88%E6%84%BF%E2%80%9D/12.%E2%80%9C%E5%90%91%E8%8A%B1%E6%9C%B5%E7%A5%88%E6%84%BF%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "荒诞儿戏", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/13.%E2%80%9C%E8%8D%92%E8%AF%9E%E5%84%BF%E6%88%8F%E2%80%9D/13.%E2%80%9C%E8%8D%92%E8%AF%9E%E5%84%BF%E6%88%8F%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "眠于春天", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/14.%E2%80%9C%E7%9C%A0%E4%BA%8E%E6%98%A5%E5%A4%A9%E2%80%9D/14.%E2%80%9C%E7%9C%A0%E4%BA%8E%E6%98%A5%E5%A4%A9%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "晶状星体", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/15.%E2%80%9C%E6%99%B6%E7%8A%B6%E6%98%9F%E4%BD%93%E2%80%9D/15.%E2%80%9C%E6%99%B6%E7%8A%B6%E6%98%9F%E4%BD%93%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "清醒梦", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/2.%E2%80%9C%E6%B8%85%E9%86%92%E6%A2%A6%E2%80%9D/2.%E2%80%9C%E6%B8%85%E9%86%92%E6%A2%A6%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "泣爱", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/3.%E2%80%9C%E6%B3%A3%E7%88%B1%E2%80%9D/3.%E2%80%9C%E6%B3%A3%E7%88%B1%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "你所期盼的春天", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/4.%E2%80%9C%E4%BD%A0%E6%89%80%E6%9C%9F%E7%9B%BC%E7%9A%84%E6%98%A5%E5%A4%A9%E2%80%9D/4.%E2%80%9C%E4%BD%A0%E6%89%80%E6%9C%9F%E7%9B%BC%E7%9A%84%E6%98%A5%E5%A4%A9%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "失落花园", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/5.%E2%80%9C%E5%A4%B1%E8%90%BD%E8%8A%B1%E5%9B%AD%E2%80%9D/5.%E2%80%9C%E5%A4%B1%E8%90%BD%E8%8A%B1%E5%9B%AD%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "新世纪", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/6.%E2%80%9C%E6%96%B0%E4%B8%96%E7%BA%AA%E2%80%9D/6.%E2%80%9C%E6%96%B0%E4%B8%96%E7%BA%AA%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "旧日里", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/7.%E2%80%9C%E6%97%A7%E6%97%A5%E9%87%8C%E2%80%9D/7.%E2%80%9C%E6%97%A7%E6%97%A5%E9%87%8C%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "记忆之门", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/8.%E2%80%9C%E8%AE%B0%E5%BF%86%E4%B9%8B%E9%97%A8%E2%80%9D/8.%E2%80%9C%E8%AE%B0%E5%BF%86%E4%B9%8B%E9%97%A8%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    },
+    { 
+        name: "捕星人", 
+        url: "https://yingo6.netlify.app/%E8%AF%9E%E6%84%BF/9.%E2%80%9C%E6%8D%95%E6%98%9F%E4%BA%BA%E2%80%9D/9.%E2%80%9C%E6%8D%95%E6%98%9F%E4%BA%BA%E2%80%9D_%E5%9C%A8%E8%99%9A%E6%97%A0%E4%B8%AD%E6%B0%B8%E5%AD%98.mp3", 
+        artist: "在虚无中永存", 
+        album: "诞愿" 
+    }
 ];
 
 // ========== 全局变量 ==========
@@ -480,3 +646,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 导出模块（如果使用模块系统）
 // export { initializeProjectButtons, initializeMusicPlayer, MusicPlayerState };
+[file content end]
