@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>版本选择</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-weight: 300;
+            font-size: 24px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .option-box {
+            background-color: #111111;
+            border: 1px solid #333;
+            width: 300px;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            color: #ffffff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 20px;
+        }
+        
+        .option-box:hover {
+            border-color: #fff;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.05);
+        }
+        
+        .box-title {
+            font-size: 32px;
+            font-weight: 300;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .box-desc {
+            color: #aaa;
+            font-size: 14px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        .new-box .box-title {
+            color: #ffffff;
+        }
+        
+        .old-box .box-title {
+            color: #cccccc;
+        }
+        
+        .divider {
+            width: 1px;
+            background-color: #333;
+            height: 200px;
+            align-self: center;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .divider {
+                display: none;
+            }
+            
+            .option-box {
+                width: 100%;
+                max-width: 300px;
+                height: 250px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 20px;
+            }
+            
+            .option-box {
+                height: 220px;
+            }
+            
+            .box-title {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>版本选择</h1>
+        <div class="subtitle">请选择您要访问的版本</div>
+    </div>
+    
+    <div class="container">
+        <a href="new.html" class="option-box new-box">
+            <div class="box-title">新版</div>
+            <div class="box-desc">访问最新版本界面<br>包含最新的功能更新和设计改进</div>
+        </a>
+        
+        <div class="divider"></div>
+        
+        <a href="old.html" class="option-box old-box">
+            <div class="box-title">旧版</div>
+            <div class="box-desc">访问经典版本界面<br>保留传统布局和操作方式</div>
+        </a>
+    </div>
+    
+    <div class="footer">
+        点击上方方框跳转到对应版本
+    </div>
+    
+    <script>
+        // 为方框添加点击确认和加载指示
+        document.addEventListener('DOMContentLoaded', function() {
+            const optionBoxes = document.querySelectorAll('.option-box');
+            
+            optionBoxes.forEach(box => {
+                box.addEventListener('click', function(e) {
+                    // 在这里可以添加点击反馈
+                    this.style.borderColor = '#fff';
+                    this.style.backgroundColor = '#222';
+                    
+                    // 添加加载提示
+                    const title = this.querySelector('.box-title').textContent;
+                    this.querySelector('.box-desc').innerHTML = `正在加载${title}...`;
+                    
+                    // 在实际应用中，这里可以添加跳转前的其他逻辑
+                });
+                
+                // 键盘导航支持
+                box.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+            
+            // 确保链接能够正常跳转
+            document.querySelector('.new-box').addEventListener('click', function(e) {
+                // 在实际环境中不需要阻止默认行为，这里只是示例
+                // e.preventDefault();
+                // window.location.href = 'new.html';
+            });
+            
+            document.querySelector('.old-box').addEventListener('click', function(e) {
+                // e.preventDefault();
+                // window.location.href = 'old.html';
+            });
+        });
+    </script>
+</body>
+</html>
