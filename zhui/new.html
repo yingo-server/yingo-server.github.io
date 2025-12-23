@@ -1,0 +1,2136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.2/pixi.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, sans-serif;
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        #tension-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 9999;
+            background: radial-gradient(circle at center, transparent 60%, rgba(255, 0, 0, 0.15) 100%);
+        }
+        
+        .pulse {
+            animation: pulse 0.5s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from { opacity: 0.3; }
+            to { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div id="tension-overlay"></div>
+    
+    <script>
+        // ==================== PIXIJS 初始化 ====================
+        const app = new PIXI.Application({
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: 0x0a0a0a,
+            resolution: Math.min(window.devicePixelRatio || 1, 2),
+            autoDensity: true,
+            antialias: true,
+            powerPreference: 'high-performance'
+        });
+        document.body.appendChild(app.view);
+
+        // ==================== 游戏参数 - 红球增强版 ====================
+        const PERFORMANCE = {
+            MAX_PARTICLES: 100,
+            USE_POOLING: true,
+            COLLISION_OPTIMIZATION: true,
+            REDRAW_OPTIMIZATION: true
+        };
+
+        // ==================== 核心游戏参数 ====================
+        const INITIAL_RED_BALLS = 28;                     // 增加初始数量
+        const RED_BALL_SPAWN_INTERVAL = 900;              // 更快生成
+        const WHITE_BALL_SPAWN_INTERVAL = 750;
+        const INITIAL_LIVES = 5;
+        const RESPAWN_DELAY = 500;                       // 更快重生
+        const GAME_RESTART_DELAY = 2000;
+        
+        // 蓝球参数 - 削弱
+        const BLUE_BALL_RADIUS = 12;
+        const BLUE_BALL_MAX_SPEED = 4.0;                  // 降低蓝球速度
+        const BLUE_BALL_ACCELERATION = 0.28;              // 降低加速度
+        const BLUE_HUNT_DISTANCE = 380;
+        const BLUE_DANGER_DISTANCE = 120;                 // 减少危险距离
+        const BLUE_CRITICAL_DISTANCE = 55;                // 减少临界距离
+        const BLUE_SPLIT_COOLDOWN = 4500;
+        const BLUE_SPLIT_SPEED_BOOST = 2.0;               // 降低分裂速度加成
+        
+        // 红球参数 - 大幅增强
+        const RED_BALL_RADIUS = 10;                       // 增大红球体积
+        const RED_BALL_MIN_SPEED = 1.9;                   // 提高最小速度
+        const RED_BALL_MAX_SPEED = 2.9;                   // 提高最大速度
+        const RED_BALL_MIN_ACCELERATION = 0.20;           // 提高加速度
+        const RED_BALL_MAX_ACCELERATION = 0.28;
+        const RED_STRATEGY_CHANGE_TIME = 2800;            // 更频繁切换策略
+        const RED_COOLDOWN_AFTER_ATTACK = 800;            // 减少攻击冷却
+        
+        // 红球冲刺系统 - 增强
+        const RED_DASH_ENABLED = true;
+        const RED_DASH_TRIGGER_DISTANCE = 160;            // 更短触发距离
+        const RED_DASH_TRIGGER_ANGLE = Math.PI / 3;       // 增大触发角度
+        const RED_DASH_DURATION = 450;
+        const RED_DASH_COOLDOWN = 2800;                   // 减少冷却
+        const RED_DASH_SPEED_MULTIPLIER = 3.2;            // 提高冲刺速度
+        const RED_DASH_CHANCE = 0.012;                    // 提高冲刺概率
+        const RED_DASH_MAX_COUNT = 6;                     // 增加同时冲刺数量
+        
+        // 高级包围系统 - 更紧密更致命
+        const RED_SURROUND_MODES = {
+            STANDARD: { radius: 130, rotationSpeed: 0.020, tightness: 0.92 },
+            TIGHT: { radius: 100, rotationSpeed: 0.028, tightness: 0.96 },
+            DOUBLE: { radius: [160, 100], rotationSpeed: [0.015, -0.024], tightness: 0.94 },
+            SPIRAL: { radius: 140, rotationSpeed: 0.032, spiralSpeed: 0.042, tightness: 0.91 }
+        };
+        
+        const RED_FORMATIONS = {
+            CIRCLE: 'circle',
+            SEMI_CIRCLE: 'semi_circle',
+            V_SHAPE: 'v_shape',
+            BOX: 'box',
+            CROSS: 'cross',
+            ARROW: 'arrow'
+        };
+        
+        const RED_SURROUND_ACTIVATION_COUNT = 3;          // 大幅降低触发条件
+        const RED_MAX_SURROUND_BALLS = 22;                // 增加最大包围数
+        const RED_FORMATION_CHANGE_TIME = 6500;           // 更频繁更换阵型
+        
+        // 红球碰撞系统 - 增强
+        const RED_COLLISION_FORCE = 0.85;                 // 增加碰撞力
+        const RED_MIN_SEPARATION = RED_BALL_RADIUS * 2.1; // 减少最小分离距离
+        const RED_REPULSION_FORCE = 0.35;                 // 增加排斥力
+        
+        // 白球参数 - 调整
+        const WHITE_BALL_RADIUS = 6;
+        const WHITE_BALL_SPEED = 1.6;
+        const WHITE_BALL_AVOID_DISTANCE = 125;            // 减少躲避距离
+        const WHITE_BALL_MAX_AVOID_SPEED = 1.9;
+        const WHITE_WANDER_CHANGE = 0.032;                // 增加随机游走
+        
+        // 突围系统 - 削弱
+        const BREAKTHROUGH_MODES = {
+            DASH: { speedBoost: 2.1, duration: 2400, cooldown: 4200 },   // 降低加成
+            FEINT: { speedBoost: 1.7, duration: 1400, cooldown: 3600, feintAngle: Math.PI/2 },
+            BLITZ: { speedBoost: 2.3, duration: 1700, cooldown: 5200 }
+        };
+        
+        const BREAKTHROUGH_ANGLE_SEARCH = 84;
+        const BREAKTHROUGH_WEAKPOINT_THRESHOLD = 0.8;     // 提高弱点阈值
+        const BREAKTHROUGH_ACTIVATION = 3;                // 降低突围触发条件
+        const BREAKTHROUGH_SPEED_BOOST = 2.2;             // 降低突围速度加成
+        const BREAKTHROUGH_DURATION = 2600;
+        const BREAKTHROUGH_COOLDOWN = 4200;               // 增加突围冷却
+        
+        // 紧张度系统 - 增强红球加成
+        const TENSION_MAX = 150;
+        const TENSION_INCREASE_RATE = 0.28;               // 增加紧张度增长速度
+        const TENSION_DECREASE_RATE = 0.09;               // 减少紧张度下降速度
+        const TENSION_EFFECT_THRESHOLD = 55;              // 降低效果阈值
+        const TENSION_CRITICAL_THRESHOLD = 105;
+        const RED_SPEED_TENSION_MULTIPLIER = 0.035;       // 大幅提高紧张度对红球的加成
+        const RED_ACCEL_TENSION_MULTIPLIER = 0.028;       // 大幅提高加速度加成
+        
+        // 路径优化
+        const PATH_OPTIMIZATION_DEPTH = 8;
+        const PATH_SAFETY_WEIGHT = 3.5;
+        const PATH_OBSTACLE_CHECK_RADIUS = 65;            // 减少障碍检查半径
+
+        // ==================== 游戏状态 ====================
+        let gameActive = true;
+        let gameStartTime = Date.now();
+        let gameTime = 0;
+        let tension = 0;
+        let debugMode = false;
+        let performanceStats = { fps: 60, particles: 0 };
+        
+        // 包围系统状态
+        let currentSurroundMode = null;
+        let surroundFormation = null;
+        let lastFormationChange = Date.now();
+        let surroundAngleOffset = 0;
+        let surroundSpiralOffset = 0;
+        let isSurroundActive = false;
+        let activeDashingRedBalls = 0;
+        
+        // 突围系统状态
+        let blueBreakthroughCooldown = 0;
+        let currentBreakthroughMode = null;
+        
+        // 对象池
+        const blueBalls = [];
+        const redBalls = [];
+        const whiteBalls = [];
+        const respawnQueue = [];
+        let mainBlueBall = null;
+        
+        // 计时器
+        let redSpawnTimer, whiteSpawnTimer, statsTimer;
+        
+        // ==================== PIXI 容器和图形 ====================
+        const gameContainer = new PIXI.Container();
+        app.stage.addChild(gameContainer);
+        
+        const uiContainer = new PIXI.Container();
+        app.stage.addChild(uiContainer);
+        
+        // 紧张度效果层
+        const tensionLayer = new PIXI.Graphics();
+        tensionLayer.zIndex = 10;
+        app.stage.addChild(tensionLayer);
+        
+        // 包围圈可视化层
+        const surroundLayer = new PIXI.Graphics();
+        surroundLayer.zIndex = 5;
+        app.stage.addChild(surroundLayer);
+        
+        // UI元素
+        const uiTexts = {};
+        const uiStyle = new PIXI.TextStyle({
+            fill: 0xffffff,
+            fontSize: 15,
+            fontFamily: 'Arial',
+            dropShadow: { 
+                color: 0x000000, 
+                blur: 5, 
+                distance: 2,
+                alpha: 0.8
+            }
+        });
+        
+        // UI背景
+        const uiBackground = new PIXI.Graphics();
+        uiBackground.beginFill(0x000000, 0.6);
+        uiBackground.drawRoundedRect(8, 8, 190, 165, 6);
+        uiBackground.endFill();
+        uiContainer.addChild(uiBackground);
+        
+        // UI文本项
+        const uiItems = [
+            { id: 'lives', text: '生命值: 5', y: 20 },
+            { id: 'redCount', text: '红球数量: 0', y: 40 },
+            { id: 'whiteCount', text: '白球数量: 0', y: 60 },
+            { id: 'gameTime', text: '游戏时间: 0秒', y: 80 },
+            { id: 'tension', text: '紧张度: 0%', y: 100 },
+            { id: 'surroundMode', text: '包围模式: 无', y: 120 },
+            { id: 'formation', text: '阵型: 无', y: 140 },
+            { id: 'breakthrough', text: '突围: 可用', y: 160 }
+        ];
+        
+        uiItems.forEach(item => {
+            const text = new PIXI.Text(item.text, uiStyle);
+            text.x = 20;
+            text.y = item.y;
+            uiContainer.addChild(text);
+            uiTexts[item.id] = text;
+        });
+        
+        // 游戏结束文本
+        const gameOverText = new PIXI.Text('游戏结束!', new PIXI.TextStyle({
+            fill: 0xff3838,
+            fontSize: 56,
+            fontFamily: 'Arial',
+            fontWeight: 'bold',
+            dropShadow: {
+                color: 0x000000,
+                blur: 10,
+                angle: Math.PI / 6,
+                distance: 6,
+                alpha: 0.7
+            }
+        }));
+        gameOverText.anchor.set(0.5);
+        gameOverText.position.set(app.screen.width / 2, app.screen.height / 2);
+        gameOverText.visible = false;
+        uiContainer.addChild(gameOverText);
+        
+        // 性能监控
+        const statsText = new PIXI.Text('FPS: 60', new PIXI.TextStyle({
+            fill: 0x00ff88,
+            fontSize: 12,
+            fontFamily: 'Arial'
+        }));
+        statsText.x = app.screen.width - 100;
+        statsText.y = 10;
+        statsText.visible = false;
+        uiContainer.addChild(statsText);
+
+        // ==================== 图形创建函数 ====================
+        function createBallGraphic(radius, color) {
+            const graphics = new PIXI.Graphics();
+            graphics.beginFill(color);
+            graphics.drawCircle(0, 0, radius);
+            graphics.endFill();
+            return graphics;
+        }
+        
+        function createRedBall(x, y) {
+            const tensionEffect = Math.min(1, tension / 100);
+            const speed = RED_BALL_MIN_SPEED + 
+                         (RED_BALL_MAX_SPEED - RED_BALL_MIN_SPEED) * tensionEffect * RED_SPEED_TENSION_MULTIPLIER;
+            const acceleration = RED_BALL_MIN_ACCELERATION + 
+                               (RED_BALL_MAX_ACCELERATION - RED_BALL_MIN_ACCELERATION) * tensionEffect * RED_ACCEL_TENSION_MULTIPLIER;
+            
+            const strategies = ['direct', 'intercept', 'flank', 'surround'];
+            const strategy = strategies[Math.floor(Math.random() * strategies.length)];
+            
+            const ball = {
+                x: x, y: y,
+                radius: RED_BALL_RADIUS,
+                vx: 0, vy: 0, ax: 0, ay: 0,
+                color: 0xff3838,
+                maxSpeed: speed,
+                baseSpeed: speed,
+                acceleration: acceleration,
+                respawning: false,
+                strategy: strategy,
+                lastStrategyChange: Date.now(),
+                lastAttackTime: 0,
+                cooldown: 0,
+                packId: Math.floor(Math.random() * 4),
+                isAggressive: Math.random() > 0.3, // 70%的红球积极攻击
+                
+                // 冲刺系统
+                isDashing: false,
+                dashEndTime: 0,
+                dashCooldown: 0,
+                dashSpeed: speed * RED_DASH_SPEED_MULTIPLIER,
+                
+                // 包围系统
+                isInSurround: false,
+                isFlanking: false,
+                surroundTarget: null,
+                flankTarget: null,
+                surroundPriority: 0,
+                
+                // 碰撞系统
+                collisionRadius: RED_BALL_RADIUS,
+                
+                // PIXI图形
+                graphic: null,
+                innerGraphic: null
+            };
+            
+            // 创建图形
+            ball.graphic = createBallGraphic(ball.radius, ball.color);
+            ball.graphic.x = x;
+            ball.graphic.y = y;
+            gameContainer.addChild(ball.graphic);
+            
+            // 内层（策略指示）
+            ball.innerGraphic = createBallGraphic(ball.radius * 0.52, getStrategyColor(strategy));
+            ball.innerGraphic.x = x;
+            ball.innerGraphic.y = y;
+            gameContainer.addChild(ball.innerGraphic);
+            
+            redBalls.push(ball);
+            return ball;
+        }
+        
+        function getStrategyColor(strategy) {
+            switch(strategy) {
+                case 'intercept': return 0xff9966;
+                case 'flank': return 0xff66cc;
+                case 'surround': return 0x9966ff;
+                default: return 0xff3838;
+            }
+        }
+        
+        function createBlueBall(x, y, isMain = false) {
+            const blueBall = {
+                x: x, y: y,
+                radius: BLUE_BALL_RADIUS,
+                vx: 0, vy: 0, ax: 0, ay: 0,
+                color: 0x00a8ff,
+                maxSpeed: BLUE_BALL_MAX_SPEED,
+                acceleration: BLUE_BALL_ACCELERATION,
+                lives: isMain ? INITIAL_LIVES : 1,
+                state: 'wander',
+                targetWhiteBall: null,
+                lastStateChange: Date.now(),
+                lastSplitTime: 0,
+                lastBreakthroughTime: 0,
+                isMain: isMain,
+                breakthroughEndTime: 0,
+                splitFrom: null,
+                id: Date.now() + Math.random(),
+                cooldown: 0,
+                safeDirections: [],
+                escapeAngle: null,
+                currentBreakthroughMode: null,
+                fakeBreakthrough: false,
+                
+                // 性能优化
+                lastCollisionCheck: 0,
+                
+                // PIXI图形
+                graphic: null,
+                lifeText: null,
+                effectLayer: null
+            };
+            
+            // 创建蓝球图形
+            blueBall.graphic = createBallGraphic(blueBall.radius, blueBall.color);
+            blueBall.graphic.x = x;
+            blueBall.graphic.y = y;
+            gameContainer.addChild(blueBall.graphic);
+            
+            // 生命值文本
+            blueBall.lifeText = new PIXI.Text(blueBall.lives.toString(), new PIXI.TextStyle({
+                fill: 0xffffff,
+                fontSize: 14,
+                fontFamily: 'Arial',
+                fontWeight: 'bold'
+            }));
+            blueBall.lifeText.anchor.set(0.5);
+            blueBall.lifeText.x = x;
+            blueBall.lifeText.y = y;
+            gameContainer.addChild(blueBall.lifeText);
+            
+            // 效果层
+            blueBall.effectLayer = new PIXI.Graphics();
+            gameContainer.addChild(blueBall.effectLayer);
+            
+            blueBalls.push(blueBall);
+            if (isMain) mainBlueBall = blueBall;
+            return blueBall;
+        }
+        
+        function spawnWhiteBall() {
+            if (!gameActive || whiteBalls.length > 20) return;
+            
+            const edge = getFarthestEdge(mainBlueBall.x, mainBlueBall.y);
+            let x, y;
+            
+            switch(edge) {
+                case 'top': x = Math.random() * app.screen.width; y = -15; break;
+                case 'bottom': x = Math.random() * app.screen.width; y = app.screen.height + 15; break;
+                case 'left': x = -15; y = Math.random() * app.screen.height; break;
+                case 'right': x = app.screen.width + 15; y = Math.random() * app.screen.height; break;
+            }
+            
+            const whiteBall = {
+                x: x, y: y,
+                radius: WHITE_BALL_RADIUS,
+                vx: (Math.random() - 0.5) * WHITE_BALL_SPEED,
+                vy: (Math.random() - 0.5) * WHITE_BALL_SPEED,
+                color: 0xffffff,
+                wandering: true,
+                fleeing: false,
+                fleeingFrom: null,
+                wanderDirection: Math.random() * Math.PI * 2,
+                lastWanderChange: Date.now(),
+                attractValue: 1.0 + Math.random() * 0.8,
+                
+                graphic: null,
+                innerGraphic: null
+            };
+            
+            whiteBall.graphic = createBallGraphic(whiteBall.radius, whiteBall.color);
+            whiteBall.graphic.x = x;
+            whiteBall.graphic.y = y;
+            gameContainer.addChild(whiteBall.graphic);
+            
+            whiteBall.innerGraphic = createBallGraphic(whiteBall.radius * 0.42, 0xa0d8ff);
+            whiteBall.innerGraphic.x = x;
+            whiteBall.innerGraphic.y = y;
+            gameContainer.addChild(whiteBall.innerGraphic);
+            
+            whiteBalls.push(whiteBall);
+        }
+        
+        function spawnRedBall() {
+            if (!gameActive || redBalls.length > 55) return;
+            
+            const edge = getClosestEdge(mainBlueBall.x, mainBlueBall.y);
+            let x, y;
+            
+            switch(edge) {
+                case 'top': x = Math.random() * app.screen.width; y = -25; break;
+                case 'bottom': x = Math.random() * app.screen.width; y = app.screen.height + 25; break;
+                case 'left': x = -25; y = Math.random() * app.screen.height; break;
+                case 'right': x = app.screen.width + 25; y = Math.random() * app.screen.height; break;
+            }
+            
+            createRedBall(x, y);
+        }
+
+        // ==================== 工具函数 ====================
+        function getClosestEdge(x, y) {
+            const distToTop = y;
+            const distToBottom = app.screen.height - y;
+            const distToLeft = x;
+            const distToRight = app.screen.width - x;
+            
+            const minDist = Math.min(distToTop, distToBottom, distToLeft, distToRight);
+            if (minDist === distToTop) return 'top';
+            if (minDist === distToBottom) return 'bottom';
+            if (minDist === distToLeft) return 'left';
+            return 'right';
+        }
+        
+        function getFarthestEdge(x, y) {
+            const distToTop = y;
+            const distToBottom = app.screen.height - y;
+            const distToLeft = x;
+            const distToRight = app.screen.width - x;
+            
+            const maxDist = Math.max(distToTop, distToBottom, distToLeft, distToRight);
+            if (maxDist === distToTop) return 'top';
+            if (maxDist === distToBottom) return 'bottom';
+            if (maxDist === distToLeft) return 'left';
+            return 'right';
+        }
+
+        // ==================== 红球冲刺系统 ====================
+        function checkRedDashConditions(redBall) {
+            if (!RED_DASH_ENABLED) return false;
+            if (!redBall.isAggressive) return false;
+            if (redBall.cooldown > 0) return false;
+            if (redBall.isDashing) return false;
+            if (redBall.dashCooldown > 0) return false;
+            if (activeDashingRedBalls >= RED_DASH_MAX_COUNT) return false;
+            
+            const dx = mainBlueBall.x - redBall.x;
+            const dy = mainBlueBall.y - redBall.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist > RED_DASH_TRIGGER_DISTANCE) return false;
+            
+            const angleToBlue = Math.atan2(dy, dx);
+            const redBallAngle = Math.atan2(redBall.vy, redBall.vx);
+            const angleDiff = Math.abs((angleToBlue - redBallAngle + Math.PI) % (Math.PI * 2) - Math.PI);
+            
+            if (angleDiff > RED_DASH_TRIGGER_ANGLE) return false;
+            
+            // 检查路径
+            let pathClear = true;
+            redBalls.forEach(otherRed => {
+                if (otherRed === redBall || otherRed.respawning) return;
+                
+                const dx2 = otherRed.x - redBall.x;
+                const dy2 = otherRed.y - redBall.y;
+                const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+                
+                if (dist2 < RED_BALL_RADIUS * 3) {
+                    const angleToOther = Math.atan2(dy2, dx2);
+                    const angleDiff2 = Math.abs((angleToBlue - angleToOther + Math.PI) % (Math.PI * 2) - Math.PI);
+                    if (angleDiff2 < Math.PI / 4) pathClear = false;
+                }
+            });
+            
+            if (!pathClear) return false;
+            
+            return Math.random() < RED_DASH_CHANCE * (redBall.isInSurround ? 1.8 : 1.0);
+        }
+        
+        function activateRedDash(redBall) {
+            const now = Date.now();
+            
+            redBall.isDashing = true;
+            redBall.dashEndTime = now + RED_DASH_DURATION;
+            redBall.maxSpeed = redBall.dashSpeed;
+            activeDashingRedBalls++;
+            
+            redBall.originalColor = redBall.graphic.tint;
+            redBall.graphic.tint = 0xffcc00;
+            redBall.innerGraphic.tint = 0xffcc00;
+            
+            redBall.acceleration *= 1.8; // 增加冲刺加速度
+            redBall.cooldown = 0;
+        }
+        
+        function updateRedDash(redBall) {
+            const now = Date.now();
+            
+            if (redBall.dashCooldown > 0) redBall.dashCooldown -= 16;
+            
+            if (redBall.isDashing && now > redBall.dashEndTime) endRedDash(redBall);
+            
+            if (!redBall.isDashing && checkRedDashConditions(redBall)) activateRedDash(redBall);
+        }
+        
+        function endRedDash(redBall) {
+            redBall.isDashing = false;
+            redBall.maxSpeed = redBall.baseSpeed;
+            redBall.graphic.tint = redBall.originalColor || 0xff3838;
+            redBall.innerGraphic.tint = getStrategyColor(redBall.strategy);
+            redBall.acceleration = redBall.baseSpeed / 4; // 减少冲刺后减速
+            redBall.dashCooldown = RED_DASH_COOLDOWN;
+            activeDashingRedBalls = Math.max(0, activeDashingRedBalls - 1);
+            redBall.cooldown = 300; // 减少冲刺后冷却
+        }
+
+        // ==================== 高级包围系统 ====================
+        function analyzeSurroundSituation() {
+            if (!mainBlueBall || blueBalls.length > 1) return null;
+            
+            const nearbyReds = redBalls.filter(ball => 
+                !ball.respawning && !ball.cooldown && !ball.isDashing &&
+                Math.sqrt(Math.pow(ball.x - mainBlueBall.x, 2) + Math.pow(ball.y - mainBlueBall.y, 2)) < 320
+            );
+            
+            if (nearbyReds.length < RED_SURROUND_ACTIVATION_COUNT) return null;
+            
+            const blueSpeed = Math.sqrt(mainBlueBall.vx * mainBlueBall.vx + mainBlueBall.vy * mainBlueBall.vy);
+            const blueMovingFast = blueSpeed > 1.5;
+            const blueInCorner = mainBlueBall.x < 180 || mainBlueBall.x > app.screen.width - 180 ||
+                                mainBlueBall.y < 180 || mainBlueBall.y > app.screen.height - 180;
+            
+            // 更激进的包围策略
+            if (blueMovingFast && nearbyReds.length >= 7) {
+                return { mode: 'DOUBLE', formation: RED_FORMATIONS.V_SHAPE };
+            } else if (blueInCorner && nearbyReds.length >= 5) {
+                return { mode: 'TIGHT', formation: RED_FORMATIONS.SEMI_CIRCLE };
+            } else if (nearbyReds.length >= 10) {
+                return { mode: 'SPIRAL', formation: RED_FORMATIONS.CIRCLE };
+            } else {
+                return { mode: 'STANDARD', formation: RED_FORMATIONS.CIRCLE };
+            }
+        }
+        
+        function calculateFormationPositions(centerX, centerY, mode, formation, count) {
+            const positions = [];
+            const modeConfig = RED_SURROUND_MODES[mode];
+            const now = Date.now();
+            
+            switch(formation) {
+                case RED_FORMATIONS.CIRCLE:
+                    for (let i = 0; i < count; i++) {
+                        const angle = (i / count) * Math.PI * 2 + surroundAngleOffset;
+                        const radius = Array.isArray(modeConfig.radius) ? modeConfig.radius[0] : modeConfig.radius;
+                        positions.push({
+                            x: centerX + Math.cos(angle) * radius,
+                            y: centerY + Math.sin(angle) * radius,
+                            angle: angle
+                        });
+                    }
+                    break;
+                    
+                case RED_FORMATIONS.SEMI_CIRCLE:
+                    for (let i = 0; i < count; i++) {
+                        const angle = (i / count) * Math.PI + surroundAngleOffset - Math.PI/2;
+                        const radius = Array.isArray(modeConfig.radius) ? modeConfig.radius[0] : modeConfig.radius;
+                        positions.push({
+                            x: centerX + Math.cos(angle) * radius,
+                            y: centerY + Math.sin(angle) * radius,
+                            angle: angle
+                        });
+                    }
+                    break;
+                    
+                case RED_FORMATIONS.V_SHAPE:
+                    const vAngle = Math.PI / 2.5;
+                    for (let i = 0; i < count; i++) {
+                        const side = i % 2 === 0 ? 1 : -1;
+                        const row = Math.floor(i / 2);
+                        const angle = surroundAngleOffset + side * vAngle * (1 - row * 0.12);
+                        const distance = 95 + row * 30;
+                        positions.push({
+                            x: centerX + Math.cos(angle) * distance,
+                            y: centerY + Math.sin(angle) * distance,
+                            angle: angle
+                        });
+                    }
+                    break;
+                    
+                case RED_FORMATIONS.BOX:
+                    const sideLength = Math.ceil(Math.sqrt(count));
+                    const spacing = 38;
+                    for (let i = 0; i < count; i++) {
+                        const row = Math.floor(i / sideLength);
+                        const col = i % sideLength;
+                        const offsetX = (col - (sideLength-1)/2) * spacing;
+                        const offsetY = (row - (sideLength-1)/2) * spacing;
+                        positions.push({
+                            x: centerX + offsetX,
+                            y: centerY + offsetY,
+                            angle: Math.atan2(offsetY, offsetX)
+                        });
+                    }
+                    break;
+                    
+                case RED_FORMATIONS.CROSS:
+                    const arms = 4;
+                    const pointsPerArm = Math.ceil(count / arms);
+                    for (let arm = 0; arm < arms; arm++) {
+                        const baseAngle = (arm / arms) * Math.PI * 2;
+                        for (let i = 0; i < pointsPerArm && positions.length < count; i++) {
+                            const distance = 70 + i * 20;
+                            positions.push({
+                                x: centerX + Math.cos(baseAngle) * distance,
+                                y: centerY + Math.sin(baseAngle) * distance,
+                                angle: baseAngle
+                            });
+                        }
+                    }
+                    break;
+                    
+                case RED_FORMATIONS.ARROW:
+                    const arrowCount = Math.min(count, 9);
+                    for (let i = 0; i < arrowCount; i++) {
+                        const angle = surroundAngleOffset + (i - (arrowCount-1)/2) * 0.25;
+                        const distance = 85 + Math.abs(i - (arrowCount-1)/2) * 15;
+                        positions.push({
+                            x: centerX + Math.cos(angle) * distance,
+                            y: centerY + Math.sin(angle) * distance,
+                            angle: angle
+                        });
+                    }
+                    break;
+            }
+            
+            // 螺旋模式特殊处理
+            if (mode === 'SPIRAL') {
+                positions.forEach((pos, i) => {
+                    const spiralRadius = modeConfig.radius * (1 + 0.18 * Math.sin(surroundSpiralOffset + i * 0.35));
+                    pos.x = centerX + Math.cos(pos.angle) * spiralRadius;
+                    pos.y = centerY + Math.sin(pos.angle) * spiralRadius;
+                });
+            }
+            
+            return positions;
+        }
+        
+        function updateAdvancedSurroundSystem() {
+            if (!mainBlueBall || blueBalls.length > 1) {
+                currentSurroundMode = null;
+                isSurroundActive = false;
+                return;
+            }
+            
+            const now = Date.now();
+            const situation = analyzeSurroundSituation();
+            
+            if (!situation) {
+                currentSurroundMode = null;
+                isSurroundActive = false;
+                
+                // 重置所有红球的包围状态
+                redBalls.forEach(ball => {
+                    ball.isInSurround = false;
+                    ball.isFlanking = false;
+                    ball.surroundTarget = null;
+                    ball.flankTarget = null;
+                });
+                return;
+            }
+            
+            // 更新包围系统
+            currentSurroundMode = situation.mode;
+            surroundFormation = situation.formation;
+            isSurroundActive = true;
+            
+            // 更新旋转角度
+            const modeConfig = RED_SURROUND_MODES[situation.mode];
+            if (Array.isArray(modeConfig.rotationSpeed)) {
+                surroundAngleOffset += modeConfig.rotationSpeed[0];
+            } else {
+                surroundAngleOffset += modeConfig.rotationSpeed;
+            }
+            
+            // 更新螺旋角度
+            if (situation.mode === 'SPIRAL') {
+                surroundSpiralOffset += modeConfig.spiralSpeed;
+            }
+            
+            // 定期更换阵型
+            if (now - lastFormationChange > RED_FORMATION_CHANGE_TIME) {
+                const formations = Object.values(RED_FORMATIONS);
+                surroundFormation = formations[Math.floor(Math.random() * formations.length)];
+                lastFormationChange = now;
+            }
+            
+            // 选择参与包围的红球（更激进的选择）
+            const candidates = redBalls
+                .filter(ball => 
+                    !ball.respawning && 
+                    !ball.cooldown && 
+                    !ball.isDashing &&
+                    Math.sqrt(Math.pow(ball.x - mainBlueBall.x, 2) + Math.pow(ball.y - mainBlueBall.y, 2)) < 380
+                )
+                .sort((a, b) => {
+                    const distA = Math.sqrt(Math.pow(a.x - mainBlueBall.x, 2) + Math.pow(a.y - mainBlueBall.y, 2));
+                    const distB = Math.sqrt(Math.pow(b.x - mainBlueBall.x, 2) + Math.pow(b.y - mainBlueBall.y, 2));
+                    return distA - distB;
+                })
+                .slice(0, RED_MAX_SURROUND_BALLS);
+            
+            // 计算阵型位置
+            const positions = calculateFormationPositions(
+                mainBlueBall.x, 
+                mainBlueBall.y, 
+                situation.mode, 
+                surroundFormation, 
+                candidates.length
+            );
+            
+            // 分配位置
+            candidates.forEach((ball, index) => {
+                ball.isInSurround = true;
+                ball.isFlanking = false;
+                ball.surroundTarget = positions[index];
+                ball.surroundPriority = index;
+            });
+            
+            // 更新其他红球为包抄状态
+            updateFlankingSystem(candidates);
+        }
+        
+        function updateFlankingSystem(engagedBalls) {
+            const availableReds = redBalls.filter(ball => 
+                !ball.respawning && !ball.cooldown && !ball.isDashing && 
+                !engagedBalls.includes(ball)
+            );
+            
+            if (availableReds.length < 2) return;
+            
+            const blueAngle = Math.atan2(mainBlueBall.vy, mainBlueBall.vx);
+            const blueSpeed = Math.sqrt(mainBlueBall.vx * mainBlueBall.vx + mainBlueBall.vy * mainBlueBall.vy);
+            const predictDistance = Math.min(250, blueSpeed * 22);
+            
+            availableReds.forEach((ball, index) => {
+                const flankType = index % 4;
+                let targetAngle, targetDistance;
+                
+                switch(flankType) {
+                    case 0: // 正面
+                        targetAngle = blueAngle;
+                        targetDistance = 160;
+                        break;
+                    case 1: // 左侧
+                        targetAngle = blueAngle + Math.PI/2.2;
+                        targetDistance = 200;
+                        break;
+                    case 2: // 右侧
+                        targetAngle = blueAngle - Math.PI/2.2;
+                        targetDistance = 200;
+                        break;
+                    case 3: // 后方
+                        targetAngle = blueAngle + Math.PI;
+                        targetDistance = 180;
+                        break;
+                }
+                
+                ball.isFlanking = true;
+                ball.isInSurround = false;
+                ball.flankTarget = {
+                    x: mainBlueBall.x + Math.cos(targetAngle) * targetDistance,
+                    y: mainBlueBall.y + Math.sin(targetAngle) * targetDistance,
+                    angle: targetAngle
+                };
+            });
+        }
+
+        // ==================== 红球碰撞系统 ====================
+        function resolveRedBallCollisions() {
+            // 使用空间分区优化碰撞检测
+            const gridSize = RED_MIN_SEPARATION * 3.5;
+            const grid = {};
+            
+            // 填充网格
+            redBalls.forEach((ball, index) => {
+                if (ball.respawning) return;
+                
+                const gridX = Math.floor(ball.x / gridSize);
+                const gridY = Math.floor(ball.y / gridSize);
+                const key = `${gridX},${gridY}`;
+                
+                if (!grid[key]) grid[key] = [];
+                grid[key].push({ ball, index });
+            });
+            
+            // 检查每个网格及其相邻网格
+            for (const [key, ballsInCell] of Object.entries(grid)) {
+                const [gridX, gridY] = key.split(',').map(Number);
+                
+                // 检查当前网格和相邻的8个网格
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        const neighborKey = `${gridX + dx},${gridY + dy}`;
+                        const neighborBalls = grid[neighborKey];
+                        
+                        if (!neighborBalls) continue;
+                        
+                        // 检查当前网格内球体之间的碰撞
+                        for (let i = 0; i < ballsInCell.length; i++) {
+                            const ballA = ballsInCell[i].ball;
+                            
+                            for (let j = i + 1; j < ballsInCell.length; j++) {
+                                const ballB = ballsInCell[j].ball;
+                                checkAndResolveCollision(ballA, ballB);
+                            }
+                            
+                            // 检查与相邻网格中球体的碰撞
+                            for (const other of neighborBalls) {
+                                if (ballsInCell[i].index === other.index) continue;
+                                checkAndResolveCollision(ballA, other.ball);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        function checkAndResolveCollision(ballA, ballB) {
+            const dx = ballB.x - ballA.x;
+            const dy = ballB.y - ballA.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < RED_MIN_SEPARATION && distance > 0) {
+                // 计算重叠量
+                const overlap = (RED_MIN_SEPARATION - distance) / 2;
+                const angle = Math.atan2(dy, dx);
+                
+                // 分离球体
+                const moveX = Math.cos(angle) * overlap;
+                const moveY = Math.sin(angle) * overlap;
+                
+                ballA.x -= moveX;
+                ballA.y -= moveY;
+                ballB.x += moveX;
+                ballB.y += moveY;
+                
+                // 计算碰撞响应
+                const normalX = dx / distance;
+                const normalY = dy / distance;
+                const relativeVelocityX = ballB.vx - ballA.vx;
+                const relativeVelocityY = ballB.vy - ballA.vy;
+                const speedAlongNormal = relativeVelocityX * normalX + relativeVelocityY * normalY;
+                
+                if (speedAlongNormal > 0) return; // 已经分离
+                
+                // 计算冲量
+                const impulse = 2 * speedAlongNormal;
+                ballA.vx += impulse * normalX * RED_COLLISION_FORCE;
+                ballA.vy += impulse * normalY * RED_COLLISION_FORCE;
+                ballB.vx -= impulse * normalX * RED_COLLISION_FORCE;
+                ballB.vy -= impulse * normalY * RED_COLLISION_FORCE;
+                
+                // 速度限制
+                const maxSpeed = 9;
+                ballA.vx = Math.max(-maxSpeed, Math.min(maxSpeed, ballA.vx));
+                ballA.vy = Math.max(-maxSpeed, Math.min(maxSpeed, ballA.vy));
+                ballB.vx = Math.max(-maxSpeed, Math.min(maxSpeed, ballB.vx));
+                ballB.vy = Math.max(-maxSpeed, Math.min(maxSpeed, ballB.vy));
+            }
+        }
+
+        // ==================== 高级突围系统 ====================
+        function findWeakPoint(blueBall, redThreats) {
+            if (redThreats.length < 2) return null;
+            
+            const angles = new Array(BREAKTHROUGH_ANGLE_SEARCH).fill(0).map((_, i) => 
+                (i / BREAKTHROUGH_ANGLE_SEARCH) * Math.PI * 2
+            );
+            
+            const scores = angles.map(angle => {
+                let score = 0;
+                
+                // 评估威胁
+                redThreats.forEach(threat => {
+                    const threatAngle = Math.atan2(threat.dy, threat.dx);
+                    const angleDiff = Math.abs((angle - threatAngle + Math.PI) % (Math.PI * 2) - Math.PI);
+                    
+                    let threatWeight = 1.0;
+                    if (threat.ball.isDashing) threatWeight = 3.2;
+                    else if (threat.ball.isInSurround) threatWeight = 2.4;
+                    
+                    const distanceFactor = 1.0 / Math.max(1, threat.dist);
+                    const angleFactor = 1.0 - (angleDiff / Math.PI);
+                    const threatScore = threatWeight * distanceFactor * angleFactor * 9;
+                    score -= threatScore;
+                });
+                
+                // 检查路径安全性
+                let pathClear = true;
+                const checkSteps = 5;
+                for (let step = 1; step <= checkSteps; step++) {
+                    const t = step / checkSteps;
+                    const checkX = blueBall.x + Math.cos(angle) * t * 220;
+                    const checkY = blueBall.y + Math.sin(angle) * t * 220;
+                    
+                    // 边界检查
+                    if (checkX < 50 || checkX > app.screen.width - 50 ||
+                        checkY < 50 || checkY > app.screen.height - 50) {
+                        score -= 5;
+                    }
+                    
+                    // 红球检查
+                    redThreats.forEach(threat => {
+                        const dx = checkX - threat.ball.x;
+                        const dy = checkY - threat.ball.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < 80) {
+                            pathClear = false;
+                            score -= 8;
+                        }
+                        
+                        if (threat.ball.isDashing && dist < 130) {
+                            score -= 10;
+                        }
+                    });
+                }
+                
+                if (pathClear) score += 15;
+                
+                // 检查白球奖励
+                whiteBalls.forEach(whiteBall => {
+                    const dx = whiteBall.x - blueBall.x;
+                    const dy = whiteBall.y - blueBall.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const whiteAngle = Math.atan2(dy, dx);
+                    const angleDiff = Math.abs((angle - whiteAngle + Math.PI) % (Math.PI * 2) - Math.PI);
+                    
+                    if (dist < 280 && angleDiff < Math.PI / 3) {
+                        // 检查白球安全性
+                        let whiteSafety = 1.0;
+                        redThreats.forEach(threat => {
+                            const threatToWhiteDist = Math.sqrt(
+                                Math.pow(whiteBall.x - threat.ball.x, 2) + 
+                                Math.pow(whiteBall.y - threat.ball.y, 2)
+                            );
+                            if (threatToWhiteDist < 120) whiteSafety -= 0.5;
+                        });
+                        
+                        if (whiteSafety > 0.4) {
+                            const whiteScore = (1 - angleDiff / Math.PI) * (1 - dist / 280) * whiteBall.attractValue * whiteSafety;
+                            score += whiteScore * 18;
+                        }
+                    }
+                });
+                
+                return score;
+            });
+            
+            const maxScore = Math.max(...scores);
+            const bestAngleIndex = scores.indexOf(maxScore);
+            
+            if (maxScore > BREAKTHROUGH_WEAKPOINT_THRESHOLD) {
+                let mode;
+                if (maxScore > 25) mode = 'BLITZ';
+                else if (maxScore > 15) mode = 'DASH';
+                else mode = 'FEINT';
+                
+                return {
+                    angle: angles[bestAngleIndex],
+                    score: maxScore,
+                    mode: mode
+                };
+            }
+            
+            return null;
+        }
+        
+        function executeBreakthrough(blueBall, weakPoint) {
+            const now = Date.now();
+            const modeConfig = BREAKTHROUGH_MODES[weakPoint.mode];
+            
+            blueBall.state = 'breakthrough';
+            blueBall.currentBreakthroughMode = weakPoint.mode;
+            blueBall.maxSpeed = BLUE_BALL_MAX_SPEED * modeConfig.speedBoost;
+            blueBall.breakthroughEndTime = now + modeConfig.duration;
+            blueBall.lastBreakthroughTime = now;
+            blueBall.lastStateChange = now;
+            blueBreakthroughCooldown = modeConfig.cooldown;
+            
+            // 突围方向
+            let breakAngle = weakPoint.angle;
+            if (weakPoint.mode === 'FEINT') {
+                // 假动作
+                const feintAngle = weakPoint.angle + (Math.random() > 0.5 ? 1 : -1) * modeConfig.feintAngle;
+                breakAngle = feintAngle;
+                blueBall.fakeBreakthrough = true;
+                
+                setTimeout(() => {
+                    if (blueBall.fakeBreakthrough) {
+                        blueBall.vx = Math.cos(weakPoint.angle) * blueBall.maxSpeed * 0.7;
+                        blueBall.vy = Math.sin(weakPoint.angle) * blueBall.maxSpeed * 0.7;
+                        blueBall.fakeBreakthrough = false;
+                    }
+                }, 320);
+            }
+            
+            blueBall.vx = Math.cos(breakAngle) * blueBall.maxSpeed * 0.6;
+            blueBall.vy = Math.sin(breakAngle) * blueBall.maxSpeed * 0.6;
+            
+            // 突围特效
+            createBreakthroughEffect(blueBall);
+        }
+        
+        function createBreakthroughEffect(blueBall) {
+            const effect = blueBall.effectLayer;
+            effect.clear();
+            
+            // 冲击波
+            effect.beginFill(0x00ffff, 0.4);
+            effect.drawCircle(0, 0, blueBall.radius * 4);
+            effect.endFill();
+            
+            effect.x = blueBall.x;
+            effect.y = blueBall.y;
+            
+            // 动画
+            const startTime = Date.now();
+            const animate = () => {
+                const elapsed = Date.now() - startTime;
+                if (elapsed > 600) {
+                    effect.clear();
+                    return;
+                }
+                
+                const scale = 1 + elapsed / 80;
+                effect.scale.set(scale);
+                effect.alpha = 1 - elapsed / 600;
+                
+                requestAnimationFrame(animate);
+            };
+            animate();
+        }
+
+        // ==================== 紧张度视觉效果 ====================
+        function updateTensionEffects() {
+            const tensionOverlay = document.getElementById('tension-overlay');
+            
+            if (tension > TENSION_EFFECT_THRESHOLD) {
+                const intensity = (tension - TENSION_EFFECT_THRESHOLD) / (TENSION_MAX - TENSION_EFFECT_THRESHOLD);
+                let opacity = Math.min(0.7, intensity * 0.9);
+                
+                // 心跳效果
+                if (tension > TENSION_CRITICAL_THRESHOLD) {
+                    const pulse = 0.18 * Math.sin(Date.now() / 160);
+                    opacity += pulse;
+                    tensionOverlay.classList.add('pulse');
+                } else {
+                    tensionOverlay.classList.remove('pulse');
+                }
+                
+                tensionOverlay.style.opacity = opacity;
+            } else {
+                tensionOverlay.style.opacity = 0;
+                tensionOverlay.classList.remove('pulse');
+            }
+            
+            // 更新Pixi紧张度层
+            tensionLayer.clear();
+            if (tension > TENSION_EFFECT_THRESHOLD) {
+                const intensity = (tension - TENSION_EFFECT_THRESHOLD) / (TENSION_MAX - TENSION_EFFECT_THRESHOLD);
+                const alpha = 0.45 * intensity;
+                
+                // 边缘红色光晕
+                const gradientSize = 110;
+                tensionLayer.beginFill(0xff0000, alpha * 0.7);
+                tensionLayer.drawRect(0, 0, app.screen.width, gradientSize); // 上
+                tensionLayer.drawRect(0, app.screen.height - gradientSize, app.screen.width, gradientSize); // 下
+                tensionLayer.drawRect(0, 0, gradientSize, app.screen.height); // 左
+                tensionLayer.drawRect(app.screen.width - gradientSize, 0, gradientSize, app.screen.height); // 右
+                tensionLayer.endFill();
+                
+                // 角落加强
+                const cornerSize = 90;
+                tensionLayer.beginFill(0xff0000, alpha * 1.0);
+                tensionLayer.drawRect(0, 0, cornerSize, cornerSize); // 左上
+                tensionLayer.drawRect(app.screen.width - cornerSize, 0, cornerSize, cornerSize); // 右上
+                tensionLayer.drawRect(0, app.screen.height - cornerSize, cornerSize, cornerSize); // 左下
+                tensionLayer.drawRect(app.screen.width - cornerSize, app.screen.height - cornerSize, cornerSize, cornerSize); // 右下
+                tensionLayer.endFill();
+            }
+            
+            // 更新包围圈可视化
+            surroundLayer.clear();
+            if (isSurroundActive && mainBlueBall) {
+                const modeConfig = RED_SURROUND_MODES[currentSurroundMode];
+                const radius = Array.isArray(modeConfig.radius) ? modeConfig.radius[0] : modeConfig.radius;
+                
+                // 绘制包围圈
+                surroundLayer.lineStyle(2, 0x9966ff, 0.5);
+                surroundLayer.drawCircle(mainBlueBall.x, mainBlueBall.y, radius);
+                
+                // 绘制阵型指示
+                if (surroundFormation === RED_FORMATIONS.V_SHAPE) {
+                    const angle1 = surroundAngleOffset + Math.PI/2.5;
+                    const angle2 = surroundAngleOffset - Math.PI/2.5;
+                    
+                    surroundLayer.lineStyle(1, 0xff66cc, 0.4);
+                    surroundLayer.moveTo(
+                        mainBlueBall.x + Math.cos(angle1) * radius,
+                        mainBlueBall.y + Math.sin(angle1) * radius
+                    );
+                    surroundLayer.lineTo(mainBlueBall.x, mainBlueBall.y);
+                    surroundLayer.lineTo(
+                        mainBlueBall.x + Math.cos(angle2) * radius,
+                        mainBlueBall.y + Math.sin(angle2) * radius
+                    );
+                }
+            }
+        }
+
+        // ==================== 核心游戏逻辑 ====================
+        function update() {
+            if (!gameActive) return;
+            
+            const now = Date.now();
+            gameTime = Math.floor((now - gameStartTime) / 1000);
+            
+            // 更新紧张度
+            const activeRedBalls = redBalls.filter(b => !b.respawning).length;
+            const surroundFactor = isSurroundActive ? 1.8 : 1.0;
+            const dashFactor = 1.0 + (activeDashingRedBalls * 0.25);
+            const timeFactor = 1.0 + (gameTime / 100); // 时间越长越紧张
+            
+            tension += TENSION_INCREASE_RATE * (activeRedBalls / 25) * surroundFactor * dashFactor * timeFactor;
+            tension -= TENSION_DECREASE_RATE;
+            tension = Math.max(0, Math.min(TENSION_MAX, tension));
+            
+            // 更新紧张度效果
+            updateTensionEffects();
+            
+            // 处理重生队列
+            for (let i = respawnQueue.length - 1; i >= 0; i--) {
+                if (now - respawnQueue[i].timestamp >= RESPAWN_DELAY) {
+                    if (respawnQueue[i].type === 'red') {
+                        createRedBall(respawnQueue[i].x, respawnQueue[i].y);
+                    } else if (respawnQueue[i].type === 'white') {
+                        spawnWhiteBall();
+                    }
+                    respawnQueue.splice(i, 1);
+                }
+            }
+            
+            // 更新包围系统
+            updateAdvancedSurroundSystem();
+            
+            // 更新所有球体
+            updateBlueBalls();
+            updateRedBalls();
+            updateWhiteBalls();
+            
+            // 红球碰撞
+            resolveRedBallCollisions();
+            
+            // 边界处理
+            handleBoundaries();
+            
+            // 更新UI
+            updateUI();
+            
+            // 更新突围冷却
+            if (blueBreakthroughCooldown > 0) {
+                blueBreakthroughCooldown -= 16;
+            }
+            
+            // 性能统计
+            performanceStats.particles = blueBalls.length + redBalls.filter(b => !b.respawning).length + whiteBalls.length;
+        }
+        
+        function updateBlueBalls() {
+            const now = Date.now();
+            
+            for (let i = blueBalls.length - 1; i >= 0; i--) {
+                const ball = blueBalls[i];
+                
+                if (ball.cooldown > 0) ball.cooldown -= 16;
+                
+                // 突围状态处理
+                if (ball.state === 'breakthrough' && now > ball.breakthroughEndTime) {
+                    ball.state = 'wander';
+                    ball.maxSpeed = BLUE_BALL_MAX_SPEED;
+                    ball.lastStateChange = now;
+                    ball.currentBreakthroughMode = null;
+                }
+                
+                // 威胁检测
+                const redThreats = [];
+                let immediateThreats = 0;
+                
+                redBalls.forEach(redBall => {
+                    if (redBall.respawning || redBall.cooldown > 0) return;
+                    
+                    const dx = redBall.x - ball.x;
+                    const dy = redBall.y - ball.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < BLUE_DANGER_DISTANCE * 1.8) {
+                        redThreats.push({ball: redBall, dist, dx, dy});
+                        if (dist < BLUE_DANGER_DISTANCE) immediateThreats++;
+                    }
+                });
+                
+                // 状态决策
+                const canChangeState = ball.cooldown <= 0 && now - ball.lastStateChange > 500;
+                const canBreakthrough = blueBreakthroughCooldown <= 0 && ball.state !== 'breakthrough';
+                
+                // 检查包围
+                const surroundCount = redThreats.filter(threat => threat.ball.isInSurround).length;
+                const dashingCount = redThreats.filter(threat => threat.ball.isDashing).length;
+                
+                // 突围决策
+                if ((surroundCount >= RED_SURROUND_ACTIVATION_COUNT || 
+                     (immediateThreats >= BREAKTHROUGH_ACTIVATION && surroundCount >= 2) ||
+                     dashingCount >= 2) && 
+                    canBreakthrough && canChangeState) {
+                    
+                    const weakPoint = findWeakPoint(ball, redThreats);
+                    if (weakPoint) {
+                        executeBreakthrough(ball, weakPoint);
+                        continue;
+                    }
+                }
+                
+                // 逃跑状态
+                if (immediateThreats > 0 && canChangeState && ball.state !== 'breakthrough') {
+                    ball.state = 'flee';
+                    ball.lastStateChange = now;
+                    ball.cooldown = 280;
+                }
+                // 捕食状态
+                else if (ball.state === 'wander' && canChangeState && ball.lives < 15) {
+                    let bestWhite = null;
+                    let bestScore = -Infinity;
+                    
+                    whiteBalls.forEach(whiteBall => {
+                        const dx = whiteBall.x - ball.x;
+                        const dy = whiteBall.y - ball.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist > BLUE_HUNT_DISTANCE || dist < 30) return;
+                        
+                        let safety = 1.0;
+                        redThreats.forEach(threat => {
+                            const threatDist = Math.sqrt(
+                                Math.pow(whiteBall.x - threat.ball.x, 2) + 
+                                Math.pow(whiteBall.y - threat.ball.y, 2)
+                            );
+                            if (threatDist < 140) safety -= 0.5;
+                        });
+                        
+                        if (safety > 0.4) {
+                            const score = (1 / dist) * safety * whiteBall.attractValue;
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestWhite = whiteBall;
+                            }
+                        }
+                    });
+                    
+                    if (bestWhite) {
+                        ball.state = 'hunt';
+                        ball.targetWhiteBall = bestWhite;
+                        ball.lastStateChange = now;
+                        ball.cooldown = 280;
+                    }
+                }
+                // 返回游走状态
+                else if (ball.state === 'flee' && immediateThreats === 0 && canChangeState) {
+                    ball.state = 'wander';
+                    ball.lastStateChange = now;
+                    ball.cooldown = 180;
+                }
+                
+                // 执行状态行为
+                if (ball.state === 'flee') {
+                    executeFleeBehavior(ball, redThreats);
+                } else if (ball.state === 'hunt' && ball.targetWhiteBall) {
+                    executeHuntBehavior(ball);
+                } else if (ball.state === 'wander') {
+                    executeWanderBehavior(ball);
+                }
+                
+                // 更新物理
+                ball.vx += ball.ax;
+                ball.vy += ball.ay;
+                
+                const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+                if (speed > ball.maxSpeed) {
+                    ball.vx = (ball.vx / speed) * ball.maxSpeed;
+                    ball.vy = (ball.vy / speed) * ball.maxSpeed;
+                }
+                
+                const drag = ball.state === 'breakthrough' ? 0.992 : 0.982;
+                ball.vx *= drag;
+                ball.vy *= drag;
+                
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+                
+                // 边界反弹
+                const bounce = ball.state === 'breakthrough' ? 0.94 : 0.88;
+                if (ball.x < ball.radius) {
+                    ball.x = ball.radius;
+                    ball.vx = Math.abs(ball.vx) * bounce;
+                }
+                if (ball.x > app.screen.width - ball.radius) {
+                    ball.x = app.screen.width - ball.radius;
+                    ball.vx = -Math.abs(ball.vx) * bounce;
+                }
+                if (ball.y < ball.radius) {
+                    ball.y = ball.radius;
+                    ball.vy = Math.abs(ball.vy) * bounce;
+                }
+                if (ball.y > app.screen.height - ball.radius) {
+                    ball.y = app.screen.height - ball.radius;
+                    ball.vy = -Math.abs(ball.vy) * bounce;
+                }
+                
+                // 更新图形
+                ball.graphic.x = ball.x;
+                ball.graphic.y = ball.y;
+                ball.effectLayer.x = ball.x;
+                ball.effectLayer.y = ball.y;
+                
+                // 检查碰撞
+                checkCollisions(ball, i);
+            }
+        }
+        
+        function executeFleeBehavior(blueBall, redThreats) {
+            let fleeX = 0, fleeY = 0;
+            let maxForce = 0;
+            
+            redThreats.forEach(threat => {
+                const force = 1.0 - (threat.dist / BLUE_DANGER_DISTANCE);
+                if (force > 0) {
+                    let threatMultiplier = 1.0;
+                    if (threat.ball.isDashing) threatMultiplier = 2.5;
+                    else if (threat.ball.isInSurround) threatMultiplier = 2.0;
+                    
+                    const threatSpeed = Math.sqrt(threat.ball.vx * threat.ball.vx + threat.ball.vy * threat.ball.vy);
+                    const speedFactor = 1.0 + threatSpeed * 0.6;
+                    
+                    fleeX -= (threat.dx / threat.dist) * force * speedFactor * threatMultiplier;
+                    fleeY -= (threat.dy / threat.dist) * force * speedFactor * threatMultiplier;
+                    maxForce = Math.max(maxForce, force);
+                }
+            });
+            
+            if (maxForce > 0) {
+                const fleeMagnitude = Math.sqrt(fleeX * fleeX + fleeY * fleeY);
+                if (fleeMagnitude > 0) {
+                    // 向白球移动
+                    whiteBalls.forEach(whiteBall => {
+                        const dx = whiteBall.x - blueBall.x;
+                        const dy = whiteBall.y - blueBall.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < 240 && dist > 50) {
+                            let whiteSafety = 1.0;
+                            redThreats.forEach(threat => {
+                                const dxToWhite = whiteBall.x - threat.ball.x;
+                                const dyToWhite = whiteBall.y - threat.ball.y;
+                                const distToWhite = Math.sqrt(dxToWhite * dxToWhite + dyToWhite * dyToWhite);
+                                
+                                if (distToWhite < 110) whiteSafety -= 0.6;
+                            });
+                            
+                            if (whiteSafety > 0.4) {
+                                fleeX += (dx / dist) * 0.4;
+                                fleeY += (dy / dist) * 0.4;
+                            }
+                        }
+                    });
+                    
+                    const finalMagnitude = Math.sqrt(fleeX * fleeX + fleeY * fleeY);
+                    if (finalMagnitude > 0) {
+                        blueBall.ax = (fleeX / finalMagnitude) * blueBall.acceleration * 2.0;
+                        blueBall.ay = (fleeY / finalMagnitude) * blueBall.acceleration * 2.0;
+                    }
+                }
+            } else {
+                blueBall.ax = 0;
+                blueBall.ay = 0;
+            }
+        }
+        
+        function executeHuntBehavior(blueBall) {
+            if (!blueBall.targetWhiteBall || !whiteBalls.includes(blueBall.targetWhiteBall)) {
+                blueBall.state = 'wander';
+                blueBall.targetWhiteBall = null;
+                return;
+            }
+            
+            const target = blueBall.targetWhiteBall;
+            const dx = target.x - blueBall.x;
+            const dy = target.y - blueBall.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist > 0) {
+                let avoidX = 0, avoidY = 0;
+                
+                redBalls.forEach(ball => {
+                    if (ball.respawning || ball.cooldown > 0) return;
+                    
+                    const redDx = ball.x - blueBall.x;
+                    const redDy = ball.y - blueBall.y;
+                    const redDist = Math.sqrt(redDx * redDx + redDy * redDy);
+                    
+                    if (redDist < 130) {
+                        const force = 1 - (redDist / 130);
+                        avoidX -= (redDx / redDist) * force * 0.6;
+                        avoidY -= (redDy / redDist) * force * 0.6;
+                    }
+                });
+                
+                const combinedX = dx + avoidX * 90;
+                const combinedY = dy + avoidY * 90;
+                const combinedDist = Math.sqrt(combinedX * combinedX + combinedY * combinedY);
+                
+                if (combinedDist > 0) {
+                    blueBall.ax = (combinedX / combinedDist) * blueBall.acceleration * 1.4;
+                    blueBall.ay = (combinedY / combinedDist) * blueBall.acceleration * 1.4;
+                }
+                
+                if (dist < 60) {
+                    blueBall.ax *= 0.75;
+                    blueBall.ay *= 0.75;
+                }
+            }
+        }
+        
+        function executeWanderBehavior(blueBall) {
+            const centerX = app.screen.width / 2;
+            const centerY = app.screen.height / 2;
+            const toCenterX = centerX - blueBall.x;
+            const toCenterY = centerY - blueBall.y;
+            const toCenterDist = Math.sqrt(toCenterX * toCenterX + toCenterY * toCenterY);
+            
+            let wanderX = (Math.random() - 0.5) * 0.14;
+            let wanderY = (Math.random() - 0.5) * 0.14;
+            
+            if (toCenterDist > 280) {
+                wanderX += (toCenterX / toCenterDist) * 0.12;
+                wanderY += (toCenterY / toCenterDist) * 0.12;
+            }
+            
+            blueBall.ax = wanderX * blueBall.acceleration;
+            blueBall.ay = wanderY * blueBall.acceleration;
+        }
+        
+        function updateRedBalls() {
+            const now = Date.now();
+            
+            for (let i = redBalls.length - 1; i >= 0; i--) {
+                const ball = redBalls[i];
+                if (ball.respawning) continue;
+                
+                // 更新冲刺
+                if (RED_DASH_ENABLED) updateRedDash(ball);
+                
+                if (ball.cooldown > 0) {
+                    ball.cooldown -= 16;
+                    continue;
+                }
+                
+                // 边界检查
+                if (ball.x < -ball.radius * 3 || ball.x > app.screen.width + ball.radius * 3 ||
+                    ball.y < -ball.radius * 3 || ball.y > app.screen.height + ball.radius * 3) {
+                    ball.respawning = true;
+                    gameContainer.removeChild(ball.graphic);
+                    gameContainer.removeChild(ball.innerGraphic);
+                    respawnQueue.push({
+                        type: 'red',
+                        x: Math.random() * app.screen.width,
+                        y: Math.random() * app.screen.height,
+                        timestamp: now
+                    });
+                    continue;
+                }
+                
+                // 包围行为
+                if (ball.isInSurround && ball.surroundTarget) {
+                    const dx = ball.surroundTarget.x - ball.x;
+                    const dy = ball.surroundTarget.y - ball.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist > 6) {
+                        const modeConfig = RED_SURROUND_MODES[currentSurroundMode];
+                        const tightness = modeConfig ? modeConfig.tightness : 0.92;
+                        
+                        ball.ax = (dx / dist) * ball.acceleration * tightness * 1.2; // 增加包围加速度
+                        ball.ay = (dy / dist) * ball.acceleration * tightness * 1.2;
+                    } else {
+                        ball.ax = (Math.random() - 0.5) * 0.015;
+                        ball.ay = (Math.random() - 0.5) * 0.015;
+                    }
+                    
+                    // 包围时降低策略切换频率
+                    if (now - ball.lastStrategyChange > RED_STRATEGY_CHANGE_TIME * 1.2) {
+                        const strategies = ['direct', 'intercept', 'flank'];
+                        ball.strategy = strategies[Math.floor(Math.random() * strategies.length)];
+                        ball.innerGraphic.tint = getStrategyColor(ball.strategy);
+                        ball.lastStrategyChange = now;
+                    }
+                }
+                // 包抄行为
+                else if (ball.isFlanking && ball.flankTarget) {
+                    const dx = ball.flankTarget.x - ball.x;
+                    const dy = ball.flankTarget.y - ball.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist > 12) {
+                        ball.ax = (dx / dist) * ball.acceleration * 0.95;
+                        ball.ay = (dy / dist) * ball.acceleration * 0.95;
+                    }
+                }
+                // 正常追击 - 增强追击能力
+                else {
+                    if (!ball.isAggressive && Math.random() < 0.1) { // 减少不追击的时间
+                        ball.ax = (Math.random() - 0.5) * 0.025;
+                        ball.ay = (Math.random() - 0.5) * 0.025;
+                    } else {
+                        let targetX = mainBlueBall.x;
+                        let targetY = mainBlueBall.y;
+                        
+                        if (ball.strategy === 'intercept') {
+                            const predictTime = 0.8;
+                            targetX = mainBlueBall.x + mainBlueBall.vx * predictTime * 18;
+                            targetY = mainBlueBall.y + mainBlueBall.vy * predictTime * 18;
+                        } else if (ball.strategy === 'flank') {
+                            const angleToBlue = Math.atan2(mainBlueBall.y - ball.y, mainBlueBall.x - ball.x);
+                            const flankAngle = angleToBlue + (Math.PI / 4) * (Math.random() > 0.5 ? 1 : -1);
+                            const flankDistance = 115;
+                            targetX = mainBlueBall.x + Math.cos(flankAngle) * flankDistance;
+                            targetY = mainBlueBall.y + Math.sin(flankAngle) * flankDistance;
+                        } else if (ball.strategy === 'surround') {
+                            const baseAngle = Math.atan2(mainBlueBall.y - ball.y, mainBlueBall.x - ball.x);
+                            const packOffset = (ball.packId % 4) * (Math.PI / 4);
+                            const surroundAngle = baseAngle + packOffset;
+                            const surroundDistance = 95;
+                            targetX = mainBlueBall.x + Math.cos(surroundAngle) * surroundDistance;
+                            targetY = mainBlueBall.y + Math.sin(surroundAngle) * surroundDistance;
+                        }
+                        
+                        const dx = targetX - ball.x;
+                        const dy = targetY - ball.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist > 0) {
+                            // 增强追击加速度
+                            ball.ax = (dx / dist) * ball.acceleration * 1.4;
+                            ball.ay = (dy / dist) * ball.acceleration * 1.4;
+                        }
+                    }
+                    
+                    // 策略切换
+                    if (now - ball.lastStrategyChange > RED_STRATEGY_CHANGE_TIME) {
+                        const strategies = ball.isAggressive ? ['direct', 'intercept', 'flank', 'surround'] : ['flank', 'surround'];
+                        ball.strategy = strategies[Math.floor(Math.random() * strategies.length)];
+                        ball.innerGraphic.tint = getStrategyColor(ball.strategy);
+                        ball.lastStrategyChange = now;
+                    }
+                }
+                
+                // 更新物理
+                ball.vx += ball.ax;
+                ball.vy += ball.ay;
+                
+                const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+                if (speed > ball.maxSpeed) {
+                    ball.vx = (ball.vx / speed) * ball.maxSpeed;
+                    ball.vy = (ball.vy / speed) * ball.maxSpeed;
+                }
+                
+                ball.vx *= 0.978; // 减少速度衰减
+                ball.vy *= 0.978;
+                
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+                
+                // 边界反弹
+                const bounce = 0.84; // 增加反弹力
+                if (ball.x < ball.radius) {
+                    ball.x = ball.radius;
+                    ball.vx *= -bounce;
+                }
+                if (ball.x > app.screen.width - ball.radius) {
+                    ball.x = app.screen.width - ball.radius;
+                    ball.vx *= -bounce;
+                }
+                if (ball.y < ball.radius) {
+                    ball.y = ball.radius;
+                    ball.vy *= -bounce;
+                }
+                if (ball.y > app.screen.height - ball.radius) {
+                    ball.y = app.screen.height - ball.radius;
+                    ball.vy *= -bounce;
+                }
+                
+                // 更新图形
+                ball.graphic.x = ball.x;
+                ball.graphic.y = ball.y;
+                ball.innerGraphic.x = ball.x;
+                ball.innerGraphic.y = ball.y;
+                
+                // 冲刺特效
+                if (ball.isDashing) {
+                    const pulse = 4 * Math.sin(Date.now() / 50);
+                    ball.graphic.scale.set(1 + pulse * 0.06);
+                    ball.innerGraphic.scale.set(1 + pulse * 0.06);
+                } else {
+                    ball.graphic.scale.set(1);
+                    ball.innerGraphic.scale.set(1);
+                }
+            }
+        }
+        
+        function updateWhiteBalls() {
+            const now = Date.now();
+            
+            for (let i = whiteBalls.length - 1; i >= 0; i--) {
+                const ball = whiteBalls[i];
+                
+                let avoidX = 0, avoidY = 0;
+                let threatCount = 0;
+                
+                // 躲避蓝球
+                blueBalls.forEach(blueBall => {
+                    const dxBlue = blueBall.x - ball.x;
+                    const dyBlue = blueBall.y - ball.y;
+                    const distBlue = Math.sqrt(dxBlue * dxBlue + dyBlue * dyBlue);
+                    
+                    if (distBlue < WHITE_BALL_AVOID_DISTANCE) {
+                        const force = 1 - (distBlue / WHITE_BALL_AVOID_DISTANCE);
+                        avoidX -= (dxBlue / distBlue) * force * 1.6;
+                        avoidY -= (dyBlue / distBlue) * force * 1.6;
+                        threatCount++;
+                        ball.wandering = false;
+                    }
+                });
+                
+                // 躲避红球
+                redBalls.forEach(redBall => {
+                    if (redBall.respawning) return;
+                    
+                    const dxRed = redBall.x - ball.x;
+                    const dyRed = redBall.y - ball.y;
+                    const distRed = Math.sqrt(dxRed * dxRed + dyRed * dyRed);
+                    
+                    const avoidDistance = redBall.isDashing ? 
+                        WHITE_BALL_AVOID_DISTANCE * 1.5 : 
+                        WHITE_BALL_AVOID_DISTANCE * 1.2;
+                    
+                    if (distRed < avoidDistance) {
+                        const force = 1 - (distRed / avoidDistance);
+                        avoidX -= (dxRed / distRed) * force * (redBall.isDashing ? 1.4 : 1.0);
+                        avoidY -= (dyRed / distRed) * force * (redBall.isDashing ? 1.4 : 1.0);
+                        threatCount++;
+                        ball.wandering = false;
+                    }
+                });
+                
+                if (threatCount > 0) {
+                    ball.fleeing = true;
+                    const avoidLength = Math.sqrt(avoidX * avoidX + avoidY * avoidY);
+                    if (avoidLength > 0) {
+                        const targetVx = (avoidX / avoidLength) * WHITE_BALL_MAX_AVOID_SPEED;
+                        const targetVy = (avoidY / avoidLength) * WHITE_BALL_MAX_AVOID_SPEED;
+                        ball.vx = ball.vx * 0.65 + targetVx * 0.35;
+                        ball.vy = ball.vy * 0.65 + targetVy * 0.35;
+                    }
+                } else {
+                    ball.fleeing = false;
+                    ball.wandering = true;
+                    
+                    if (Math.random() < WHITE_WANDER_CHANGE) {
+                        ball.wanderDirection += (Math.random() - 0.5) * Math.PI * 0.5;
+                        ball.lastWanderChange = now;
+                    }
+                    
+                    const targetVx = Math.cos(ball.wanderDirection) * WHITE_BALL_SPEED;
+                    const targetVy = Math.sin(ball.wanderDirection) * WHITE_BALL_SPEED;
+                    ball.vx = ball.vx * 0.75 + targetVx * 0.25;
+                    ball.vy = ball.vy * 0.75 + targetVy * 0.25;
+                }
+                
+                const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+                if (speed > WHITE_BALL_MAX_AVOID_SPEED) {
+                    ball.vx = (ball.vx / speed) * WHITE_BALL_MAX_AVOID_SPEED;
+                    ball.vy = (ball.vy / speed) * WHITE_BALL_MAX_AVOID_SPEED;
+                }
+                
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+                
+                const bounce = 0.86;
+                if (ball.x < ball.radius) {
+                    ball.x = ball.radius;
+                    ball.vx = Math.abs(ball.vx) * bounce;
+                }
+                if (ball.x > app.screen.width - ball.radius) {
+                    ball.x = app.screen.width - ball.radius;
+                    ball.vx = -Math.abs(ball.vx) * bounce;
+                }
+                if (ball.y < ball.radius) {
+                    ball.y = ball.radius;
+                    ball.vy = Math.abs(ball.vy) * bounce;
+                }
+                if (ball.y > app.screen.height - ball.radius) {
+                    ball.y = app.screen.height - ball.radius;
+                    ball.vy = -Math.abs(ball.vy) * bounce;
+                }
+                
+                ball.graphic.x = ball.x;
+                ball.graphic.y = ball.y;
+                ball.innerGraphic.x = ball.x;
+                ball.innerGraphic.y = ball.y;
+                ball.innerGraphic.tint = ball.fleeing ? 0xff6b6b : (ball.wandering ? 0xa0d8ff : 0x00a8ff);
+                
+                // 高吸引力特效
+                if (ball.attractValue > 1.4) {
+                    const pulse = 2.5 * Math.sin(Date.now() / 450);
+                    ball.graphic.scale.set(1 + pulse * 0.06);
+                    ball.innerGraphic.scale.set(1 + pulse * 0.06);
+                }
+            }
+        }
+        
+        function checkCollisions(blueBall, blueIndex) {
+            const now = Date.now();
+            
+            // 每25ms检查一次碰撞（性能优化）
+            if (now - blueBall.lastCollisionCheck < 25) return;
+            blueBall.lastCollisionCheck = now;
+            
+            // 与红球碰撞
+            for (let i = 0; i < redBalls.length; i++) {
+                const ball = redBalls[i];
+                if (ball.respawning || ball.cooldown > 0) continue;
+                
+                const dx = blueBall.x - ball.x;
+                const dy = blueBall.y - ball.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < blueBall.radius + ball.radius) {
+                    handleBlueRedCollision(blueBall, ball, i, blueIndex);
+                }
+            }
+            
+            // 与白球碰撞
+            for (let i = 0; i < whiteBalls.length; i++) {
+                const ball = whiteBalls[i];
+                
+                const dx = blueBall.x - ball.x;
+                const dy = blueBall.y - ball.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < blueBall.radius + ball.radius) {
+                    handleBlueWhiteCollision(blueBall, ball, i);
+                }
+            }
+        }
+        
+        function handleBlueRedCollision(blueBall, redBall, redIndex, blueIndex) {
+            const now = Date.now();
+            
+            // 伤害计算 - 增强伤害
+            let damage = 1;
+            if (redBall.isDashing) damage = 3; // 增加冲刺伤害
+            else if (redBall.isInSurround) damage = 2; // 增加包围伤害
+            
+            blueBall.lives -= damage;
+            
+            // 红球冷却
+            redBall.lastAttackTime = now;
+            redBall.cooldown = RED_COOLDOWN_AFTER_ATTACK;
+            
+            // 结束冲刺
+            if (redBall.isDashing) endRedDash(redBall);
+            
+            // 碰撞反弹
+            const pushAngle = Math.atan2(blueBall.y - redBall.y, blueBall.x - redBall.x);
+            const pushForce = 2.8; // 增加碰撞力
+            blueBall.vx += Math.cos(pushAngle) * pushForce;
+            blueBall.vy += Math.sin(pushAngle) * pushForce;
+            
+            redBall.vx = -Math.cos(pushAngle) * 1.8; // 增加红球反弹
+            redBall.vy = -Math.sin(pushAngle) * 1.8;
+            
+            // 紧张度增加
+            tension = Math.min(TENSION_MAX, tension + 6);
+            
+            if (blueBall.lives <= 0) {
+                gameContainer.removeChild(blueBall.graphic);
+                gameContainer.removeChild(blueBall.lifeText);
+                gameContainer.removeChild(blueBall.effectLayer);
+                blueBalls.splice(blueIndex, 1);
+                
+                if (blueBalls.length === 0) {
+                    gameOver();
+                    return;
+                } else {
+                    const remainingBall = blueBalls[0];
+                    remainingBall.isMain = true;
+                    remainingBall.lives = Math.max(1, remainingBall.lives);
+                    mainBlueBall = remainingBall;
+                }
+            }
+            
+            // 红球重生
+            redBall.respawning = true;
+            gameContainer.removeChild(redBall.graphic);
+            gameContainer.removeChild(redBall.innerGraphic);
+            respawnQueue.push({
+                type: 'red',
+                x: Math.random() * app.screen.width,
+                y: Math.random() * app.screen.height,
+                timestamp: now
+            });
+        }
+        
+        function handleBlueWhiteCollision(blueBall, whiteBall, whiteIndex) {
+            blueBall.lives = Math.min(20, blueBall.lives + 1);
+            
+            gameContainer.removeChild(whiteBall.graphic);
+            gameContainer.removeChild(whiteBall.innerGraphic);
+            whiteBalls.splice(whiteIndex, 1);
+            respawnQueue.push({
+                type: 'white',
+                x: 0, y: 0,
+                timestamp: Date.now()
+            });
+            
+            blueBall.vx *= 1.3; // 减少吃到白球的速度加成
+            blueBall.vy *= 1.3;
+            tension = Math.max(0, tension - 10);
+        }
+        
+        function handleBoundaries() {
+            for (let i = whiteBalls.length - 1; i >= 0; i--) {
+                const ball = whiteBalls[i];
+                if (ball.x < -ball.radius * 6 || ball.x > app.screen.width + ball.radius * 6 ||
+                    ball.y < -ball.radius * 6 || ball.y > app.screen.height + ball.radius * 6) {
+                    gameContainer.removeChild(ball.graphic);
+                    gameContainer.removeChild(ball.innerGraphic);
+                    whiteBalls.splice(i, 1);
+                    respawnQueue.push({
+                        type: 'white',
+                        x: 0, y: 0,
+                        timestamp: Date.now()
+                    });
+                }
+            }
+        }
+
+        // ==================== 分裂系统 ====================
+        function splitBlueBall(originalBall) {
+            const now = Date.now();
+            
+            const angle1 = Math.random() * Math.PI * 2;
+            const angle2 = angle1 + Math.PI;
+            
+            const ball1 = createBlueBall(originalBall.x, originalBall.y, true);
+            ball1.lives = Math.max(1, Math.floor(originalBall.lives / 2));
+            ball1.vx = Math.cos(angle1) * BLUE_BALL_MAX_SPEED * BLUE_SPLIT_SPEED_BOOST;
+            ball1.vy = Math.sin(angle1) * BLUE_BALL_MAX_SPEED * BLUE_SPLIT_SPEED_BOOST;
+            ball1.lastSplitTime = now;
+            ball1.state = 'split';
+            ball1.splitFrom = originalBall.id;
+            
+            const ball2 = createBlueBall(originalBall.x, originalBall.y, false);
+            ball2.lives = Math.max(1, originalBall.lives - ball1.lives);
+            ball2.vx = Math.cos(angle2) * BLUE_BALL_MAX_SPEED * BLUE_SPLIT_SPEED_BOOST;
+            ball2.vy = Math.sin(angle2) * BLUE_BALL_MAX_SPEED * BLUE_SPLIT_SPEED_BOOST;
+            ball2.lastSplitTime = now;
+            ball2.state = 'split';
+            ball2.splitFrom = originalBall.id;
+            
+            const index = blueBalls.indexOf(originalBall);
+            if (index !== -1) {
+                gameContainer.removeChild(originalBall.graphic);
+                gameContainer.removeChild(originalBall.lifeText);
+                gameContainer.removeChild(originalBall.effectLayer);
+                blueBalls.splice(index, 1);
+            }
+            
+            mainBlueBall = ball1;
+            
+            setTimeout(() => {
+                ball1.state = 'wander';
+                ball2.state = 'wander';
+            }, 2000);
+        }
+
+        // ==================== UI更新 ====================
+        function updateUI() {
+            const totalLives = blueBalls.reduce((sum, ball) => sum + ball.lives, 0);
+            
+            uiTexts.lives.text = `生命值: ${totalLives}`;
+            uiTexts.redCount.text = `红球数量: ${redBalls.filter(b => !b.respawning).length}`;
+            uiTexts.whiteCount.text = `白球数量: ${whiteBalls.length}`;
+            uiTexts.gameTime.text = `游戏时间: ${gameTime}秒`;
+            uiTexts.tension.text = `紧张度: ${Math.floor(tension)}%`;
+            
+            // 包围信息
+            const surroundInfo = currentSurroundMode ? 
+                `${currentSurroundMode} (${surroundFormation})` : '无';
+            uiTexts.surroundMode.text = `包围模式: ${surroundInfo}`;
+            uiTexts.formation.text = `阵型: ${surroundFormation || '无'}`;
+            
+            // 突围信息
+            const breakthroughAvailable = blueBreakthroughCooldown <= 0;
+            const breakthroughText = breakthroughAvailable ? 
+                '可用' : `冷却: ${Math.ceil(blueBreakthroughCooldown/1000)}秒`;
+            uiTexts.breakthrough.text = `突围: ${breakthroughText}`;
+            
+            // 更新蓝球生命值文本
+            blueBalls.forEach(ball => {
+                ball.lifeText.text = ball.lives.toString();
+                ball.lifeText.x = ball.x;
+                ball.lifeText.y = ball.y;
+            });
+            
+            // 性能监控
+            if (statsText.visible) {
+                statsText.text = `FPS: ${Math.round(app.ticker.FPS)} | 粒子: ${performanceStats.particles}`;
+                statsText.x = app.screen.width - 120;
+            }
+        }
+
+        // ==================== 游戏控制 ====================
+        function gameOver() {
+            gameActive = false;
+            gameOverText.visible = true;
+            
+            clearInterval(redSpawnTimer);
+            clearInterval(whiteSpawnTimer);
+            clearInterval(statsTimer);
+            
+            setTimeout(() => {
+                initGame();
+                redSpawnTimer = setInterval(spawnRedBall, RED_BALL_SPAWN_INTERVAL);
+                whiteSpawnTimer = setInterval(spawnWhiteBall, WHITE_BALL_SPAWN_INTERVAL);
+                statsTimer = setInterval(updateStats, 1000);
+            }, GAME_RESTART_DELAY);
+        }
+        
+        function initGame() {
+            gameActive = true;
+            gameStartTime = Date.now();
+            gameTime = 0;
+            tension = 0;
+            
+            // 重置状态
+            currentSurroundMode = null;
+            surroundFormation = null;
+            lastFormationChange = Date.now();
+            surroundAngleOffset = 0;
+            surroundSpiralOffset = 0;
+            isSurroundActive = false;
+            activeDashingRedBalls = 0;
+            blueBreakthroughCooldown = 0;
+            
+            // 清空容器
+            gameContainer.removeChildren();
+            tensionLayer.clear();
+            surroundLayer.clear();
+            
+            // 重新添加容器
+            app.stage.addChild(gameContainer);
+            app.stage.addChild(tensionLayer);
+            app.stage.addChild(surroundLayer);
+            
+            // 清空数组
+            blueBalls.length = 0;
+            redBalls.length = 0;
+            whiteBalls.length = 0;
+            respawnQueue.length = 0;
+            
+            // 创建初始球体
+            mainBlueBall = createBlueBall(app.screen.width / 2, app.screen.height / 2, true);
+            
+            for (let i = 0; i < INITIAL_RED_BALLS; i++) {
+                spawnRedBall();
+            }
+            
+            // 初始化UI
+            gameOverText.visible = false;
+            updateUI();
+        }
+        
+        function updateStats() {
+            if (debugMode) {
+                performanceStats.fps = Math.round(app.ticker.FPS);
+            }
+        }
+
+        // ==================== 游戏主循环 ====================
+        function gameLoop() {
+            update();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // ==================== 启动游戏 ====================
+        initGame();
+        redSpawnTimer = setInterval(spawnRedBall, RED_BALL_SPAWN_INTERVAL);
+        whiteSpawnTimer = setInterval(spawnWhiteBall, WHITE_BALL_SPAWN_INTERVAL);
+        statsTimer = setInterval(updateStats, 1000);
+        gameLoop();
+        
+        // ==================== 事件监听 ====================
+        window.addEventListener('resize', () => {
+            app.renderer.resize(window.innerWidth, window.innerHeight);
+            
+            // 更新UI位置
+            uiBackground.clear();
+            uiBackground.beginFill(0x000000, 0.6);
+            uiBackground.drawRoundedRect(8, 8, 190, 165, 6);
+            uiBackground.endFill();
+            
+            gameOverText.position.set(app.screen.width / 2, app.screen.height / 2);
+            statsText.x = app.screen.width - 120;
+        });
+        
+        window.addEventListener('keydown', (e) => {
+            // 调试模式
+            if (e.key === 'd' || e.key === 'D') {
+                debugMode = !debugMode;
+                statsText.visible = debugMode;
+            }
+            
+            // 强制突围（测试用）
+            if ((e.key === 'b' || e.key === 'B') && mainBlueBall && blueBreakthroughCooldown <= 0) {
+                const threats = redBalls
+                    .filter(b => !b.respawning && !b.cooldown)
+                    .map(ball => {
+                        const dx = ball.x - mainBlueBall.x;
+                        const dy = ball.y - mainBlueBall.y;
+                        return {ball, dist: Math.sqrt(dx*dx + dy*dy), dx, dy};
+                    });
+                
+                const weakPoint = findWeakPoint(mainBlueBall, threats);
+                if (weakPoint) executeBreakthrough(mainBlueBall, weakPoint);
+            }
+            
+            // 分裂测试
+            if ((e.key === 's' || e.key === 'S') && mainBlueBall && mainBlueBall.lives > 1) {
+                splitBlueBall(mainBlueBall);
+            }
+        });
+    </script>
+</body>
+</html>
