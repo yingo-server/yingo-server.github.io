@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字醒 - 名言展示器</title>
+    <!-- 引入html2canvas库用于保存图片 -->
+    <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            background-image: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            color: #2c3e50;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+        
+        .quote-box {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #eaeaea;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .quote-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+        }
+        
+        .time-stamp {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            background-color: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+        
+        .quote-content {
+            margin: 40px 0 60px;
+            font-size: 1.4rem;
+            line-height: 1.8;
+            text-align: justify;
+            color: #2c3e50;
+            min-height: 200px;
+        }
+        
+        .save-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 10px 24px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+        }
+        
+        .save-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .save-button:active {
+            transform: translateY(0);
+        }
+        
+        .save-button svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .refresh-info {
+            text-align: center;
+            margin-top: 20px;
+            color: #95a5a6;
+            font-size: 0.9rem;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #95a5a6;
+            font-size: 0.85rem;
+        }
+        
+        .quote-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .quote-index {
+            font-weight: 500;
+        }
+        
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .refresh-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #2ecc71;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .quote-box {
+                padding: 30px 20px;
+            }
+            
+            .quote-content {
+                font-size: 1.2rem;
+                margin: 30px 0 50px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .quote-content {
+                font-size: 1.1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .save-button {
+                padding: 8px 18px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* 消息提示样式 */
+        .message-popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background-color: #2ecc71;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            font-weight: 500;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
+        }
+        
+        .message-popup.error {
+            background-color: #e74c3c;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>字醒</h1>
+            <p>名言警句 · 每日启示</p>
+        </div>
+        
+        <div class="quote-box" id="quoteBox">
+            <div class="time-stamp" id="timeStamp"></div>
+            
+            <div class="quote-content" id="quoteContent">
+                <!-- 名言内容将通过JavaScript动态加载 -->
+            </div>
+            
+            <div class="quote-meta">
+                <div class="quote-index" id="quoteIndex"></div>
+                <div class="auto-refresh">
+                    <div class="refresh-indicator"></div>
+                    <span>每3分钟自动刷新</span>
+                </div>
+            </div>
+            
+            <button class="save-button" id="saveButton">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M5 4v14l7-7 7 7V4H5zm15-2H4v18.59l5.5-5.5 7.5 7.5 5.5-5.5V2z"/>
+                </svg>
+                保存图片
+            </button>
+        </div>
+        
+        <div class="refresh-info">
+            <p>下一句名言将在 <span id="countdown">180</span> 秒后自动刷新</p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 字醒</p>
+        </div>
+    </div>
+
+    <script>
+        // 名言数组（使用您提供的最新版本）
+        const quotes = [
+            "风向是会转变的，终有一天会吹向更加光亮的地方。所以，带着我的祝福，活的更加从容一些吧。",
+            "旅行者，当你重新踏上旅途之后，一定要记得旅途本身的意义。这片大陆的飞鸟、诗歌和城邦，女王、愚者和怪物......都是你旅途的一部分。终点并不意味着一切，在抵达终点之前，用你的眼睛，多多观察这个世界吧…",
+            "复白亘古事，诗人起歌喉。众神居尘世，人间几春秋。",
+            "那就让我再次加入你的旅程吧，你的诗篇，值得对我这个世上最好的吟游诗人传唱。",
+            "最初的鸟儿是不会飞翔的,飞翔是它们勇敢跃入峡谷的奖励,重要的不是强风,而是勇气,是它让你们成为世上最初的飞鸟。",
+            "在黎明到来之前，必需有人稍微照亮黑暗。",
+            "只要坚信自己的道路，就无所谓天气是晴是雨。",
+            "前方会有什么，我很少会思考这种问题，我必须前进，不论有谁阻挡在我面前，破晓将至。",
+            "正因为无法更改，无法违逆，只能接受，命运才被称之为命运。",
+            "在这个真实得太过分的世界里，每个人都需要仰望星空，就算我们不抬头仰望，星空，也永远注视着我们。",
+            "用自己的双脚丈量土地，将未知变为知识。",
+            "若凡事都要先考虑摩拉，也就等同于凡事都被摩拉束缚了手脚。",
+            "仙家的时代已经过去了，如果连统治阶层都不敢正视这一点，那这座城市的未来要怎么办啊?",
+            "契约既成，食言者当受严惩。",
+            "一切力量皆有其代价,一千种权力伴随着一千种责任。",
+            "感故人之恩，承旧友之情，追千古之意，环千秋之城。",
+            "见证者为见证而来；铭记者，因铭记而生。",
+            "朋友，假使有一日不得不同你相别，你在我的记忆中也会如黄金般闪耀。",
+            "时间拥有强大的力量，历史会在岁月中扭曲。",
+            "欲买桂花同载酒，只可惜故人，何日再见呢？",
+            "旅程总有一天会迎来终点，不必匆忙。",
+            "天动万象，山海化形，荒地生星，璨如烈阳",
+            "赌徒永远会把希望寄托在下一颗骰子上...但最后赚钱的，当然是从来不碰骰子的庄家。",
+            "纵使古玩价值连城，给人的快乐不过刚拥有时的一瞬。",
+            "我第一次明白，人们不总是照着灯塔的指引前进，即使前方黑暗又危险，他们也毅然扬帆远航。",
+            "风雨犹祝,山海同欢，是承天地之佑;星移斗转，沧海桑田，烟火人间依旧;功名在我，百岁千秋，毋忘秉烛夜游",
+            "心有所向，日复一日，必有精进。",
+            "今古诸事，激荡中流，宏图待看新秀。",
+            "如遇失道旷野之难，路遭贼人之难，水火刀兵之难，鬼神药毒之难，恶兽毒虫之难，冤家恶人之难，便呼我名。某位仙家，听召，前来守护。",
+            "惊涛入海觅之螭虎，风雪归山斩妖邪。",
+            "人这一辈子这么短，趁着还活着抓紧时间好好享受生活。",
+            "阴阳有序，命运无常，生老病死，天地万象，尽在吾辈。",
+            "改革自我，改革命运，告别懦弱和退让。风雨中绝不熄灭的烛火，岩洞下在永远沸腾的岩浆，无人可挡，无法停止的气魄，这才是我的摇滚。",
+            "哪怕无法改变事实，我也绝不能待在迷雾中。",
+            "心移斗转，沧海桑田，烟火人间依旧。",
+            "总会有地上的生灵，敢于直面雷霆的威光。",
+            "天高散孤云，落日澄空故乡影，飘摇游子心。",
+            "接引春雷焚身骨，化灰以养万类荣。",
+            "拾花鸟之一趣，照月风之长路。",
+            "深山踏红叶，耳畔闻鹿鸣，我很喜欢枫叶，可惜枫叶红时总多离别。",
+            "飘摇风雨中，睹物思故乡，深山踏红叶，耳畔闻鹿鸣，流光换日月，鹤归云起庆生时，异乡有故知。",
+            "人们所展现出来的，从来都是自己想展现出来的一面，这点我可清楚得很。所以，无论哪一面都是真正的自我，只是人们总喜欢无意义的去定义罢了。",
+            "你知道制定计划之前，最重要的事是什么吗？是认清时局。",
+            "人们总是喜欢相信自己愿意相信的事情，所以有些事，可能只是你不愿看到而已。",
+            "人类很有趣，所以我才如此喜欢人类，明明生命短暂，却能散发映昼光辉。",
+            "烟花易逝，人情长存。",
+            "正是因为有大家的寄托，烟花才能以如此美妙的姿态一直存在下去吧。",
+            "烟花易逝，人情长存，正是因为我们都是须臾之人，而更需要纪念须臾的美好。",
+            "想要留住雪花，但在手心里，他只会融化的更快。",
+            "浮世景色百千年依旧，人之在世却如白露与泡影。",
+            "浮世景色百千年依旧，人之在世却如白露与泡影虚无。",
+            "无人相陪，此般花鸟鸟余情，也不过衬托我身，不移不变的背景罢了。",
+            "人生在世，谁都不能保证遇到困难时，会有人对自己出手相助。",
+            "雪霁银装素，桔高映琼枝，若知是梦何须醒，不比真如一相会。",
+            "当你无法理解一名学者的行动时候,绝大多数情况都可以用好奇心来解释,这是一条定律。",
+            "学术、知识...一切事物都有边界，一旦跨越边界，万物运行的规则和秩序都会被破坏。",
+            "凡事要先骗过自己，自我鼓励偶尔也会成为欺骗，有用就行。",
+            "明天会到来，这件事对所有人来讲都是常识。但其实明天是否真的会到来，只有身处明天的你才知道。",
+            "想象，便是突破那些习以为常的事物。",
+            "先否定一些不可行的方案，会让即将提出要施行的计划变得更有分量。",
+            "很多人在面临复杂的立场问题的时候，会选择充耳不闻并且随波逐流，直到事情变得不可挽回。",
+            "世上可以感受到的一切，可以认知的一切，在人们身上已经发生过的一切，都是知识。",
+            "即便是没有月亮的夜晚，一众星光亦足以刺破虚幻与谎言。",
+            "种籽萌发，破土生根。幼苗拔高，开枝展叶。花蕾满枝，杏雨梨云。硕果丰熟，来日更盛。",
+            "我们是学者，学者的本职工作是跟知识打交道，而不是回应他人的期待。",
+            "所以在我看来，任何生命都是很重要的。理解生命的首要前提是尊重生命。",
+            "生命不是消耗品。知识也不该成为王冠与权杖。",
+            "不要害怕犯错，犯错也是学习过程中的一环。",
+            "知识的价值，是不能用金钱简单衡量的。",
+            "我觉得你也可以找一个更明确的目标，这样应该会好一些，总要试一试，试一试发现做不到，再放弃也不迟",
+            "很多事总要学着去做,做过了就会发现其实也就那样。",
+            "将自己置于其他生命之上,怀着不纯的目的去研究纯粹的生命,真的能取得什么成果吗？",
+            "我身上并没有什么压力，首先投射在你身上的期待未必都是善意的。真正愿意为你考虑的人，不会希望你勉强自己。",
+            "任何生命诞生在世上都有意义,它也不例外。既然存在,就不该被随意抛弃或销毁。",
+            "将树叶夹在干燥的纸页之间简单压制，就能做成好看又好用的书签了。",
+            "我认为人与人之间相互了解的最好办法就是多花时间相处，其他的都不实际；所以不必急着自我介绍，时间会沉淀一切。",
+            "哎，有时还挺羡慕那些什么都搞不清楚，还敢到处乱摸乱吃的家伙——在他们的世界里，一定处处都有奇迹发生吧？",
+            "执着于注定不属于自己的事物，只是在浪费时间。",
+            "快乐和放松是每个人都需要的东西，管他什么孩子大人的。",
+            "希望是一次寂静的旅途。",
+            "如果决定本身充满弹性,就相当于一开始就找好了后路,那还不如不要做这样的决定。",
+            "法律只裁定罪行,并不度量感情,如果说判决能让有罪无罪的争议尘埃落定，那当事人充沛的感情最终会流向哪里呢?",
+            "旧的土壤仍能开出新的繁花。",
+            "举起双手,有时可并不代表投降。",
+            "我很喜欢幽光星星，这种生物在无人注视的地方也能发出自己的光亮，是我心目中最真实的明星。如果有让幽光星星当主角的歌剧就好了，我可以真情实感地在舞台上演绎一只可爱的离群海星。",
+            "即便承受了许多痛苦与孤独,她也不曾质疑世界的美好。",
+            "欢迎来到水的国度，我将承认你们旅途的价值与意义，现在，你们可以尽情欢呼了。",
+            "虽然我尽经卸下扮演神明的职责,但岁月留下的沉淀可不会轻易地流逝。",
+            "我愿意，因为我爱他们。",
+            "一个人救了另一个人,这是事实,可离去和归来怎么都不能算是交换。",
+            "迈勒斯和西尔弗不是作为救了谁的代价，他们只是成为了英雄。",
+            "互相帮助是良性发展的必然法则之一。",
+            "一个强有为的组织无论做好事还是坏事,它的行动力不会变。",
+            "我的故事已然落幕，接下来开场的是我们的故事了……",
+            "在人的社会中。你会见到许多开心的事，不开心的事。总有一天你会容纳足够多的过去。那时候，你将有资格代表历史。来审判一切。",
+            "坐在高高的位置往下看,眼里的东西都很片面。",
+            "感情最终都会回归人心，随时间逐渐沉淀。",
+            "几百年的时间,足以重新塑造一个人,哪怕原本的我并非如此。",
+            "命运真是完全不讲道理，也不遵守规则，仅仅作为预言开始的征兆,就要夺走那么多人的生命。",
+            "分担什么的，那也是根本做不到的事,从一开始就注定只有我自己来背负这份职责。",
+            "把答案留给时间去验证吧。",
+            "逃避往往是最方使的选择。但它没法解决任何问题，也不能帮助你跨越任障碍。",
+            "畏惧是小人物的举动。",
+            "想要用歌声打动观众,就要投入到自身的角色中,融入最充沛的感情。",
+            "这世间最为精彩的，不就是属于人类的爱恨情仇吗？",
+            "如果说神明的礼物是一只眼睛...那我确实不应该辜负它。",
+            "我是否已经到了极限呢…不，我应该很久很久以前就到极限了吧，今天的我就连自己落泪都察觉不到了。",
+            "好想要和人倾诉啊。哪怕一个人也好…可是，那样就前功尽弃了吧",
+            "几百年间我做了那么多调查，可没有任何突破预言的希望…",
+            "有的时候还得用实力让人冷静下来听自己说话。",
+            "她做的那些事并不能证明她自我认定为某个群体的一份子。她仅仅是作为一个个体。对他人投以温柔的援手。",
+            "生和死，往往只有一念之差。",
+            "预言或许很重要,可一个人又怎么能被几句话彻底控制生活呢？",
+            "你不能失去信心，你要相信，眼前看到的一切还不是定局。",
+            "不挣扎到最后一刻。怎么能坦然面对结局。",
+            "就像人类吃饭一样，明天也许吃不到，但今天能吃。就要继续吃。人们管这个叫生活。",
+            "大部分人预料不到自己在最险恶的一刻会做什么。与其想那些事情想破头，还不如顺其自然。",
+            "人活着，本是一种祝福。但人一旦死后,他曾经与这个世界千丝万缕的联系，都将变成诅咒。",
+            "一切都已经被淹没了,只有你,还陪着我了。所以说啊,命运虽然喜欢和你开玩笑…但唯独命运不会欺骗你。除非...是你先欺骗了..命运。",
+            "没想到你会对我的事这么上心，这是否意味着你仍然需要我的力量呢?然而如今的我...或许无法给你足够的回报。你说看重的是我本人？既然这样，就让你我共同出演我们的未来吧。",
+            "每个人都不会讨厌精致的糕点，但想要做到让我喜欢的程度,还需要多多努力才行。听好了，甜品就像歌剧，从选角到布景都需要花费心思，才能在最后的演出中大放异彩!",
+            "人们很喜欢谈论过去，为那些逝去的美好感到惋惜；也很喜欢谈论未来,仿佛为了缥缈的明天可以牺牲一切。我并不认同他们的做法，但也感到非常羡慕：因为我曾经生活在既没有过去、也没有未来的世界里。为了应对那种恐慌，我尝试塑造并扮演了一个更坚强、更像神明的自己,几百年的时间过去,我曾扮演的形象逐渐与真实的自己融为一体。如今连我也无法分辨...或许也没有分辨的必要了,过去的种种经历组成了现在的我，那场并不完美的演出也是我最重要的一部分啊。",
+            "当那古老的预言终结、一切落幕之后，我曾经陷入很长时间的消沉。站在舞台上的人受到观众的追捧，同时也承受着更多的注视与期待。但我很清楚，他们期待的并不是我，而是我扮演的那位神明...在这个过程中，我真正得到的只有孤独。所以我一度庆恶任何跟表演有关的事，把自己关在房间里，直到再次站上舞台、再次面对观众的时候，我才发现不知不觉我内心的不安已经消失了。现在的我可以坦然承受他们的目光,也许是因为…我终于开始扮演我自己了。",
+            "爱是难驯鸟，哀乞亦无用。女人均善变，仿若水中萍。秘密藏心间,无人知我名。若非处幽冥,怎知生可贵!诸君听我颂，共举爱之杯。",
+            "世间的奇遇之所以存在，就是为了给世人带来转机。",
+            "要让预言看似实现,我邀请了这位演员。来扮演预言中的神明。",
+            "五百年对乎她来说....是一场无比漫长，无比孤独，无比痛苦的…歌剧啊。",
+            "看起来行刑的时间就快到了呢,我这个罪人，也该准备谢幕了。",
+            "一直以来辛苦你了，请如我理想中那样，以人类的身份，幸福地活下去吧。",
+            "罪恶没有假期，正义便无暇休憩。",
+            "我既认可我自身工作的价值,也认同大众所作所为的意义。",
+            "不要有任何梦的涟漪撩拨你的心绪。",
+            "正义、公平、平等、法律，这几个概念互相之间其实无法等同。",
+            "既然你是天地外之人，那就由你见证吧。",
+            "时代已然错乱脱节,而我就是为了扭整乾坤而生。",
+            "人习惯将自己与自然对立。此时总会有人出来呼吁人也是自然的一部分。",
+            "人类的文明世界和这个星球的自然，应该算是需要寻求共处之道吧。",
+            "每一个站在舞台上的人，都要竭尽全力扮演好自己的角色个为观众等来一场盛宴。",
+            "太阳下山之后，人们内心潜藏的欲望，就会浮上水面。",
+            "拥有力量就会拥有更多底牌，就能在危急情况下保护重要的人。",
+            "人是很复杂的生物，即便不是有意欺瞒，也会不自觉地隐藏自己的真实一面。",
+            "人的精神和弓弦一样，如果一直绷得太紧，就会有断裂的风险。",
+            "越是想要隐藏，秘密就暴露得越快。",
+            "甜美的浆果通常出没于荆棘丛生之地，不然就会被馋嘴的狐狸一口吃完...这都是为了保护自己呀！",
+            "魔法不仅是一种表演形式，也是一种思维方式。世界上有很多看似平平无奇的东西，其中大有玄机。",
+            "保持忠诚之心，以及……守护我们的家。",
+            "家人，就是我们最宝贵的归宿。",
+            "没有父母遮风挡雨，从小流落街头的孤儿，总要经历比常人更多的磨难。",
+            "真实的我，并没有我所表现出得那么外向、健谈。更多时候,我是为了跟大家拉近关系，才使用了语言上的魔术。",
+            "无论我在何处漂流，只要那盏炉火亮着，我就有家可归。",
+            "既然你是我的同伴，那我们之间的联结，就比齿轮与机关更紧密了。",
+            "我会不惜一切地守护现在这个家，一丝一毫都不退让。",
+            "单一视角很容易被有针对性地蒙蔽，有时候换个视角才能拨云见日。",
+            "太阳之下无新事。",
+            "我喜欢力量和希望的信号，会让我感觉未来一切向好。这并非悲观，只是陈述事实，因为现实本就不可能一帆风顺。",
+            "某地的孩子是伴随着双亲的心愿与祝福诞生的，不过我愿意相信这世上的每一个人都是如此。",
+            "何必和自己的本心过不去呢?",
+            "记者并不是一个讨人喜欢的职业。毕竟就像那句话说的:谎言处处圆滑，真相棱角分明。",
+            "身为战士，要时刻把挑战之心系于刀尖之上。身为战士，要时刻把挑战之心系于刀尖之上，但无论胜败，都是无可替代的珍贵经历。",
+            "孩童时期的梦是最易碎的东西，即使不去管它也总有一天会自己碎掉。所以身为亲人，就应该努力的去守护吧",
+            "直到今天，你们仍然是我的荣耀。",
+            "我们都还没来得及说再见,所以，我不会把它当做离别。",
+            "谁也没有见过风，更别说你和我了；谁也没有见过爱情，直到有花束抛向自己。",
+            "于此浮世中，不独入寝可成梦，事事皆虚空。",
+            "在夜空所有星星熄灭的时候，所有梦想、所有溪流，都能汇入同一片大海中，那时我们终会相见.",
+            "唯有遵循应守之规律，人才能获得解开一切问题的方法。",
+            "风带来故事的种子，时间使其发芽；风带来了新的故事，时间使之成为神话。",
+            "如果有一天你遇到无法解决的难题，也别认为那就是人生的终点。",
+            "为什么人们总要证明自己的存在比他人更有意义呢?",
+            "举头望明月，万般感怀皆在其中。此情此景，犹如天星照我，愿逐月华。感故人之恩，承旧友之情，追千古之意，环千秋之城。以上种种，谓之逐月。",
+            "旅行总有一天会到达终点，不必匆忙。",
+            "我想要和你们一起旅行。去看看生命的小溪到海之前，会经历的夹岸繁花与天际云霞。",
+            "年年今日，灯明如昼。原火不灭，愿人依旧。",
+            "听凭风引，与风同行。",
+            "世事易变，匪石弗转。",
+            "与邪佞战斗的人，切莫失掉正直的心。",
+            "人间归离复归离，借一浮生逃浮生。",
+            "当你来到时间的尽头，便会与过去未来所有因缘之人重逢。",
+            "我们是不会分开的，对吗？我们还要一起走很远很远的路，度过好久好久的时光。",
+            "与君相别离，不知何日是归期，我如朝露转瞬兮。",
+            "诗文是传颂的心意，即便一切都将逝去，随风而行的诗歌，仍会将世间的一切美好传遍。",
+            "无论当下境遇如何，这片大陆的星空始终有你的位置。",
+            "心中净澈，万物天地皆为净。",
+            "在旅途的终点再见吧，去见证一切事物的沉淀。",
+            "我虽无意逐鹿，却知苍生苦处。",
+            "前方等待着他的将是一场史无前例的雷暴，这一次，他不会绕行。雨与雷与他，终将相会于命运聚散。",
+            "不奇怪吗？没有目的地的人，又何必在雨里赶路呢?既然不赶时间，又为什么冒雨走在野外?",
+            "曲高未必人不识，自有知音和清词。",
+            "今古诸事，激荡中流，宏图待看新秀。",
+            "我等必将复起，古木已发新枝。",
+            "只要不失去你的崇高，整个世界都会为你敞开。",
+            "凡人的想法就像冰层下的水…是不会永远坚固锐利的。",
+            "惊涛入海觅螭虎，风雪归山斩妖邪。",
+            "神明没有遗弃人，是人自己创造了业。",
+            "哪怕世界充满谎言与虚假，我也必须在里面找到属于我的真实"
+        ];
+
+        // 全局变量
+        let currentIndex = -1;
+        let usedIndices = []; // 记录已使用的索引，确保更均匀的随机性
+        let refreshInterval;
+        let countdownValue = 180; // 3分钟，单位：秒
+        let countdownInterval;
+        let html2canvasLoaded = false;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 更新当前时间
+            updateTime();
+            
+            // 获取DOM元素
+            const quoteContent = document.getElementById('quoteContent');
+            const quoteIndex = document.getElementById('quoteIndex');
+            const timeStamp = document.getElementById('timeStamp');
+            const saveButton = document.getElementById('saveButton');
+            const countdownElement = document.getElementById('countdown');
+            
+            // 检查html2canvas是否加载成功
+            checkHtml2Canvas();
+            
+            // 每次打开网页时刷新名言
+            refreshQuote();
+            
+            // 设置每3分钟自动刷新
+            startAutoRefresh();
+            
+            // 更新倒计时显示
+            countdownElement.textContent = countdownValue;
+            
+            // 开始倒计时
+            startCountdown();
+            
+            // 保存按钮点击事件
+            saveButton.addEventListener('click', saveAsImage);
+            
+            // 每秒钟更新时间
+            setInterval(updateTime, 1000);
+        });
+
+        // 检查html2canvas是否加载
+        function checkHtml2Canvas() {
+            if (typeof html2canvas === 'function') {
+                html2canvasLoaded = true;
+                console.log('html2canvas已加载');
+            } else {
+                console.warn('html2canvas未加载，尝试重新加载...');
+                loadHtml2Canvas();
+            }
+        }
+
+        // 动态加载html2canvas
+        function loadHtml2Canvas() {
+            const script = document.createElement('script');
+            script.src = 'https://html2canvas.maptalks.org/dist/html2canvas.min.js';
+            script.onload = function() {
+                html2canvasLoaded = true;
+                console.log('html2canvas动态加载成功');
+                showMessage('html2canvas加载成功，现在可以保存图片了');
+            };
+            script.onerror = function() {
+                console.error('html2canvas动态加载失败');
+                showMessage('html2canvas加载失败，无法保存图片', true);
+                document.getElementById('saveButton').disabled = true;
+                document.getElementById('saveButton').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>保存功能不可用';
+            };
+            document.head.appendChild(script);
+        }
+
+        // 刷新名言函数 - 改进的随机算法
+        function refreshQuote() {
+            const quoteContent = document.getElementById('quoteContent');
+            const quoteIndex = document.getElementById('quoteIndex');
+            
+            // 如果所有名言都已显示过，重置记录
+            if (usedIndices.length >= quotes.length) {
+                usedIndices = [];
+            }
+            
+            // 生成新的随机索引，确保不重复
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * quotes.length);
+                // 如果尝试了所有索引都重复，则重置记录
+                if (usedIndices.length > 0 && usedIndices.length < quotes.length) {
+                    let attempts = 0;
+                    while (usedIndices.includes(newIndex) && attempts < quotes.length * 2) {
+                        newIndex = Math.floor(Math.random() * quotes.length);
+                        attempts++;
+                    }
+                }
+            } while (usedIndices.includes(newIndex) && usedIndices.length < quotes.length);
+            
+            currentIndex = newIndex;
+            usedIndices.push(currentIndex);
+            
+            // 更新名言内容
+            quoteContent.textContent = quotes[currentIndex];
+            
+            // 更新名言索引
+            quoteIndex.textContent = `名言 ${currentIndex + 1} / ${quotes.length}`;
+            
+            // 重置倒计时
+            resetCountdown();
+            
+            // 添加淡入效果
+            quoteContent.style.opacity = '0';
+            setTimeout(() => {
+                quoteContent.style.transition = 'opacity 0.5s ease';
+                quoteContent.style.opacity = '1';
+            }, 50);
+        }
+
+        // 更新当前时间
+        function updateTime() {
+            const timeStamp = document.getElementById('timeStamp');
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                weekday: 'long'
+            };
+            timeStamp.textContent = now.toLocaleDateString('zh-CN', options);
+        }
+
+        // 开始自动刷新
+        function startAutoRefresh() {
+            // 清除已有的定时器
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+            
+            // 设置新的定时器（3分钟 = 180000毫秒）
+            refreshInterval = setInterval(refreshQuote, 180000);
+        }
+
+        // 开始倒计时
+        function startCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            countdownInterval = setInterval(() => {
+                countdownValue--;
+                document.getElementById('countdown').textContent = countdownValue;
+                
+                if (countdownValue <= 0) {
+                    resetCountdown();
+                }
+            }, 1000);
+        }
+
+        // 重置倒计时
+        function resetCountdown() {
+            countdownValue = 180;
+            document.getElementById('countdown').textContent = countdownValue;
+        }
+
+        // 保存为图片
+        async function saveAsImage() {
+            if (!html2canvasLoaded) {
+                showMessage('html2canvas未加载，无法保存图片', true);
+                return;
+            }
+            
+            const quoteBox = document.getElementById('quoteBox');
+            const saveButton = document.getElementById('saveButton');
+            const originalButtonText = saveButton.innerHTML;
+            
+            try {
+                // 更改按钮文本为保存中
+                saveButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M14.7 8.3a1 1 0 0 0-1.4 0L11 10.6 9.7 9.3a1 1 0 0 0-1.4 1.4l2 2a1 1 0 0 0 1.4 0l3-3a1 1 0 0 0 0-1.4z"/></svg>保存中...';
+                saveButton.disabled = true;
+                
+                // 使用html2canvas将quoteBox转换为图片
+                const canvas = await html2canvas(quoteBox, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    allowTaint: true
+                });
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/[:]/g, '-');
+                link.download = `字醒-名言-${timestamp}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                // 恢复按钮状态
+                saveButton.innerHTML = originalButtonText;
+                saveButton.disabled = false;
+                
+                // 显示成功提示
+                showMessage('图片保存成功！');
+                
+            } catch (error) {
+                console.error('保存图片时出错:', error);
+                
+                // 恢复按钮状态
+                saveButton.innerHTML = originalButtonText;
+                saveButton.disabled = false;
+                
+                // 显示错误提示
+                showMessage('保存失败: ' + error.message, true);
+            }
+        }
+
+        // 显示消息提示
+        function showMessage(message, isError = false) {
+            // 移除可能已存在的提示
+            const existingMessage = document.querySelector('.message-popup');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            // 创建消息元素
+            const messageElement = document.createElement('div');
+            messageElement.className = `message-popup ${isError ? 'error' : ''}`;
+            messageElement.textContent = message;
+            
+            // 添加到页面
+            document.body.appendChild(messageElement);
+            
+            // 3秒后移除
+            setTimeout(() => {
+                if (messageElement.parentNode) {
+                    messageElement.remove();
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
