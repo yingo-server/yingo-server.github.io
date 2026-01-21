@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目入口</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 动态背景 -->
+    <div class="dynamic-background"></div>
+    
+    <!-- 项目按钮容器 -->
+    <div class="open-container">
+        <h1 class="page-title">项目入口</h1>
+        <div class="buttons-grid" id="buttons-container">
+            <!-- 项目按钮将通过JavaScript动态生成 -->
+        </div>
+        
+        <!-- 跳转到音乐播放器的提示 -->
+        <div class="jump-to-music" id="jump-to-music">
+            <div class="countdown" id="countdown">3秒后显示音乐按钮</div>
+            <a href="music.html" class="kugou-btn" id="kugou-btn" style="display: none;">
+                <i class="fas fa-music"></i> 音乐播放器
+            </a>
+        </div>
+    </div>
+    
+    <script src="data.js"></script>
+    <script>
+        // 极简项目按钮初始化
+        function initializeProjectButtons() {
+            const container = document.getElementById('buttons-container');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            PROJECTS.forEach(project => {
+                const btn = document.createElement('a');
+                
+                if (project.url && project.url.trim() !== '') {
+                    btn.href = project.url;
+                    btn.target = "_blank";
+                    btn.className = "project-btn";
+                    btn.innerHTML = `
+                        <i class="${project.icon}"></i>
+                        <span>${project.name}</span>
+                    `;
+                } else {
+                    btn.className = "project-btn hidden";
+                }
+                
+                container.appendChild(btn);
+            });
+        }
+        
+        // 滚动检测逻辑
+        function checkScrollForJump() {
+            const container = document.querySelector('.open-container');
+            const jumpSection = document.getElementById('jump-to-music');
+            const countdownEl = document.getElementById('countdown');
+            const kugouBtn = document.getElementById('kugou-btn');
+            
+            if (!container || !jumpSection) return;
+            
+            const containerBottom = container.getBoundingClientRect().bottom;
+            const viewportHeight = window.innerHeight;
+            
+            if (containerBottom <= viewportHeight + 50) {
+                jumpSection.classList.add('show');
+                
+                let countdown = 3;
+                countdownEl.textContent = `${countdown}秒后显示音乐按钮`;
+                
+                const countdownInterval = setInterval(() => {
+                    countdown--;
+                    if (countdown > 0) {
+                        countdownEl.textContent = `${countdown}秒后显示音乐按钮`;
+                    } else {
+                        clearInterval(countdownInterval);
+                        countdownEl.textContent = '音乐按钮已就绪';
+                        kugouBtn.style.display = 'inline-flex';
+                    }
+                }, 1000);
+                
+                window.removeEventListener('scroll', checkScrollForJump);
+            }
+        }
+        
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeProjectButtons();
+            
+            // 添加滚动监听
+            window.addEventListener('scroll', checkScrollForJump);
+            
+            // 初始检查
+            setTimeout(checkScrollForJump, 100);
+            
+            // 性能优化：延迟非关键资源加载
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(() => {
+                    // 可以在这里加载次要资源
+                });
+            }
+        });
+        
+        // 触摸设备优化
+        if ('ontouchstart' in window) {
+            document.addEventListener('touchstart', function() {}, {passive: true});
+        }
+    </script>
+</body>
+</html>
