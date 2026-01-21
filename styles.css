@@ -1,0 +1,587 @@
+/* ========== 简约黑白风格全局样式 ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    overflow-x: hidden;
+    background: #000000; /* 纯黑背景 */
+    color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========== 动态背景（深灰到黑色渐变动画） ========== */
+.dynamic-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: linear-gradient(-45deg, #121212, #1a1a1a, #0a0a0a, #000000);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ========== 时间页面样式 ========== */
+.time-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    cursor: pointer;
+    background: transparent;
+}
+
+.time-display {
+    font-size: 70px;
+    font-weight: 300;
+    letter-spacing: 3px;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    font-family: 'Roboto Mono', monospace;
+}
+
+.time-display:hover {
+    color: #e0e0e0;
+}
+
+/* ========== 项目页面样式 ========== */
+.open-container {
+    padding: 30px 20px;
+    min-height: 100vh;
+    background: transparent;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 400;
+    margin-bottom: 30px;
+    color: #ffffff;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 80px;
+}
+
+.project-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 12px;
+    background: #1a1a1a;
+    border: 1px solid #ffffff; /* 纯白边框 */
+    border-radius: 16px;
+    text-decoration: none;
+    color: #ffffff;
+    transition: all 0.2s ease;
+    height: 120px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.project-btn:hover {
+    background: #222222;
+    border-color: #e0e0e0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.project-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.project-btn i {
+    font-size: 28px;
+    margin-bottom: 12px;
+    color: #ffffff;
+}
+
+.project-btn span {
+    font-size: 14px;
+    text-align: center;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.project-btn.hidden {
+    display: none;
+}
+
+/* ========== 跳转提示样式 ========== */
+.jump-to-music {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 24px 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.jump-to-music.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.jump-to-music .countdown {
+    font-size: 15px;
+    color: #b0b0b0;
+    margin-bottom: 12px;
+    font-weight: 400;
+}
+
+.kugou-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: #1a1a1a;
+    border: 1px solid #ffffff;
+    border-radius: 24px;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.kugou-btn:hover {
+    background: #222222;
+    border-color: #e0e0e0;
+    transform: scale(1.03);
+}
+
+/* ========== 音乐播放器页面样式 ========== */
+.music-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 20px;
+    min-height: 100vh;
+    background: transparent;
+}
+
+/* 播放器主容器 */
+.music-player {
+    background: #1a1a1a;
+    border: 1px solid #ffffff;
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* 专辑封面区域 */
+.album-section {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 20px;
+}
+
+.album-cover {
+    width: 140px;
+    height: 140px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0a0a0a;
+    border: 1px solid #333333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.album-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.album-cover i {
+    font-size: 48px;
+    color: #444444;
+}
+
+.track-info {
+    flex: 1;
+}
+
+.track-title {
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #ffffff;
+    line-height: 1.3;
+}
+
+.track-artist {
+    font-size: 16px;
+    color: #b0b0b0;
+    margin-bottom: 4px;
+    font-weight: 400;
+}
+
+.track-album {
+    font-size: 14px;
+    color: #808080;
+    font-weight: 400;
+}
+
+/* 进度条区域 */
+.progress-section {
+    margin-bottom: 24px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #333333;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    background: #ffffff;
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+.time-display-section {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #b0b0b0;
+    font-weight: 400;
+}
+
+/* 控制按钮区域 */
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.control-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #222222;
+    border: 1px solid #444444;
+    color: #ffffff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+    background: #2a2a2a;
+    border-color: #666666;
+    transform: scale(1.05);
+}
+
+.control-btn:active {
+    transform: scale(0.98);
+}
+
+.control-btn.play-pause {
+    width: 64px;
+    height: 64px;
+    font-size: 22px;
+    background: #222222;
+    border: 1px solid #666666;
+}
+
+/* 音量控制 */
+.volume-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #b0b0b0;
+}
+
+.volume-slider {
+    flex: 1;
+    height: 6px;
+    background: #333333;
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.volume-progress {
+    height: 100%;
+    background: #ffffff;
+    border-radius: 3px;
+    width: 70%;
+}
+
+/* 歌曲列表 */
+.song-list-container {
+    background: #1a1a1a;
+    border: 1px solid #ffffff;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.song-list-title {
+    font-size: 18px;
+    color: #ffffff;
+    margin-bottom: 16px;
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.song-count {
+    font-size: 14px;
+    color: #b0b0b0;
+    font-weight: 400;
+}
+
+.song-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.song-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    background: #222222;
+    border: 1px solid #333333;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.song-item:hover {
+    background: #2a2a2a;
+    border-color: #444444;
+}
+
+.song-item.active {
+    background: #2a2a2a;
+    border-color: #ffffff;
+    border-left: 3px solid #ffffff;
+}
+
+.song-item-index {
+    width: 30px;
+    font-size: 14px;
+    color: #b0b0b0;
+    font-weight: 500;
+}
+
+.song-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.song-item-title {
+    font-size: 15px;
+    margin-bottom: 2px;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.song-item-artist {
+    font-size: 13px;
+    color: #b0b0b0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.song-item-duration {
+    font-size: 13px;
+    color: #808080;
+    font-weight: 400;
+}
+
+/* 滚动条样式 */
+.song-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.song-list::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 3px;
+}
+
+.song-list::-webkit-scrollbar-thumb {
+    background: #444444;
+    border-radius: 3px;
+}
+
+.song-list::-webkit-scrollbar-thumb:hover {
+    background: #555555;
+}
+
+/* ========== 响应式设计 ========== */
+@media (max-width: 768px) {
+    .time-display {
+        font-size: 48px;
+    }
+    
+    .buttons-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 12px;
+    }
+    
+    .project-btn {
+        height: 100px;
+        padding: 16px 10px;
+        border-radius: 12px;
+    }
+    
+    .project-btn i {
+        font-size: 24px;
+    }
+    
+    .album-section {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+    }
+    
+    .album-cover {
+        width: 160px;
+        height: 160px;
+    }
+    
+    .track-title {
+        font-size: 20px;
+    }
+    
+    .controls {
+        gap: 16px;
+    }
+    
+    .control-btn {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .control-btn.play-pause {
+        width: 56px;
+        height: 56px;
+    }
+    
+    .music-player, .song-list-container {
+        padding: 20px;
+        border-radius: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .time-display {
+        font-size: 40px;
+        letter-spacing: 2px;
+    }
+    
+    .buttons-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .page-title {
+        font-size: 22px;
+    }
+    
+    .track-title {
+        font-size: 18px;
+    }
+    
+    .track-artist {
+        font-size: 14px;
+    }
+    
+    .song-item {
+        padding: 10px 12px;
+    }
+    
+    .song-item-title {
+        font-size: 14px;
+    }
+    
+    .song-item-artist {
+        font-size: 12px;
+    }
+}
+
+/* ========== 性能优化 ========== */
+/* 减少动画和阴影以优化低性能设备 */
+@media (prefers-reduced-motion: reduce) {
+    .dynamic-background {
+        animation: none;
+        background: #000000;
+    }
+    
+    .project-btn,
+    .control-btn,
+    .kugou-btn,
+    .song-item {
+        transition: none;
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    .project-btn:hover,
+    .control-btn:hover,
+    .song-item:hover {
+        transform: none;
+        background: inherit;
+    }
+    
+    .project-btn:active,
+    .control-btn:active,
+    .song-item:active {
+        background: #2a2a2a;
+    }
+    
+    .control-btn {
+        min-height: 44px; /* 满足触摸最小尺寸 */
+    }
+}
