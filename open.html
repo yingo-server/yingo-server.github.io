@@ -6,15 +6,18 @@
     <title>项目入口</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- 动态背景 -->
-    <div class="dynamic-background"></div>
+    <!-- 背景图片容器 -->
+    <div class="background-container">
+        <img src="https://free.picui.cn/free/2026/01/21/6970d140b28c7.png" 
+             alt="横版背景" class="background-image landscape-bg">
+        <img src="https://free.picui.cn/free/2026/01/21/6970d48703e9e.webp" 
+             alt="竖版背景" class="background-image portrait-bg">
+    </div>
     
     <!-- 项目按钮容器 -->
     <div class="open-container">
-        <h1 class="page-title">项目入口</h1>
         <div class="buttons-grid" id="buttons-container">
             <!-- 项目按钮将通过JavaScript动态生成 -->
         </div>
@@ -23,18 +26,17 @@
         <div class="jump-to-music" id="jump-to-music">
             <div class="countdown" id="countdown">3秒后显示音乐按钮</div>
             <a href="music.html" class="kugou-btn" id="kugou-btn" style="display: none;">
-                <i class="fas fa-music"></i> 音乐播放器
+                <i class="fas fa-music"></i> kugou
             </a>
         </div>
     </div>
     
     <script src="data.js"></script>
+    <script src="utils.js"></script>
     <script>
-        // 极简项目按钮初始化
+        // 初始化项目按钮
         function initializeProjectButtons() {
             const container = document.getElementById('buttons-container');
-            if (!container) return;
-            
             container.innerHTML = '';
             
             PROJECTS.forEach(project => {
@@ -56,21 +58,24 @@
             });
         }
         
-        // 滚动检测逻辑
+        // 检查是否需要显示跳转提示
         function checkScrollForJump() {
             const container = document.querySelector('.open-container');
             const jumpSection = document.getElementById('jump-to-music');
             const countdownEl = document.getElementById('countdown');
             const kugouBtn = document.getElementById('kugou-btn');
             
-            if (!container || !jumpSection) return;
-            
+            // 获取容器底部位置
             const containerBottom = container.getBoundingClientRect().bottom;
+            // 获取视口高度
             const viewportHeight = window.innerHeight;
             
+            // 如果容器底部已经在视口上方（即已经滚动到底部）
             if (containerBottom <= viewportHeight + 50) {
+                // 显示跳转提示
                 jumpSection.classList.add('show');
                 
+                // 开始倒计时
                 let countdown = 3;
                 countdownEl.textContent = `${countdown}秒后显示音乐按钮`;
                 
@@ -80,37 +85,36 @@
                         countdownEl.textContent = `${countdown}秒后显示音乐按钮`;
                     } else {
                         clearInterval(countdownInterval);
-                        countdownEl.textContent = '音乐按钮已就绪';
-                        kugouBtn.style.display = 'inline-flex';
+                        countdownEl.textContent = '音乐按钮已显示';
+                        kugouBtn.style.display = 'inline-block';
                     }
                 }, 1000);
                 
+                // 移除滚动监听，避免重复触发
                 window.removeEventListener('scroll', checkScrollForJump);
             }
         }
         
-        // 页面初始化
+        // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
+            // 初始化项目按钮
             initializeProjectButtons();
+            
+            // 设置背景图片
+            if (typeof setBackgroundBasedOnOrientation === 'function') {
+                setBackgroundBasedOnOrientation();
+                
+                // 监听窗口大小变化
+                window.addEventListener('resize', setBackgroundBasedOnOrientation);
+                window.addEventListener('orientationchange', setBackgroundBasedOnOrientation);
+            }
             
             // 添加滚动监听
             window.addEventListener('scroll', checkScrollForJump);
             
-            // 初始检查
+            // 初始检查一次（如果页面高度小于视口高度）
             setTimeout(checkScrollForJump, 100);
-            
-            // 性能优化：延迟非关键资源加载
-            if ('requestIdleCallback' in window) {
-                window.requestIdleCallback(() => {
-                    // 可以在这里加载次要资源
-                });
-            }
         });
-        
-        // 触摸设备优化
-        if ('ontouchstart' in window) {
-            document.addEventListener('touchstart', function() {}, {passive: true});
-        }
     </script>
 </body>
 </html>
