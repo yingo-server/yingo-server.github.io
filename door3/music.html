@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐播放器</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 背景图片容器 -->
+    <div class="background-container">
+        <img src="https://ghproxy.net/raw.githubusercontent.com/yingo-server/yingo-server.github.io/main/image/glby.png" 
+             alt="横版背景" class="background-image landscape-bg">
+        <img src="https://ghproxy.net/raw.githubusercontent.com/yingo-server/yingo-server.github.io/main/image/glby.webp" 
+             alt="竖版背景" class="background-image portrait-bg">
+    </div>
+    
+    <!-- 音乐播放器主容器 -->
+    <div class="music-container">
+        <!-- 音乐播放器 -->
+        <div class="music-player">
+            <!-- 专辑封面和歌曲信息 -->
+            <div class="album-section">
+                <div class="album-cover" id="album-cover">
+                    <!-- 专辑图片将通过JavaScript动态加载 -->
+                    <i class="fas fa-compact-disc"></i>
+                </div>
+                <div class="track-info">
+                    <div class="track-title" id="track-title">歌曲标题</div>
+                    <div class="track-artist" id="track-artist">歌手</div>
+                    <div class="track-album" id="track-album">专辑</div>
+                </div>
+            </div>
+            
+            <!-- 进度条 -->
+            <div class="progress-section">
+                <div class="progress-bar" id="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+                <div class="time-display">
+                    <span id="current-time">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+            
+            <!-- 控制按钮 -->
+            <div class="controls">
+                <button class="control-btn" id="prev-btn">
+                    <i class="fas fa-step-backward"></i>
+                </button>
+                <button class="control-btn play-pause" id="play-pause-btn">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="control-btn" id="next-btn">
+                    <i class="fas fa-step-forward"></i>
+                </button>
+            </div>
+            
+            <!-- 音量控制 -->
+            <div class="volume-section">
+                <i class="fas fa-volume-up"></i>
+                <div class="volume-slider" id="volume-slider">
+                    <div class="volume-progress" id="volume-progress"></div>
+                </div>
+                <i class="fas fa-volume-up"></i>
+            </div>
+        </div>
+        
+        <!-- 歌曲列表 -->
+        <div class="song-list-container">
+            <div class="song-list-title">歌曲列表 (共150首)</div>
+            <div class="song-list" id="song-list">
+                <!-- 歌曲列表将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- 音频元素（隐藏） -->
+    <audio id="audio-player"></audio>
+    
+    <script src="utils.js"></script>
+    <script src="music-player.js"></script>
+    <script>
+        // 页面加载完成后初始化音乐播放器
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('音乐播放器页面初始化开始...');
+            
+            // 设置背景图片
+            if (typeof setBackgroundBasedOnOrientation === 'function') {
+                setBackgroundBasedOnOrientation();
+                
+                // 监听窗口大小变化
+                window.addEventListener('resize', setBackgroundBasedOnOrientation);
+                window.addEventListener('orientationchange', setBackgroundBasedOnOrientation);
+            }
+            
+            try {
+                // 初始化音乐播放器
+                if (typeof initializeMusicPlayer === 'function') {
+                    await initializeMusicPlayer();
+                    console.log('音乐播放器初始化完成');
+                } else {
+                    console.error('initializeMusicPlayer 函数未找到');
+                }
+            } catch (error) {
+                console.error('初始化失败:', error);
+            }
+        });
+    </script>
+</body>
+</html>
