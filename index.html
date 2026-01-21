@@ -3,182 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>跳转中...</title>
+    <title>时间</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Roboto+Mono:wght@300;400&display=swap" rel="stylesheet">
     <style>
-        /* 全局样式 - 全屏黑色背景 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            background-color: #000; /* 背景颜色 - 可修改为其他颜色 */
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            font-family: Arial, sans-serif; /* 字体样式 - 可修改 */
-        }
-        
-        /* 手动跳转按钮 - 初始状态为隐藏 */
-        #manualRedirectBtn {
+        /* 内联关键CSS以减少渲染阻塞 */
+        .dynamic-bg-init {
             position: fixed;
-            bottom: 40px; /* 按钮距离底部的距离 - 可修改 */
-            padding: 15px 40px; /* 按钮内边距 - 可修改 */
-            background-color: #333; /* 按钮背景色 - 可修改 */
-            color: #fff; /* 按钮文字颜色 - 可修改 */
-            border: none;
-            border-radius: 50px; /* 按钮圆角 - 可修改 */
-            font-size: 16px; /* 按钮文字大小 - 可修改 */
-            cursor: pointer;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.5s ease, transform 0.3s ease;
-            z-index: 1000;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* 按钮阴影 - 可修改 */
-        }
-        
-        /* 按钮显示时的样式 */
-        #manualRedirectBtn.show {
-            opacity: 0.9;
-            visibility: visible;
-        }
-        
-        /* 按钮悬停效果 */
-        #manualRedirectBtn:hover {
-            transform: translateY(-3px); /* 悬停上移距离 - 可修改 */
-            background-color: #555; /* 悬停背景色 - 可修改 */
-        }
-        
-        /* 加载动画 - 在跳转过程中显示 */
-        .loading-spinner {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 50px; /* 加载动画大小 - 可修改 */
-            height: 50px; /* 加载动画大小 - 可修改 */
-            border: 3px solid rgba(255, 255, 255, 0.1); /* 加载动画边框颜色 - 可修改 */
-            border-top-color: #fff; /* 加载动画顶部颜色 - 可修改 */
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            opacity: 0.7;
-        }
-        
-        @keyframes spin {
-            to { transform: translate(-50%, -50%) rotate(360deg); }
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            z-index: -1;
         }
     </style>
 </head>
 <body>
-    <!-- 加载动画 -->
-    <div class="loading-spinner" id="loadingSpinner"></div>
+    <!-- 动态背景 -->
+    <div class="dynamic-background"></div>
     
-    <!-- 手动跳转按钮 -->
-    <button id="manualRedirectBtn">点击跳转</button>
+    <!-- 时间显示区域 -->
+    <div class="time-container" id="time-container">
+        <div class="time-display" id="time-display">00:00</div>
+    </div>
     
     <script>
-        // 跳转配置区域 - 这里可以修改跳转目标
-        const REDIRECT_URL = "/door"; // 目标网址 - 请修改为您要跳转的网址
-        const REDIRECT_TIMEOUT = 3000; // 跳转超时时间(毫秒) - 可修改，当前为3秒
-        const USE_METHOD1 = true; // 是否使用方法1跳转 - 可修改为false禁用
-        const USE_METHOD2 = true; // 是否使用方法2跳转 - 可修改为false禁用
+        // 极简时间更新逻辑
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('time-display').textContent = `${hours}:${minutes}`;
+        }
         
-        // 获取DOM元素
-        const manualRedirectBtn = document.getElementById('manualRedirectBtn');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        
-        // 记录跳转是否成功
-        let redirectSuccess = false;
-        
-        // 方法1: 使用window.location.replace跳转 (不会在历史记录中留下当前页面)
-        function redirectMethod1() {
-            if (!USE_METHOD1) return false;
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTime();
+            setInterval(updateTime, 1000);
             
-            try {
-                console.log('尝试使用方法1跳转...');
-                window.location.replace(REDIRECT_URL);
-                return true;
-            } catch (error) {
-                console.error('方法1跳转失败:', error);
-                return false;
+            // 点击任意位置跳转到open.html
+            document.getElementById('time-container').addEventListener('click', function() {
+                window.location.href = 'open.html';
+            });
+            
+            // 键盘支持（任意键跳转）
+            document.addEventListener('keydown', function() {
+                window.location.href = 'open.html';
+            });
+            
+            // 触摸设备优化
+            if ('ontouchstart' in window) {
+                document.documentElement.style.touchAction = 'manipulation';
             }
-        }
-        
-        // 方法2: 使用window.location.href跳转 (标准跳转方法)
-        function redirectMethod2() {
-            if (!USE_METHOD2) return false;
-            
-            try {
-                console.log('尝试使用方法2跳转...');
-                window.location.href = REDIRECT_URL;
-                return true;
-            } catch (error) {
-                console.error('方法2跳转失败:', error);
-                return false;
-            }
-        }
-        
-        // 显示手动跳转按钮
-        function showManualRedirectButton() {
-            console.log('显示手动跳转按钮');
-            manualRedirectBtn.classList.add('show');
-            // 可以调整加载动画的显示状态
-            loadingSpinner.style.opacity = '0.3';
-        }
-        
-        // 手动跳转函数
-        function manualRedirect() {
-            console.log('手动跳转中...');
-            // 尝试使用方法2进行手动跳转
-            window.location.href = REDIRECT_URL;
-        }
-        
-        // 主跳转函数
-        function startRedirect() {
-            console.log('开始跳转流程...');
-            
-            // 先使用方法1跳转
-            if (USE_METHOD1) {
-                redirectMethod1();
-            }
-            
-            // 延迟使用方法2跳转，增加成功率
-            setTimeout(() => {
-                if (USE_METHOD2 && !redirectSuccess) {
-                    redirectMethod2();
-                }
-            }, 100); // 方法2延迟时间(毫秒) - 可修改
-            
-            // 设置超时检测，如果指定时间后还未跳转成功，显示手动跳转按钮
-            setTimeout(() => {
-                if (!redirectSuccess) {
-                    showManualRedirectButton();
-                }
-            }, REDIRECT_TIMEOUT);
-        }
-        
-        // 页面加载完成后开始跳转
-        document.addEventListener('DOMContentLoaded', startRedirect);
-        
-        // 为手动跳转按钮添加点击事件
-        manualRedirectBtn.addEventListener('click', manualRedirect);
-        
-        // 添加一个页面可见性变化的检测，以防跳转被浏览器阻止
-        document.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'hidden') {
-                // 页面被隐藏，可能跳转成功
-                redirectSuccess = true;
-                console.log('页面已隐藏，可能跳转成功');
-            }
-        });
-        
-        // 添加beforeunload事件，检测页面是否开始跳转
-        window.addEventListener('beforeunload', function() {
-            redirectSuccess = true;
-            console.log('页面开始卸载，跳转可能成功');
         });
     </script>
 </body>
