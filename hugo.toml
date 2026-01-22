@@ -1,0 +1,4 @@
+baseURL = 'http://yingo-server.github.io/yingos'
+languageCode = 'zh-cn'
+title = 'yingo的空间'
+theme = 'PaperMod'
