@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404:page not found :(</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Montserrat:400,600,700');
+        @import url('https://fonts.googleapis.com/css?family=Catamaran:400,800');
+        
+        * {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #FDFAF5;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', Helvetica, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .error-container {
+            text-align: center;
+            font-size: 106px;
+            font-family: 'Catamaran', sans-serif;
+            font-weight: 800;
+            margin: 70px 15px;
+        }
+        
+        .error-container > span {
+            display: inline-block;
+            position: relative;
+        }
+        
+        .error-container > span.four {
+            width: 136px;
+            height: 43px;
+            border-radius: 999px;
+            background: linear-gradient(140deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.07) 43%, transparent 44%, transparent 100%), linear-gradient(105deg, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.06) 41%, rgba(0, 0, 0, 0.07) 76%, transparent 77%, transparent 100%), linear-gradient(to right, #d89ca4, #e27b7e);
+        }
+        
+        .error-container > span.four:before,
+        .error-container > span.four:after {
+            content: '';
+            display: block;
+            position: absolute;
+            border-radius: 999px;
+        }
+        
+        .error-container > span.four:before {
+            width: 43px;
+            height: 156px;
+            left: 60px;
+            bottom: -43px;
+            background: linear-gradient(128deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.07) 40%, transparent 41%, transparent 100%), linear-gradient(116deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.07) 50%, transparent 51%, transparent 100%), linear-gradient(to top, #99749D, #B895AB, #CC9AA6, #D7969E, #E0787F);
+        }
+        
+        .error-container > span.four:after {
+            width: 137px;
+            height: 43px;
+            transform: rotate(-49.5deg);
+            left: -18px;
+            bottom: 36px;
+            background: linear-gradient(to right, #99749D, #B895AB, #CC9AA6, #D7969E, #E0787F);
+        }
+        
+        .error-container > span.zero {
+            vertical-align: text-top;
+            width: 156px;
+            height: 156px;
+            border-radius: 999px;
+            background: linear-gradient(-45deg, transparent 0%, rgba(0, 0, 0, 0.06) 50%, transparent 51%, transparent 100%), linear-gradient(to top right, #99749D, #99749D, #B895AB, #CC9AA6, #D7969E, #ED8687, #ED8687);
+            overflow: hidden;
+            animation: bgshadow 5s infinite;
+        }
+        
+        .error-container > span.zero:before {
+            content: '';
+            display: block;
+            position: absolute;
+            transform: rotate(45deg);
+            width: 90px;
+            height: 90px;
+            background-color: transparent;
+            left: 0px;
+            bottom: 0px;
+            background: linear-gradient(95deg, transparent 0%, transparent 8%, rgba(0, 0, 0, 0.07) 9%, transparent 50%, transparent 100%), linear-gradient(85deg, transparent 0%, transparent 19%, rgba(0, 0, 0, 0.05) 20%, rgba(0, 0, 0, 0.07) 91%, transparent 92%, transparent 100%);
+        }
+        
+        .error-container > span.zero:after {
+            content: '';
+            display: block;
+            position: absolute;
+            border-radius: 999px;
+            width: 70px;
+            height: 70px;
+            left: 43px;
+            bottom: 43px;
+            background: #FDFAF5;
+            box-shadow: -2px 2px 2px 0px rgba(0, 0, 0, 0.1);
+        }
+        
+        .screen-reader-text {
+            position: absolute;
+            top: -9999em;
+            left: -9999em;
+        }
+        
+        @keyframes bgshadow {
+            0% {
+                box-shadow: inset -160px 160px 0px 5px rgba(0, 0, 0, 0.4);
+            }
+            45% {
+                box-shadow: inset 0px 0px 0px 0px rgba(0, 0, 0, 0.1);
+            }
+            55% {
+                box-shadow: inset 0px 0px 0px 0px rgba(0, 0, 0, 0.1);
+            }
+            100% {
+                box-shadow: inset 160px -160px 0px 5px rgba(0, 0, 0, 0.4);
+            }
+        }
+        
+        h1 {
+            text-align: center;
+            margin: 30px 15px 20px;
+            font-size: 2.5rem;
+            color: #444;
+            font-weight: 700;
+        }
+        
+        .message {
+            max-width: 600px;
+            margin: 0 auto 40px;
+            font-size: 1.25rem;
+            color: #666;
+            text-align: center;
+            line-height: 1.8;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 40px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .action-button {
+            text-transform: uppercase;
+            font-size: 14px;
+            background-color: #de7e85;
+            padding: 12px 30px;
+            border-radius: 4px;
+            color: #fff;
+            display: inline-block;
+            line-height: 1.5;
+            text-decoration: none;
+            letter-spacing: 1px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .action-button:hover {
+            background-color: #d36a72;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .action-button.secondary {
+            background-color: #99749D;
+        }
+        
+        .action-button.secondary:hover {
+            background-color: #8a6590;
+        }
+        
+        .action-button.tertiary {
+            background-color: #7a9eb1;
+        }
+        
+        .action-button.tertiary:hover {
+            background-color: #6a8fa3;
+        }
+        
+        .footer {
+            margin-top: 0px;
+            color: #999;
+            font-size: 0.4rem;
+            text-align: center;
+            padding: 0px;
+            border-top: 0.5px solid #eee;
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            .error-container {
+                font-size: 80px;
+                margin: 40px 15px;
+            }
+            
+            .error-container > span.four {
+                width: 100px;
+                height: 32px;
+            }
+            
+            .error-container > span.four:before {
+                width: 32px;
+                height: 115px;
+                left: 45px;
+                bottom: -32px;
+            }
+            
+            .error-container > span.four:after {
+                width: 100px;
+                height: 32px;
+                left: -13px;
+                bottom: 27px;
+            }
+            
+            .error-container > span.zero {
+                width: 115px;
+                height: 115px;
+            }
+            
+            .error-container > span.zero:after {
+                width: 52px;
+                height: 52px;
+                left: 32px;
+                bottom: 32px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .message {
+                font-size: 1.1rem;
+                padding: 0 20px;
+            }
+            
+            .button-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .action-button {
+                width: 80%;
+                max-width: 280px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .error-container {
+                font-size: 60px;
+            }
+            
+            .error-container > span.four {
+                width: 75px;
+                height: 24px;
+            }
+            
+            .error-container > span.four:before {
+                width: 24px;
+                height: 86px;
+                left: 34px;
+                bottom: -24px;
+            }
+            
+            .error-container > span.four:after {
+                width: 75px;
+                height: 24px;
+                left: -10px;
+                bottom: 20px;
+            }
+            
+            .error-container > span.zero {
+                width: 86px;
+                height: 86px;
+            }
+            
+            .error-container > span.zero:after {
+                width: 39px;
+                height: 39px;
+                left: 24px;
+                bottom: 24px;
+            }
+            
+            h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="error-container">
+            <span class="four"><span class="screen-reader-text">4</span></span>
+            <span class="zero"><span class="screen-reader-text">0</span></span>
+            <span class="four"><span class="screen-reader-text">4</span></span>
+        </section>
+        
+        <h1>抱歉，页面未找到</h1>
+        
+        <div class="message">
+            您访问的页面可能已被移动、删除或暂时不可用。<br>
+            请检查网址是否正确，或使用下面的按钮返回。
+        </div>
+        
+        <div class="button-container">
+            <a href="https://yingos.netlify.app" class="action-button" target="_blank">
+                博客首页
+            </a>
+            
+            <a href="https://yingo.netlify.app" class="action-button" target="_blank">
+                其他项目
+            </button>
+            
+            <a href="https://yingo.netlify.app" class="action-button" target="_blank">
+                小游戏
+            </button>
+        </div>
+        
+        <div class="footer">
+            <p>如果您认为这是一个错误，请通过适当渠道向我们报告。
+            <p>Email:18674211622@163.com</p>
+            <p>© 2025 yingo-server. 保留所有权利.</p>
+        </div>
+    </div>
+
+    <script>
+        
+        
+        // 添加一些交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.action-button');
+            
+            buttons.forEach(button => {
+                button.addEventListener('mousedown', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+                
+                button.addEventListener('mouseup', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
