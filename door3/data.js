@@ -16,9 +16,9 @@ const PROJECTS = [
     { name: "music2", url: "http://yingo6.netlify.app", icon: "fas fa-mobile-alt" },
     { name: "洛伦兹吸引子", url: "/luo", icon: "fas fa-cloud" },
     { name: "追捕", url: "/zhui", icon: "fas fa-code" },
-    { name: "字醒", url: "word", icon: "fas fa-lock" },
+    { name: "字醒", url: "/word", icon: "fas fa-lock" },
     { name: "壁纸", url: "/wall", icon: "fas fa-lock" },
-    { name: "项目 14", url: "", icon: "fas fa-lock" },
+    { name: "博客", url: "http://yingos.netlify.app", icon: "fas fa-lock" },
     { name: "项目 14", url: "", icon: "fas fa-lock" },
     { name: "项目 14", url: "", icon: "fas fa-lock" },
     { name: "项目 15", url: "", icon: "fas fa-star" }
