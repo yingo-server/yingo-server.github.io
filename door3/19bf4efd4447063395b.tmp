@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间页面</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 背景图片容器 -->
+    <div class="background-container">
+        <img src="https://ghproxy.net/raw.githubusercontent.com/yingo-server/yingo-server.github.io/main/image/glby.png" 
+             alt="横版背景" class="background-image landscape-bg">
+        <img src="https://ghproxy.net/raw.githubusercontent.com/yingo-server/yingo-server.github.io/main/image/glby.webp" 
+             alt="竖版背景" class="background-image portrait-bg">
+    </div>
+    
+    <!-- 时间显示区域 -->
+    <div class="time-container" id="time-container">
+        <div class="time-display" id="time-display">00:00</div>
+    </div>
+    
+    <script src="utils.js"></script>
+    <script>
+        // 更新时间显示
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('time-display').textContent = `${hours}:${minutes}`;
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始更新时间
+            updateTime();
+            
+            // 每秒更新时间
+            setInterval(updateTime, 1000);
+            
+            // 设置背景图片
+            if (typeof setBackgroundBasedOnOrientation === 'function') {
+                setBackgroundBasedOnOrientation();
+                
+                // 监听窗口大小变化
+                window.addEventListener('resize', setBackgroundBasedOnOrientation);
+                window.addEventListener('orientationchange', setBackgroundBasedOnOrientation);
+            }
+            
+            // 点击任意位置跳转到open.html
+            document.getElementById('time-container').addEventListener('click', function() {
+                window.location.href = 'open.html';
+            });
+            
+            // 添加键盘支持（任意键跳转）
+            document.addEventListener('keydown', function() {
+                window.location.href = 'open.html';
+            });
+        });
+    </script>
+    <span>ICP备案信息：<a href="https://yingo-server.github.io/ICP-yingo/data/20260125-193214-226.html" target="_blank" style="color: #f00; text-decoration: none;">终ICP备01BAB6A2号</a></span>
+    <span style="opacity: 0.7;">yingo.netlify.app</span>
+</body>
+</html>
