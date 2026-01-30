@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MD3简洁下载站</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 导入字体 */
+        @font-face {
+            font-family: 'PMZD';
+            src: url('pmzd.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'PMZD', 'Roboto', 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(211, 47, 47, 0.15) 0%, transparent 55%),
+                radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.15) 0%, transparent 55%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 头部样式 */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #ffffff 0%, #ff5252 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ff5252;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 下载列表样式 */
+        .downloads-container {
+            margin-top: 30px;
+        }
+
+        .downloads-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .downloads-header h2 {
+            font-size: 1.8rem;
+            color: #ffffff;
+        }
+
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 45px;
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #ff5252;
+            background-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 下载项样式 */
+        .download-item {
+            background-color: rgba(30, 30, 30, 0.8);
+            border-radius: 16px;
+            padding: 22px 28px;
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .download-item:hover {
+            background-color: rgba(40, 40, 40, 0.9);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 82, 82, 0.2);
+        }
+
+        .download-info {
+            flex-grow: 1;
+        }
+
+        .download-name {
+            font-size: 1.4rem;
+            font-weight: 500;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+
+        .download-meta {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .download-btn {
+            background-color: #ff5252;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(255, 82, 82, 0.3);
+        }
+
+        .download-btn:hover {
+            background-color: #ff6b6b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(255, 82, 82, 0.4);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        .download-btn i {
+            font-size: 1.1rem;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .empty-state h3 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* 页脚 */
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            padding: 30px 0;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .downloads-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+            
+            .download-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+            
+            .download-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .stats {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>yingo下载站</h1>
+            <p class="subtitle">yingo的公开下载平台</p>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="total-count">0</span>
+                    <span class="stat-label">总资源</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="available-count">0</span>
+                    <span class="stat-label">可用资源</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">102</span>
+                    <span class="stat-label">最大容量</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="downloads-container">
+                <div class="downloads-header">
+                    <h2>资源下载</h2>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-input" placeholder="搜索资源名称...">
+                    </div>
+                </div>
+
+                <div id="downloads-list">
+                    <!-- 下载项将通过JavaScript动态生成 -->
+                    <div class="empty-state">
+                        <i class="fas fa-cloud-download-alt"></i>
+                        <h3>正在加载资源...</h3>
+                        <p>请稍候，正在从服务器获取下载列表</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>© 2026 MD3下载站 | 遵循Material Design 3设计规范 | 资源仅供学习交流使用</p>
+            <p style="margin-top: 8px; font-size: 0.8rem;">已加载 <span id="loaded-count">0</span> 个资源</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // 等待页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取下载列表容器
+            const downloadsList = document.getElementById('downloads-list');
+            const searchInput = document.getElementById('search-input');
+            const totalCountEl = document.getElementById('total-count');
+            const availableCountEl = document.getElementById('available-count');
+            const loadedCountEl = document.getElementById('loaded-count');
+            
+            let allDownloads = [];
+            let filteredDownloads = [];
+            
+            // 初始化函数
+            function initDownloads() {
+                // 从app.js中获取downloadLinks数组
+                if (typeof downloadLinks === 'undefined') {
+                    console.error('未找到downloadLinks数组，请确保app.js已正确加载');
+                    showErrorMessage('无法加载下载列表，请检查app.js文件');
+                    return;
+                }
+                
+                // 过滤掉链接为空的项目
+                allDownloads = downloadLinks.filter(item => item.link && item.link.trim() !== '');
+                filteredDownloads = [...allDownloads];
+                
+                // 更新统计信息
+                updateStats();
+                
+                // 渲染下载列表
+                renderDownloads();
+            }
+            
+            // 更新统计信息
+            function updateStats() {
+                totalCountEl.textContent = downloadLinks.length;
+                availableCountEl.textContent = allDownloads.length;
+                loadedCountEl.textContent = allDownloads.length;
+            }
+            
+            // 渲染下载列表
+            function renderDownloads() {
+                // 清空当前列表
+                downloadsList.innerHTML = '';
+                
+                if (filteredDownloads.length === 0) {
+                    // 显示空状态
+                    downloadsList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到匹配的资源</h3>
+                            <p>尝试使用不同的关键词搜索</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 创建下载项
+                filteredDownloads.forEach(item => {
+                    const downloadItem = document.createElement('div');
+                    downloadItem.className = 'download-item';
+                    
+                    // 从链接中提取可能的文件类型
+                    const fileType = getFileType(item.link);
+                    
+                    downloadItem.innerHTML = `
+                        <div class="download-info">
+                            <div class="download-name">${item.name}</div>
+                            <div class="download-meta">${fileType} • 点击下载按钮获取资源</div>
+                        </div>
+                        <button class="download-btn" data-link="${item.link}">
+                            <i class="fas fa-download"></i>
+                            下载
+                        </button>
+                    `;
+                    
+                    downloadsList.appendChild(downloadItem);
+                });
+                
+                // 为下载按钮添加事件监听
+                document.querySelectorAll('.download-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const link = this.getAttribute('data-link');
+                        if (link) {
+                            // 创建临时a标签触发下载
+                            const a = document.createElement('a');
+                            a.href = link;
+                            a.target = '_blank';
+                            a.rel = 'noopener noreferrer';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            
+                            // 添加点击反馈
+                            this.style.backgroundColor = '#4CAF50';
+                            this.innerHTML = '<i class="fas fa-check"></i> 已开始下载';
+                            
+                            setTimeout(() => {
+                                this.style.backgroundColor = '';
+                                this.innerHTML = '<i class="fas fa-download"></i> 下载';
+                            }, 1500);
+                        }
+                    });
+                });
+            }
+            
+            // 根据链接获取文件类型
+            function getFileType(link) {
+                const extension = link.split('.').pop().toLowerCase();
+                const fileTypes = {
+                    'exe': 'Windows应用程序',
+                    'zip': '压缩文件',
+                    'rar': '压缩文件',
+                    '7z': '压缩文件',
+                    'dmg': 'macOS安装包',
+                    'pkg': 'macOS安装包',
+                    'deb': 'Debian软件包',
+                    'rpm': 'RPM软件包',
+                    'apk': 'Android应用',
+                    'ipa': 'iOS应用',
+                    'msi': 'Windows安装包',
+                    'iso': '光盘镜像',
+                    'pdf': 'PDF文档',
+                    'doc': 'Word文档',
+                    'docx': 'Word文档',
+                    'xls': 'Excel表格',
+                    'xlsx': 'Excel表格',
+                    'ppt': 'PowerPoint演示',
+                    'pptx': 'PowerPoint演示',
+                    'txt': '文本文件',
+                    'jpg': '图片文件',
+                    'jpeg': '图片文件',
+                    'png': '图片文件',
+                    'gif': '图片文件',
+                    'mp4': '视频文件',
+                    'mp3': '音频文件',
+                    'avi': '视频文件',
+                    'mov': '视频文件',
+                    'wav': '音频文件',
+                    'flac': '音频文件'
+                };
+                
+                return fileTypes[extension] || '文件';
+            }
+            
+            // 显示错误信息
+            function showErrorMessage(message) {
+                downloadsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>加载失败</h3>
+                        <p>${message}</p>
+                        <button id="retry-btn" style="margin-top:20px; padding:10px 20px; background:#ff5252; color:white; border:none; border-radius:8px; cursor:pointer;">
+                            重试加载
+                        </button>
+                    </div>
+                `;
+                
+                document.getElementById('retry-btn').addEventListener('click', initDownloads);
+            }
+            
+            // 搜索功能
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+                
+                if (searchTerm === '') {
+                    filteredDownloads = [...allDownloads];
+                } else {
+                    filteredDownloads = allDownloads.filter(item => 
+                        item.name.toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                renderDownloads();
+            });
+            
+            // 初始化下载列表
+            initDownloads();
+        });
+    </script>
+</body>
+</html>
