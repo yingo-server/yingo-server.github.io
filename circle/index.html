@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>三色球物理模拟</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- 状态显示 -->
+    <div class="status-overlay">
+        <h3>状态</h3>
+        <div class="status-item">
+            <span class="status-name">红球:</span>
+            <span id="redStatus" class="status-value">活跃</span>
+        </div>
+        <div class="status-item">
+            <span class="status-name">绿球:</span>
+            <span id="greenStatus" class="status-value">活跃</span>
+        </div>
+        <div class="status-item">
+            <span class="status-name">蓝球:</span>
+            <span id="blueStatus" class="status-value">活跃</span>
+        </div>
+        <div class="status-item">
+            <span class="status-name">存活:</span>
+            <span id="ballCount" class="status-value">3</span>
+        </div>
+        <div class="status-item">
+            <span class="status-name">线条:</span>
+            <span id="lineCount" class="status-value">0</span>
+        </div>
+    </div>
+    
+    <!-- 控制按钮 -->
+    <div class="control-btn" id="settingsBtn">⚙️</div>
+    
+    <!-- 设置面板 -->
+    <div class="settings-panel" id="settingsPanel" style="display: none;">
+        <div class="settings-content">
+            <div class="param-group">
+                <label>速度因子: <span id="speedValue">1.00</span></label>
+                <input type="range" id="speedFactor" min="0.1" max="3" step="0.05" value="1">
+            </div>
+            
+            <div class="param-group">
+                <label>重力因子: <span id="gravityValue">1.00</span></label>
+                <input type="range" id="gravityFactor" min="0.1" max="5" step="0.05" value="1">
+            </div>
+            
+            <div class="param-group">
+                <label>加速因子: <span id="accelerationValue">1.00</span></label>
+                <input type="range" id="accelerationFactor" min="0.1" max="10" step="0.1" value="1">
+            </div>
+            
+            <div class="param-group">
+                <label>角度偏移: <span id="angleValue">15°</span></label>
+                <input type="range" id="angleVariance" min="0" max="30" step="1" value="15">
+            </div>
+            
+            <div class="settings-buttons">
+                <button id="applyBtn">应用并重启</button>
+                <button id="closeBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 宇宙重启效果 -->
+    <div class="universe-restart black-screen" id="blackScreen"></div>
+    <div class="universe-restart white-screen" id="whiteScreen"></div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
