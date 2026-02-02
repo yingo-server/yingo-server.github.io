@@ -1,0 +1,2504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>墨谭</title>
+    <style>
+        /* 全局样式 - 极简黑底白线 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #333333;
+            background: #000000;
+            height: 97vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 头部样式 */
+        .header {
+            padding: 15px;
+            border-bottom: 1px solid #333333;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: #ffffff;
+        }
+        
+        .header .subtitle {
+            font-size: 12px;
+            color: #888888;
+            margin-top: 4px;
+        }
+        
+        .user-info {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            color: #ffffff;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .user-info:hover {
+            color: #0099ff;
+        }
+        
+        /* 消息区域样式 */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #000000;
+        }
+        
+        .message {
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #222222;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .username {
+            font-weight: 500;
+            color: #ffffff;
+            font-size: 13px;
+        }
+        
+        .message-time {
+            color: #666666;
+            font-size: 11px;
+        }
+        
+        .message-text {
+            color: #cccccc;
+            line-height: 1.4;
+            font-size: 14px;
+            word-break: break-word;
+            margin-bottom: 5px;
+            user-select: text; /* 允许文本选择 */
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+        }
+        
+        .message.own {
+            border-left: 2px solid #ffffff;
+            padding-left: 10px;
+        }
+        
+        /* 图片消息样式 */
+        .message-image-container {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+            margin-top: 5px;
+        }
+        
+        .message-image-placeholder {
+            width: 200px;
+            height: 150px;
+            background: #111111;
+            border: 1px solid #333333;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .message-image-placeholder:hover {
+            background: #1a1a1a;
+            border-color: #555555;
+        }
+        
+        .placeholder-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #666666;
+        }
+        
+        .placeholder-text {
+            font-size: 12px;
+            color: #888888;
+        }
+        
+        .message-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 4px;
+            border: 1px solid #333333;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .message-image:hover {
+            opacity: 0.9;
+        }
+        
+        /* 音频消息样式 */
+        .message-audio {
+            margin-top: 5px;
+            width: 250px;
+        }
+        
+        .audio-player {
+            background: #111111;
+            border: 1px solid #333333;
+            border-radius: 20px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .audio-play-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        
+        .audio-play-btn:hover {
+            background: #222222;
+        }
+        
+        .audio-play-btn.playing {
+            color: #0099ff;
+        }
+        
+        .audio-progress-container {
+            flex: 1;
+            height: 4px;
+            background: #333333;
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .audio-progress-bar {
+            height: 100%;
+            background: #0099ff;
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+        
+        .audio-time {
+            font-size: 11px;
+            color: #888888;
+            min-width: 40px;
+        }
+        
+        /* 录音界面样式 */
+        .recording-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .recording-overlay.active {
+            display: flex;
+        }
+        
+        .recording-container {
+            background: #000000;
+            border: 1px solid #333333;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 300px;
+            width: 90%;
+        }
+        
+        .recording-timer {
+            font-size: 32px;
+            color: #ffffff;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+        
+        .recording-visualizer {
+            width: 100%;
+            height: 80px;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .recording-visualizer canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .recording-btn {
+            background: #ff4444;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            transition: transform 0.2s;
+        }
+        
+        .recording-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .recording-btn.recording {
+            animation: pulse 1.5s infinite;
+        }
+        
+        .recording-stop-btn {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .recording-hint {
+            font-size: 12px;
+            color: #888888;
+            margin-top: 10px;
+        }
+        
+        /* 输入区域样式 - 双排布局 */
+        .input-area {
+            padding: 10px;
+            border-top: 1px solid #333333;
+            background: #000000;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .input-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #333333;
+            border-radius: 0;
+            background: #000000;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .message-input:focus {
+            border-color: #666666;
+        }
+        
+        .send-btn {
+            background: #000000;
+            color: #ffffff;
+            border: 1px solid #333333;
+            padding: 0 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 80px;
+            height: 42px;
+        }
+        
+        .send-btn:hover {
+            background: #111111;
+            border-color: #666666;
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .action-btn {
+            background: #000000;
+            color: #ffffff;
+            border: 1px solid #333333;
+            padding: 0 15px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 60px;
+        }
+        
+        .action-btn:hover {
+            background: #111111;
+            border-color: #666666;
+        }
+        
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .action-btn.recording {
+            background: #ff4444;
+            border-color: #ff4444;
+            color: #ffffff;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 8px;
+            padding: 10px;
+            border: 1px solid #333333;
+            display: none;
+        }
+        
+        .preview-container.active {
+            display: flex;
+        }
+        
+        .image-preview {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            border: 1px solid #333333;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .remove-preview {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 图片查看模态框 */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: pointer;
+        }
+        
+        .image-modal.active {
+            display: flex;
+        }
+        
+        .image-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        
+        .image-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #ffffff;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        
+        /* 状态指示器 */
+        .status-indicator {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: #000000;
+            color: #ffffff;
+            padding: 5px 10px;
+            border: 1px solid #333333;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #00ff00;
+        }
+        
+        .status-dot.offline {
+            background: #ff0000;
+        }
+        
+        .status-dot.error {
+            background: #ff9900;
+            animation: pulse 1s infinite;
+        }
+        
+        /* 错误提示 */
+        .error-message {
+            text-align: center;
+            color: #ff4444;
+            padding: 10px;
+            font-size: 12px;
+            border: 1px solid #ff4444;
+            margin: 10px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        /* 滚动条样式 */
+        .chat-container::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .chat-container::-webkit-scrollbar-track {
+            background: #000000;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #333333;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: #555555;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+        }
+        
+        /* 加载动画 */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666666;
+        }
+        
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #333333;
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                height: 100vh;
+                border: none;
+            }
+            
+            .header {
+                padding: 12px;
+            }
+            
+            .user-info {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-top: 8px;
+                display: inline-block;
+            }
+            
+            .input-row {
+                flex-wrap: wrap;
+            }
+            
+            .action-btn {
+                min-width: 50px;
+                padding: 0 10px;
+            }
+            
+            .message-image-placeholder {
+                width: 150px;
+                height: 120px;
+            }
+            
+            .message-audio {
+                width: 100%;
+                max-width: 250px;
+            }
+            
+            .recording-container {
+                padding: 20px;
+            }
+        }
+        
+        /* 压缩提示 */
+        .compress-notice {
+            font-size: 11px;
+            color: #888888;
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #333333;
+            margin-bottom: 8px;
+            display: none;
+        }
+        
+        .compress-notice.active {
+            display: block;
+        }
+        
+        /* 音频加载提示 */
+        .audio-loading {
+            font-size: 10px;
+            color: #888888;
+            margin-left: 5px;
+        }
+        
+        /* 新消息提示 */
+        .new-message-indicator {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0099ff;
+            color: #ffffff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .new-message-indicator.show {
+            opacity: 1;
+        }
+        
+        /* 复制按钮 */
+        .copy-btn {
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffffff;
+            border: 1px solid #333333;
+            border-radius: 3px;
+            padding: 3px 8px;
+            font-size: 10px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+        
+        .message:hover .copy-btn {
+            opacity: 1;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(51, 51, 51, 0.7);
+        }
+        
+        /* 消息内容容器 */
+        .message-content {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>墨谭</h1>
+            <div class="subtitle">极简 · 私密</div>
+            <div class="user-info" id="userInfo">
+                <span id="username">加载中...</span>
+            </div>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="loading">正在连接...</div>
+        </div>
+        
+        <!-- 新消息提示 -->
+        <div class="new-message-indicator" id="newMessageIndicator">
+            <span>有新的消息</span>
+            <span>↓</span>
+        </div>
+        
+        <!-- 图片预览区 -->
+        <div class="preview-container" id="previewContainer"></div>
+        
+        <!-- 压缩提示 -->
+        <div class="compress-notice" id="compressNotice"></div>
+        
+        <div class="input-area">
+            <!-- 第一排：文字输入和发送按钮 -->
+            <div class="input-row">
+                <input type="text" 
+                       class="message-input" 
+                       id="messageInput" 
+                       placeholder="输入消息..."
+                       maxlength="500"
+                       autocomplete="off">
+                <button class="send-btn" id="sendBtn" disabled>发送</button>
+            </div>
+            
+            <!-- 第二排：图片、语音按钮 -->
+            <div class="input-row">
+                <button class="action-btn" id="imageBtn" title="发送图片">
+                    📷
+                </button>
+                <input type="file" 
+                       class="file-input" 
+                       id="fileInput" 
+                       accept="image/*" 
+                       multiple>
+                
+                <button class="action-btn" id="voiceBtn" title="发送语音">
+                    🎤
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 图片查看模态框 -->
+    <div class="image-modal" id="imageModal">
+        <div class="image-close" id="imageClose">×</div>
+        <img id="modalImage" src="" alt="预览">
+    </div>
+    
+    <!-- 录音界面 -->
+    <div class="recording-overlay" id="recordingOverlay">
+        <div class="recording-container">
+            <div>按住录音，最长15秒</div>
+            <div class="recording-timer" id="recordingTimer">00:00</div>
+            <div class="recording-visualizer">
+                <canvas id="recordingCanvas"></canvas>
+            </div>
+            <button class="recording-btn" id="recordingBtn">
+                🎤
+            </button>
+            <button class="recording-stop-btn" id="recordingStopBtn" style="display: none;">
+                停止并发送
+            </button>
+            <div class="recording-hint" id="recordingHint">
+                松开手指发送，上滑取消
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-indicator">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">连接中</span>
+    </div>
+    
+    <script>
+        // ==================== Gitee配置 ====================
+        const GITEE_CONFIG = {
+            ACCESS_TOKEN: 'e823c3a1265e30f429305ddebc27f855',
+            OWNER: 'yingo-server',
+            REPO: 'yingo',
+            FILE_PATH: 'message.json',
+            IMAGE_DIR: 'chat_images',
+            AUDIO_DIR: 'rec',
+            API_BASE: 'https://gitee.com/api/v5',
+            MAX_RETRIES: 3
+        };
+
+        // 应用配置
+        const APP_CONFIG = {
+            REFRESH_INTERVAL: 3000,
+            MAX_MESSAGES: 300,
+            SHOW_TIMESTAMP: true,
+            // 图片配置
+            MAX_IMAGE_SIZE: 5 * 1024 * 1024, // 5MB
+            COMPRESS_THRESHOLD: 1 * 1024 * 1024, // 1MB 以上压缩
+            MAX_IMAGE_WIDTH: 1920,
+            MAX_IMAGE_HEIGHT: 1080,
+            IMAGE_QUALITY: 0.7,
+            // 语音配置
+            MAX_AUDIO_DURATION: 15, // 最大15秒
+            AUDIO_FORMAT: 'audio/webm',
+            AUDIO_BITRATE: 128000,
+            // 滚动行为配置
+            AUTO_SCROLL_THRESHOLD: 100,
+            KEEP_SCROLL_POSITION: true,
+            // 缓存配置
+            IMAGE_CACHE_SIZE: 50, // 图片缓存数量
+            AUDIO_CACHE_SIZE: 20  // 音频缓存数量
+        };
+
+        // 用户配置
+        const USER_CONFIG = {
+            USERNAME_LIST: [
+                '访客一', '访客二', '访客三', '访客四', '访客五'
+            ],
+            DEFAULT_USERNAME: '匿名用户'
+        };
+
+        // ==================== 核心功能 ====================
+        class GiteeChat {
+            constructor() {
+                this.messages = [];
+                this.userId = this.getOrCreateUserId();
+                this.username = this.getOrCreateUsername();
+                this.sha = null;
+                this.isLoading = false;
+                this.isOnline = true;
+                this.retryCount = 0;
+                this.lastUpdateTime = 0;
+                this.debugMode = true;
+                
+                // 滚动控制相关
+                this.isUserScrolling = false;
+                this.lastScrollPosition = 0;
+                this.lastScrollHeight = 0;
+                this.isAtBottom = true;
+                this.scrollTimeout = null;
+                this.newMessageCount = 0;
+                this.autoScrollEnabled = true;
+                this.shouldPreserveScroll = false;
+                
+                // 选择控制相关
+                this.isUserSelecting = false;
+                this.selectionStartTime = 0;
+                this.lastSelectionRange = null;
+                
+                // 语音录制相关
+                this.isRecording = false;
+                this.mediaRecorder = null;
+                this.audioChunks = [];
+                this.recordingStartTime = 0;
+                this.recordingTimer = null;
+                this.recordingDuration = 0;
+                this.audioContext = null;
+                this.analyser = null;
+                this.visualizerInterval = null;
+                this.recordingCanvas = null;
+                this.recordingCtx = null;
+                
+                // 音频播放相关
+                this.currentAudio = null;
+                this.currentAudioElement = null;
+                
+                // 缓存系统 - 解决刷新丢失问题
+                this.imageCache = new Map(); // 内存缓存
+                this.audioCache = new Map(); // 内存缓存
+                this.loadingImages = new Set(); // 正在加载的图片
+                this.loadingAudios = new Set(); // 正在加载的音频
+                
+                // 图片状态存储 - 用于恢复状态
+                this.loadedImageStates = new Map(); // 存储已加载图片的状态
+                
+                this.init();
+            }
+            
+            // 初始化
+            async init() {
+                this.displayUsername();
+                this.setupEventListeners();
+                await this.loadMessages();
+                this.startAutoRefresh();
+                this.updateStatus('在线');
+                this.initScrollTracking();
+            }
+            
+            // 初始化滚动跟踪
+            initScrollTracking() {
+                const chatContainer = document.getElementById('chatContainer');
+                
+                chatContainer.addEventListener('scroll', () => {
+                    this.handleScroll();
+                });
+                
+                this.checkIfAtBottom();
+            }
+            
+            // 处理滚动
+            handleScroll() {
+                const chatContainer = document.getElementById('chatContainer');
+                const scrollTop = chatContainer.scrollTop;
+                const scrollHeight = chatContainer.scrollHeight;
+                const clientHeight = chatContainer.clientHeight;
+                
+                this.isUserScrolling = true;
+                
+                const distanceToBottom = Math.abs(scrollHeight - scrollTop - clientHeight);
+                this.isAtBottom = distanceToBottom <= APP_CONFIG.AUTO_SCROLL_THRESHOLD;
+                
+                if (this.isAtBottom) {
+                    this.hideNewMessageIndicator();
+                    this.newMessageCount = 0;
+                }
+                
+                if (this.scrollTimeout) {
+                    clearTimeout(this.scrollTimeout);
+                }
+                
+                this.scrollTimeout = setTimeout(() => {
+                    this.isUserScrolling = false;
+                    this.lastScrollPosition = scrollTop;
+                    this.lastScrollHeight = scrollHeight;
+                    
+                    if (this.isAtBottom) {
+                        this.autoScrollEnabled = true;
+                    }
+                }, 150);
+            }
+            
+            // 检查是否在底部
+            checkIfAtBottom() {
+                const chatContainer = document.getElementById('chatContainer');
+                const scrollTop = chatContainer.scrollTop;
+                const scrollHeight = chatContainer.scrollHeight;
+                const clientHeight = chatContainer.clientHeight;
+                
+                const distanceToBottom = Math.abs(scrollHeight - scrollTop - clientHeight);
+                this.isAtBottom = distanceToBottom <= APP_CONFIG.AUTO_SCROLL_THRESHOLD;
+                
+                return this.isAtBottom;
+            }
+            
+            // 显示新消息提示
+            showNewMessageIndicator(count = 1) {
+                const indicator = document.getElementById('newMessageIndicator');
+                if (count > 1) {
+                    indicator.innerHTML = `<span>${count} 条新消息</span><span>↓</span>`;
+                } else {
+                    indicator.innerHTML = '<span>有新的消息</span><span>↓</span>';
+                }
+                indicator.classList.add('show');
+            }
+            
+            // 隐藏新消息提示
+            hideNewMessageIndicator() {
+                const indicator = document.getElementById('newMessageIndicator');
+                indicator.classList.remove('show');
+            }
+            
+            // 滚动到底部（智能）
+            scrollToBottom(force = false) {
+                if (!force && !this.autoScrollEnabled) {
+                    return;
+                }
+                
+                const chatContainer = document.getElementById('chatContainer');
+                if (chatContainer) {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                    this.hideNewMessageIndicator();
+                    this.newMessageCount = 0;
+                }
+            }
+            
+            // 恢复滚动位置
+            restoreScrollPosition() {
+                const chatContainer = document.getElementById('chatContainer');
+                if (!chatContainer || !this.shouldPreserveScroll) return;
+                
+                const oldScrollHeight = this.lastScrollHeight;
+                const newScrollHeight = chatContainer.scrollHeight;
+                
+                if (oldScrollHeight > 0 && newScrollHeight > 0) {
+                    const ratio = this.lastScrollPosition / oldScrollHeight;
+                    const newPosition = ratio * newScrollHeight;
+                    chatContainer.scrollTop = newPosition;
+                    
+                    if (this.isAtBottom) {
+                        setTimeout(() => {
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                        }, 10);
+                    }
+                }
+                
+                this.shouldPreserveScroll = false;
+            }
+            
+            // 获取或创建用户ID
+            getOrCreateUserId() {
+                let userId = localStorage.getItem('chat_userId');
+                if (!userId) {
+                    userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('chat_userId', userId);
+                }
+                return userId;
+            }
+            
+            // 获取或创建用户名
+            getOrCreateUsername() {
+                let username = localStorage.getItem('chat_username');
+                if (!username) {
+                    const randomIndex = Math.floor(Math.random() * USER_CONFIG.USERNAME_LIST.length);
+                    username = USER_CONFIG.USERNAME_LIST[randomIndex];
+                    localStorage.setItem('chat_username', username);
+                    
+                    setTimeout(() => {
+                        this.addSystemMessage(`欢迎 ${username} 加入聊天室`);
+                    }, 1000);
+                }
+                return username;
+            }
+            
+            // 显示用户名
+            displayUsername() {
+                document.getElementById('username').textContent = this.username;
+            }
+            
+            // 从Gitee加载消息
+            async loadMessages() {
+                if (this.isLoading) return;
+                
+                this.isLoading = true;
+                
+                // 保存当前滚动状态
+                this.saveScrollState();
+                
+                try {
+                    const apiUrl = `${GITEE_CONFIG.API_BASE}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/${GITEE_CONFIG.FILE_PATH}?access_token=${GITEE_CONFIG.ACCESS_TOKEN}`;
+                    
+                    const response = await fetch(apiUrl, {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            this.messages = [];
+                            this.sha = null;
+                            this.renderMessages();
+                            this.updateStatus('在线');
+                            this.enableInput();
+                            return;
+                        } else if (response.status === 403 || response.status === 401) {
+                            throw new Error('访问令牌无效或权限不足');
+                        } else {
+                            throw new Error(`HTTP错误: ${response.status}`);
+                        }
+                    }
+                    
+                    const data = await response.json();
+                    
+                    let content = '';
+                    try {
+                        if (data.content) {
+                            content = this.decodeBase64(data.content);
+                        } else {
+                            throw new Error('文件内容为空');
+                        }
+                    } catch (e) {
+                        throw new Error('文件格式错误，无法解码');
+                    }
+                    
+                    this.sha = data.sha;
+                    
+                    try {
+                        const newMessages = JSON.parse(content || '[]');
+                        
+                        // 检测新消息数量
+                        if (this.messages.length > 0 && newMessages.length > this.messages.length) {
+                            const oldCount = this.messages.length;
+                            const newCount = newMessages.length;
+                            const addedCount = newCount - oldCount;
+                            
+                            if (!this.isAtBottom && !this.isUserScrolling) {
+                                this.newMessageCount += addedCount;
+                                this.showNewMessageIndicator(this.newMessageCount);
+                            }
+                        }
+                        
+                        this.messages = newMessages;
+                    } catch (e) {
+                        console.error('解析消息失败:', e);
+                        this.messages = [];
+                    }
+                    
+                    if (this.messages.length > APP_CONFIG.MAX_MESSAGES) {
+                        this.messages = this.messages.slice(-APP_CONFIG.MAX_MESSAGES);
+                    }
+                    
+                    // 渲染消息（不恢复图片状态，避免重复请求）
+                    this.renderMessages();
+                    this.retryCount = 0;
+                    this.updateStatus('在线');
+                    this.enableInput();
+                    this.hideError();
+                    
+                } catch (error) {
+                    console.error('加载消息失败:', error);
+                    this.retryCount++;
+                    
+                    if (this.retryCount <= GITEE_CONFIG.MAX_RETRIES) {
+                        this.updateStatus(`重试中 (${this.retryCount}/${GITEE_CONFIG.MAX_RETRIES})`);
+                        this.showError(`加载失败，正在重试... (${this.retryCount}/${GITEE_CONFIG.MAX_RETRIES})`);
+                        
+                        setTimeout(() => this.loadMessages(), 2000 * this.retryCount);
+                    } else {
+                        this.updateStatus('离线', 'error');
+                        this.showError('连接失败，请检查网络或配置');
+                        this.disableInput();
+                    }
+                } finally {
+                    this.isLoading = false;
+                }
+            }
+            
+            // 保存滚动状态
+            saveScrollState() {
+                const chatContainer = document.getElementById('chatContainer');
+                if (chatContainer) {
+                    this.lastScrollPosition = chatContainer.scrollTop;
+                    this.lastScrollHeight = chatContainer.scrollHeight;
+                    this.shouldPreserveScroll = APP_CONFIG.KEEP_SCROLL_POSITION && !this.isAtBottom;
+                }
+            }
+            
+            // 保存消息到Gitee
+            async saveMessages() {
+                try {
+                    const content = JSON.stringify(this.messages, null, 2);
+                    const encodedContent = this.encodeBase64(content);
+                    
+                    const apiUrl = `${GITEE_CONFIG.API_BASE}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/${GITEE_CONFIG.FILE_PATH}?access_token=${GITEE_CONFIG.ACCESS_TOKEN}`;
+                    
+                    const body = {
+                        content: encodedContent,
+                        message: `更新消息 - ${new Date().toISOString()}`,
+                        sha: this.sha
+                    };
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(body)
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        
+                        if (response.status === 409) {
+                            await this.loadMessages();
+                            return await this.saveMessages();
+                        }
+                        
+                        throw new Error(`保存失败: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    this.sha = data.content.sha;
+                    return true;
+                    
+                } catch (error) {
+                    console.error('保存消息失败:', error);
+                    return false;
+                }
+            }
+            
+            // 发送消息
+            async sendMessage(text, images = [], audioInfo = null) {
+                if (!text.trim() && images.length === 0 && !audioInfo) return false;
+                
+                // 如果有图片，先上传图片
+                let imagePaths = [];
+                if (images.length > 0) {
+                    imagePaths = await this.uploadImages(images);
+                    if (imagePaths.length === 0 && !text.trim() && !audioInfo) {
+                        this.showError('图片上传失败');
+                        return false;
+                    }
+                }
+                
+                const message = {
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    userId: this.userId,
+                    username: this.username,
+                    text: text.trim(),
+                    images: imagePaths,
+                    audio: audioInfo,
+                    timestamp: Date.now(),
+                    time: this.formatTime(new Date())
+                };
+                
+                // 临时显示消息
+                this.messages.push(message);
+                this.renderMessages();
+                
+                // 发送消息后总是滚动到底部
+                this.autoScrollEnabled = true;
+                this.scrollToBottom(true);
+                
+                // 保存到Gitee
+                const sendBtn = document.getElementById('sendBtn');
+                const originalText = sendBtn.textContent;
+                sendBtn.textContent = '发送中...';
+                sendBtn.disabled = true;
+                
+                const success = await this.saveMessages();
+                
+                sendBtn.textContent = originalText;
+                sendBtn.disabled = false;
+                
+                if (success) {
+                    setTimeout(() => this.loadMessages(), 500);
+                } else {
+                    this.showError('发送失败，请稍后重试');
+                }
+                
+                return success;
+            }
+            
+            // 上传图片到Gitee
+            async uploadImages(imageFiles) {
+                const imagePaths = [];
+                
+                for (let i = 0; i < imageFiles.length; i++) {
+                    const file = imageFiles[i];
+                    
+                    try {
+                        if (file.size > APP_CONFIG.MAX_IMAGE_SIZE) {
+                            this.showError(`图片 ${file.name} 超过${APP_CONFIG.MAX_IMAGE_SIZE / 1024 / 1024}MB限制`);
+                            continue;
+                        }
+                        
+                        let processedFile = file;
+                        if (file.size > APP_CONFIG.COMPRESS_THRESHOLD) {
+                            processedFile = await this.compressImage(file);
+                        }
+                        
+                        const timestamp = Date.now();
+                        const randomStr = Math.random().toString(36).substr(2, 6);
+                        const fileExt = file.name.split('.').pop() || 'jpg';
+                        const fileName = `${timestamp}_${randomStr}.${fileExt}`;
+                        const filePath = `${GITEE_CONFIG.IMAGE_DIR}/${fileName}`;
+                        
+                        const base64Data = await this.fileToBase64(processedFile);
+                        const base64Content = base64Data.split(',')[1];
+                        
+                        const apiUrl = `${GITEE_CONFIG.API_BASE}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/${filePath}?access_token=${GITEE_CONFIG.ACCESS_TOKEN}`;
+                        
+                        const body = {
+                            content: base64Content,
+                            message: `上传图片 ${fileName}`,
+                            branch: 'master'
+                        };
+                        
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(body)
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`上传失败: ${response.status}`);
+                        }
+                        
+                        const data = await response.json();
+                        // 只存储路径，不存储URL
+                        imagePaths.push(filePath);
+                        
+                    } catch (error) {
+                        console.error(`图片上传失败:`, error);
+                        this.showError(`图片 ${file.name} 上传失败`);
+                    }
+                }
+                
+                return imagePaths;
+            }
+            
+            // 上传音频到Gitee
+            async uploadAudio(audioBlob) {
+                try {
+                    if (this.recordingDuration > APP_CONFIG.MAX_AUDIO_DURATION) {
+                        this.showError(`语音超过${APP_CONFIG.MAX_AUDIO_DURATION}秒限制`);
+                        return null;
+                    }
+                    
+                    const timestamp = Date.now();
+                    const randomStr = Math.random().toString(36).substr(2, 6);
+                    const fileName = `${timestamp}_${randomStr}.webm`;
+                    const filePath = `${GITEE_CONFIG.AUDIO_DIR}/${fileName}`;
+                    
+                    const base64Data = await this.blobToBase64(audioBlob);
+                    const base64Content = base64Data.split(',')[1];
+                    
+                    const apiUrl = `${GITEE_CONFIG.API_BASE}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/${filePath}?access_token=${GITEE_CONFIG.ACCESS_TOKEN}`;
+                    
+                    const body = {
+                        content: base64Content,
+                        message: `上传语音 ${fileName}`,
+                        branch: 'master'
+                    };
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(body)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`上传失败: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    // 只存储路径
+                    return filePath;
+                    
+                } catch (error) {
+                    console.error('音频上传失败:', error);
+                    this.showError(`语音上传失败`);
+                    return null;
+                }
+            }
+            
+            // 压缩图片
+            compressImage(file) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    const reader = new FileReader();
+                    
+                    reader.onload = (e) => {
+                        img.src = e.target.result;
+                        
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (width > APP_CONFIG.MAX_IMAGE_WIDTH) {
+                                height = (APP_CONFIG.MAX_IMAGE_WIDTH / width) * height;
+                                width = APP_CONFIG.MAX_IMAGE_WIDTH;
+                            }
+                            
+                            if (height > APP_CONFIG.MAX_IMAGE_HEIGHT) {
+                                width = (APP_CONFIG.MAX_IMAGE_HEIGHT / height) * width;
+                                height = APP_CONFIG.MAX_IMAGE_HEIGHT;
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            canvas.toBlob(
+                                (blob) => {
+                                    if (blob) {
+                                        resolve(new File([blob], file.name, {
+                                            type: 'image/jpeg',
+                                            lastModified: Date.now()
+                                        }));
+                                    } else {
+                                        reject(new Error('压缩失败'));
+                                    }
+                                },
+                                'image/jpeg',
+                                APP_CONFIG.IMAGE_QUALITY
+                            );
+                        };
+                        
+                        img.onerror = () => {
+                            reject(new Error('图片加载失败'));
+                        };
+                    };
+                    
+                    reader.onerror = () => {
+                        reject(new Error('文件读取失败'));
+                    };
+                    
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            // 开始录音
+            async startRecording() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            sampleRate: 44100
+                        }
+                    });
+                    
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.analyser = this.audioContext.createAnalyser();
+                    const source = this.audioContext.createMediaStreamSource(stream);
+                    source.connect(this.analyser);
+                    
+                    this.analyser.fftSize = 256;
+                    this.analyser.smoothingTimeConstant = 0.8;
+                    
+                    this.mediaRecorder = new MediaRecorder(stream, {
+                        mimeType: APP_CONFIG.AUDIO_FORMAT,
+                        audioBitsPerSecond: APP_CONFIG.AUDIO_BITRATE
+                    });
+                    
+                    this.audioChunks = [];
+                    
+                    this.mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            this.audioChunks.push(event.data);
+                        }
+                    };
+                    
+                    this.mediaRecorder.onstop = async () => {
+                        stream.getTracks().forEach(track => track.stop());
+                        
+                        if (this.audioChunks.length > 0) {
+                            const audioBlob = new Blob(this.audioChunks, { type: APP_CONFIG.AUDIO_FORMAT });
+                            
+                            document.getElementById('recordingHint').textContent = '正在上传语音...';
+                            
+                            const audioPath = await this.uploadAudio(audioBlob);
+                            
+                            document.getElementById('recordingOverlay').classList.remove('active');
+                            document.getElementById('voiceBtn').classList.remove('recording');
+                            
+                            if (audioPath) {
+                                await this.sendMessage('', [], audioPath);
+                            }
+                        }
+                    };
+                    
+                    this.mediaRecorder.start(100);
+                    this.isRecording = true;
+                    this.recordingStartTime = Date.now();
+                    
+                    document.getElementById('recordingBtn').classList.add('recording');
+                    document.getElementById('recordingBtn').style.animation = 'pulse-red 1.5s infinite';
+                    document.getElementById('recordingStopBtn').style.display = 'block';
+                    
+                    this.startRecordingTimer();
+                    this.startVisualizer();
+                    
+                } catch (error) {
+                    console.error('开始录音失败:', error);
+                    this.showError('无法访问麦克风，请检查权限设置');
+                    this.stopRecording();
+                }
+            }
+            
+            // 停止录音
+            stopRecording() {
+                if (!this.isRecording || !this.mediaRecorder) return;
+                
+                if (this.mediaRecorder.state !== 'inactive') {
+                    this.mediaRecorder.stop();
+                }
+                
+                this.stopRecordingTimer();
+                this.stopVisualizer();
+                
+                if (this.audioContext) {
+                    this.audioContext.close();
+                    this.audioContext = null;
+                }
+                
+                this.isRecording = false;
+                this.recordingDuration = Math.min(
+                    (Date.now() - this.recordingStartTime) / 1000,
+                    APP_CONFIG.MAX_AUDIO_DURATION
+                );
+            }
+            
+            // 开始录音计时器
+            startRecordingTimer() {
+                const timerElement = document.getElementById('recordingTimer');
+                this.recordingTimer = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.recordingStartTime) / 1000);
+                    const remaining = APP_CONFIG.MAX_AUDIO_DURATION - elapsed;
+                    
+                    if (remaining <= 0) {
+                        this.stopRecording();
+                        return;
+                    }
+                    
+                    const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                    const seconds = (elapsed % 60).toString().padStart(2, '0');
+                    timerElement.textContent = `${minutes}:${seconds}`;
+                    
+                    document.getElementById('recordingHint').textContent = 
+                        `剩余 ${remaining} 秒，松开发送`;
+                        
+                }, 100);
+            }
+            
+            // 停止录音计时器
+            stopRecordingTimer() {
+                if (this.recordingTimer) {
+                    clearInterval(this.recordingTimer);
+                    this.recordingTimer = null;
+                }
+            }
+            
+            // 开始音频可视化
+            startVisualizer() {
+                const canvas = document.getElementById('recordingCanvas');
+                const ctx = canvas.getContext('2d');
+                this.recordingCanvas = canvas;
+                this.recordingCtx = ctx;
+                
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                const bufferLength = this.analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                
+                const draw = () => {
+                    if (!this.isRecording || !this.analyser) return;
+                    
+                    requestAnimationFrame(draw);
+                    
+                    this.analyser.getByteFrequencyData(dataArray);
+                    
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    const barWidth = (canvas.width / bufferLength) * 2.5;
+                    let barHeight;
+                    let x = 0;
+                    
+                    for (let i = 0; i < bufferLength; i++) {
+                        barHeight = (dataArray[i] / 255) * canvas.height;
+                        
+                        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                        gradient.addColorStop(0, '#ff4444');
+                        gradient.addColorStop(1, '#ff8888');
+                        
+                        ctx.fillStyle = gradient;
+                        
+                        ctx.fillRect(
+                            x,
+                            canvas.height - barHeight,
+                            barWidth,
+                            barHeight
+                        );
+                        
+                        x += barWidth + 1;
+                    }
+                };
+                
+                this.visualizerInterval = setInterval(draw, 1000 / 30);
+            }
+            
+            // 停止音频可视化
+            stopVisualizer() {
+                if (this.visualizerInterval) {
+                    clearInterval(this.visualizerInterval);
+                    this.visualizerInterval = null;
+                }
+                
+                if (this.recordingCtx && this.recordingCanvas) {
+                    this.recordingCtx.clearRect(0, 0, this.recordingCanvas.width, this.recordingCanvas.height);
+                }
+            }
+            
+            // 通过API获取文件内容
+            async fetchFileContent(filePath) {
+                try {
+                    const apiUrl = `${GITEE_CONFIG.API_BASE}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/${filePath}?access_token=${GITEE_CONFIG.ACCESS_TOKEN}`;
+                    
+                    const response = await fetch(apiUrl, {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`获取文件失败: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (!data.content) {
+                        throw new Error('文件内容为空');
+                    }
+                    
+                    // 清理base64内容，移除换行符
+                    const cleanContent = data.content.replace(/\n/g, '').replace(/\r/g, '');
+                    
+                    return {
+                        content: cleanContent,
+                        encoding: data.encoding || 'base64'
+                    };
+                    
+                } catch (error) {
+                    console.error('获取文件内容失败:', error);
+                    throw error;
+                }
+            }
+            
+            // 获取图片数据
+            async getImageData(filePath) {
+                // 检查缓存
+                if (this.imageCache.has(filePath)) {
+                    return this.imageCache.get(filePath);
+                }
+                
+                // 检查是否正在加载
+                if (this.loadingImages.has(filePath)) {
+                    // 等待其他请求完成
+                    return new Promise((resolve) => {
+                        const checkInterval = setInterval(() => {
+                            if (this.imageCache.has(filePath)) {
+                                clearInterval(checkInterval);
+                                resolve(this.imageCache.get(filePath));
+                            }
+                        }, 100);
+                    });
+                }
+                
+                this.loadingImages.add(filePath);
+                
+                try {
+                    const fileData = await this.fetchFileContent(filePath);
+                    if (!fileData.content) {
+                        throw new Error('图片内容为空');
+                    }
+                    
+                    // 根据文件扩展名确定 MIME 类型
+                    let mimeType = 'image/jpeg';
+                    const extension = filePath.split('.').pop().toLowerCase();
+                    
+                    if (extension === 'png') mimeType = 'image/png';
+                    else if (extension === 'gif') mimeType = 'image/gif';
+                    else if (extension === 'webp') mimeType = 'image/webp';
+                    else if (extension === 'bmp') mimeType = 'image/bmp';
+                    else if (extension === 'svg') mimeType = 'image/svg+xml';
+                    
+                    const dataUrl = `data:${mimeType};base64,${fileData.content}`;
+                    
+                    // 存入缓存
+                    this.imageCache.set(filePath, dataUrl);
+                    
+                    // 限制缓存大小
+                    if (this.imageCache.size > APP_CONFIG.IMAGE_CACHE_SIZE) {
+                        const firstKey = this.imageCache.keys().next().value;
+                        this.imageCache.delete(firstKey);
+                    }
+                    
+                    return dataUrl;
+                } catch (error) {
+                    console.error('获取图片数据失败:', error);
+                    return null;
+                } finally {
+                    this.loadingImages.delete(filePath);
+                }
+            }
+            
+            // 获取音频数据
+            async getAudioData(filePath) {
+                // 检查缓存
+                if (this.audioCache.has(filePath)) {
+                    return this.audioCache.get(filePath);
+                }
+                
+                // 检查是否正在加载
+                if (this.loadingAudios.has(filePath)) {
+                    // 等待其他请求完成
+                    return new Promise((resolve) => {
+                        const checkInterval = setInterval(() => {
+                            if (this.audioCache.has(filePath)) {
+                                clearInterval(checkInterval);
+                                resolve(this.audioCache.get(filePath));
+                            }
+                        }, 100);
+                    });
+                }
+                
+                this.loadingAudios.add(filePath);
+                
+                try {
+                    const fileData = await this.fetchFileContent(filePath);
+                    if (!fileData.content) {
+                        throw new Error('音频内容为空');
+                    }
+                    
+                    const dataUrl = `data:audio/webm;base64,${fileData.content}`;
+                    
+                    // 存入缓存
+                    this.audioCache.set(filePath, dataUrl);
+                    
+                    // 限制缓存大小
+                    if (this.audioCache.size > APP_CONFIG.AUDIO_CACHE_SIZE) {
+                        const firstKey = this.audioCache.keys().next().value;
+                        this.audioCache.delete(firstKey);
+                    }
+                    
+                    return dataUrl;
+                } catch (error) {
+                    console.error('获取音频数据失败:', error);
+                    return null;
+                } finally {
+                    this.loadingAudios.delete(filePath);
+                }
+            }
+            
+            // 加载图片
+            async loadImage(filePath, placeholder, imageElement) {
+                if (this.imageCache.has(filePath)) {
+                    // 直接从缓存显示
+                    const dataUrl = this.imageCache.get(filePath);
+                    placeholder.style.display = 'none';
+                    imageElement.src = dataUrl;
+                    imageElement.style.display = 'block';
+                    return;
+                }
+                
+                placeholder.querySelector('.placeholder-text').textContent = '加载中...';
+                
+                try {
+                    const dataUrl = await this.getImageData(filePath);
+                    if (dataUrl) {
+                        placeholder.style.display = 'none';
+                        imageElement.src = dataUrl;
+                        imageElement.style.display = 'block';
+                    } else {
+                        throw new Error('获取图片数据失败');
+                    }
+                } catch (error) {
+                    console.error('加载图片失败:', error);
+                    placeholder.querySelector('.placeholder-text').textContent = '加载失败，点击重试';
+                    placeholder.style.cursor = 'pointer';
+                    
+                    // 重新绑定点击事件
+                    placeholder.onclick = () => {
+                        this.loadImage(filePath, placeholder, imageElement);
+                    };
+                }
+            }
+            
+            // 播放音频
+            async playAudio(filePath, playBtn, progressBar, timeDisplay) {
+                // 检查是否正在播放同一音频
+                if (this.currentAudio === filePath && this.currentAudioElement) {
+                    // 暂停播放
+                    if (!this.currentAudioElement.paused) {
+                        this.currentAudioElement.pause();
+                        this.currentAudioElement.currentTime = 0;
+                        playBtn.classList.remove('playing');
+                        playBtn.textContent = '▶';
+                        progressBar.style.width = '0%';
+                        timeDisplay.textContent = '00:00';
+                        this.currentAudio = null;
+                        this.currentAudioElement = null;
+                    } else {
+                        // 重新开始播放
+                        this.currentAudioElement.play();
+                        playBtn.classList.add('playing');
+                        playBtn.textContent = '⏸';
+                    }
+                    return;
+                }
+                
+                // 停止其他音频
+                if (this.currentAudio && this.currentAudioElement) {
+                    this.currentAudioElement.pause();
+                    this.currentAudioElement.currentTime = 0;
+                    const currentPlayBtn = document.querySelector('.audio-play-btn.playing');
+                    if (currentPlayBtn) {
+                        currentPlayBtn.classList.remove('playing');
+                        currentPlayBtn.textContent = '▶';
+                    }
+                }
+                
+                playBtn.textContent = '⏳';
+                playBtn.disabled = true;
+                
+                try {
+                    const audioUrl = await this.getAudioData(filePath);
+                    if (!audioUrl) {
+                        throw new Error('获取音频URL失败');
+                    }
+                    
+                    let audio;
+                    
+                    // 检查缓存
+                    if (this.audioCache.has(filePath)) {
+                        // 重新创建Audio对象，避免状态共享
+                        audio = new Audio(audioUrl);
+                    } else {
+                        audio = new Audio(audioUrl);
+                    }
+                    
+                    // 设置音频事件
+                    audio.oncanplaythrough = () => {
+                        playBtn.textContent = '▶';
+                        playBtn.disabled = false;
+                    };
+                    
+                    audio.onerror = () => {
+                        playBtn.textContent = '▶';
+                        playBtn.disabled = false;
+                        this.showError('音频加载失败');
+                    };
+                    
+                    audio.ontimeupdate = () => {
+                        if (audio.duration && !isNaN(audio.duration)) {
+                            const progress = (audio.currentTime / audio.duration) * 100;
+                            progressBar.style.width = `${progress}%`;
+                            
+                            const currentTime = Math.floor(audio.currentTime);
+                            const minutes = Math.floor(currentTime / 60).toString().padStart(2, '0');
+                            const seconds = (currentTime % 60).toString().padStart(2, '0');
+                            timeDisplay.textContent = `${minutes}:${seconds}`;
+                        }
+                    };
+                    
+                    audio.onended = () => {
+                        playBtn.classList.remove('playing');
+                        playBtn.textContent = '▶';
+                        progressBar.style.width = '0%';
+                        timeDisplay.textContent = '00:00';
+                        this.currentAudio = null;
+                        this.currentAudioElement = null;
+                    };
+                    
+                    audio.onpause = () => {
+                        if (audio.currentTime >= audio.duration || audio.currentTime === 0) {
+                            playBtn.classList.remove('playing');
+                            playBtn.textContent = '▶';
+                            progressBar.style.width = '0%';
+                            timeDisplay.textContent = '00:00';
+                        }
+                    };
+                    
+                    // 开始播放
+                    this.currentAudio = filePath;
+                    this.currentAudioElement = audio;
+                    
+                    await audio.play();
+                    
+                    playBtn.classList.add('playing');
+                    playBtn.textContent = '⏸';
+                    
+                } catch (error) {
+                    console.error('播放音频失败:', error);
+                    playBtn.textContent = '▶';
+                    playBtn.disabled = false;
+                    this.showError('音频播放失败');
+                }
+            }
+            
+            // 复制文本到剪贴板
+            copyTextToClipboard(text) {
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        this.showTemporaryMessage('已复制到剪贴板');
+                    }).catch(err => {
+                        this.copyTextFallback(text);
+                    });
+                } else {
+                    this.copyTextFallback(text);
+                }
+            }
+            
+            // 备用复制方法
+            copyTextFallback(text) {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    this.showTemporaryMessage('已复制到剪贴板');
+                } catch (err) {
+                    this.showError('复制失败，请手动复制');
+                }
+                
+                document.body.removeChild(textArea);
+            }
+            
+            // 显示临时消息
+            showTemporaryMessage(message) {
+                const tempMsg = document.createElement('div');
+                tempMsg.textContent = message;
+                tempMsg.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    z-index: 10000;
+                    font-size: 14px;
+                `;
+                document.body.appendChild(tempMsg);
+                
+                setTimeout(() => {
+                    document.body.removeChild(tempMsg);
+                }, 1500);
+            }
+            
+            // 文件转Base64
+            fileToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            // Blob转Base64
+            blobToBase64(blob) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            }
+            
+            // 添加系统消息
+            addSystemMessage(text) {
+                const message = {
+                    id: 'system_' + Date.now(),
+                    type: 'system',
+                    text: text,
+                    timestamp: Date.now(),
+                    time: this.formatTime(new Date())
+                };
+                
+                const chatContainer = document.getElementById('chatContainer');
+                const systemMsg = document.createElement('div');
+                systemMsg.className = 'system-message';
+                systemMsg.textContent = text;
+                chatContainer.appendChild(systemMsg);
+                this.scrollToBottom();
+            }
+            
+            // 渲染消息
+            renderMessages() {
+                const chatContainer = document.getElementById('chatContainer');
+                
+                // 清除旧的加载提示
+                const loadingElements = chatContainer.querySelectorAll('.loading, .system-message:first-child');
+                loadingElements.forEach(el => {
+                    if (el.textContent.includes('正在连接') || el.textContent.includes('暂无消息')) {
+                        el.remove();
+                    }
+                });
+                
+                // 保存当前选中的文本（如果有）
+                this.saveTextSelection();
+                
+                chatContainer.innerHTML = '';
+                
+                if (this.messages.length === 0) {
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'system-message';
+                    emptyMsg.textContent = '还没有消息，快来说点什么吧~';
+                    chatContainer.appendChild(emptyMsg);
+                    return;
+                }
+                
+                this.messages.forEach(msg => {
+                    if (msg.type === 'system') {
+                        const systemMsg = document.createElement('div');
+                        systemMsg.className = 'system-message';
+                        systemMsg.textContent = msg.text;
+                        chatContainer.appendChild(systemMsg);
+                    } else {
+                        const isOwn = msg.userId === this.userId;
+                        const messageElement = document.createElement('div');
+                        messageElement.className = `message ${isOwn ? 'own' : ''}`;
+                        
+                        let contentHTML = '';
+                        
+                        // 文本内容
+                        if (msg.text) {
+                            const messageId = `msg_${msg.id}`;
+                            contentHTML += `
+                                <div class="message-content">
+                                    <div class="message-text" id="${messageId}">${this.escapeHtml(msg.text)}</div>
+                                    <button class="copy-btn" data-message-id="${messageId}">复制</button>
+                                </div>
+                            `;
+                        }
+                        
+                        // 图片内容
+                        if (msg.images && msg.images.length > 0) {
+                            msg.images.forEach((filePath, index) => {
+                                const imageId = `image_${msg.id}_${index}`;
+                                
+                                // 检查图片是否已经在缓存中
+                                if (this.imageCache.has(filePath)) {
+                                    // 直接从缓存显示，不需要占位符
+                                    const dataUrl = this.imageCache.get(filePath);
+                                    contentHTML += `
+                                        <div class="message-image-container">
+                                            <img class="message-image" 
+                                                 id="${imageId}"
+                                                 src="${dataUrl}"
+                                                 alt="图片"
+                                                 style="display: block;">
+                                        </div>
+                                    `;
+                                } else {
+                                    // 显示占位符
+                                    contentHTML += `
+                                        <div class="message-image-container">
+                                            <div class="message-image-placeholder" 
+                                                 id="placeholder_${imageId}"
+                                                 data-file-path="${filePath}">
+                                                <div class="placeholder-icon">🖼️</div>
+                                                <div class="placeholder-text">点击查看图片</div>
+                                            </div>
+                                            <img class="message-image" 
+                                                 id="${imageId}"
+                                                 data-file-path="${filePath}"
+                                                 alt="图片"
+                                                 style="display: none;">
+                                        </div>
+                                    `;
+                                }
+                            });
+                        }
+                        
+                        // 语音内容
+                        if (msg.audio) {
+                            const audioId = `audio_${msg.id}`;
+                            const playBtnId = `play_${msg.id}`;
+                            const progressBarId = `progress_${msg.id}`;
+                            const timeDisplayId = `time_${msg.id}`;
+                            
+                            contentHTML += `
+                                <div class="message-audio">
+                                    <div class="audio-player">
+                                        <button class="audio-play-btn" id="${playBtnId}" data-file-path="${msg.audio}">
+                                            ▶
+                                        </button>
+                                        <div class="audio-progress-container">
+                                            <div class="audio-progress-bar" id="${progressBarId}"></div>
+                                        </div>
+                                        <div class="audio-time" id="${timeDisplayId}">00:00</div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        messageElement.innerHTML = `
+                            <div class="message-header">
+                                <div class="username">${this.escapeHtml(msg.username)}</div>
+                                <div class="message-time">${msg.time || this.formatTime(new Date(msg.timestamp))}</div>
+                            </div>
+                            ${contentHTML}
+                        `;
+                        
+                        chatContainer.appendChild(messageElement);
+                        
+                        // 为复制按钮添加事件
+                        if (msg.text) {
+                            const copyBtn = messageElement.querySelector('.copy-btn');
+                            if (copyBtn) {
+                                const messageText = msg.text;
+                                copyBtn.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    this.copyTextToClipboard(messageText);
+                                });
+                            }
+                        }
+                        
+                        // 为图片占位符添加事件
+                        if (msg.images && msg.images.length > 0) {
+                            msg.images.forEach((filePath, index) => {
+                                const imageId = `image_${msg.id}_${index}`;
+                                const placeholder = document.getElementById(`placeholder_${imageId}`);
+                                const imageElement = document.getElementById(imageId);
+                                
+                                if (placeholder && imageElement) {
+                                    placeholder.addEventListener('click', () => {
+                                        this.loadImage(filePath, placeholder, imageElement);
+                                    });
+                                }
+                            });
+                        }
+                        
+                        // 为音频消息添加事件
+                        if (msg.audio) {
+                            const playBtn = document.getElementById(`play_${msg.id}`);
+                            const progressBar = document.getElementById(`progress_${msg.id}`);
+                            const timeDisplay = document.getElementById(`time_${msg.id}`);
+                            
+                            if (playBtn) {
+                                playBtn.addEventListener('click', () => {
+                                    this.playAudio(msg.audio, playBtn, progressBar, timeDisplay);
+                                });
+                            }
+                        }
+                    }
+                });
+                
+                // 恢复文本选择（如果之前有）
+                this.restoreTextSelection();
+                
+                // 恢复滚动位置或滚动到底部
+                if (this.shouldPreserveScroll && !this.isAtBottom) {
+                    setTimeout(() => {
+                        this.restoreScrollPosition();
+                    }, 50);
+                } else if (this.autoScrollEnabled && this.isAtBottom) {
+                    setTimeout(() => {
+                        this.scrollToBottom(true);
+                    }, 100);
+                }
+            }
+            
+            // 保存文本选择
+            saveTextSelection() {
+                const selection = window.getSelection();
+                if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+                    const range = selection.getRangeAt(0);
+                    const chatContainer = document.getElementById('chatContainer');
+                    
+                    if (chatContainer.contains(range.commonAncestorContainer) || 
+                        range.commonAncestorContainer === chatContainer) {
+                        
+                        this.isUserSelecting = true;
+                        this.selectionStartTime = Date.now();
+                        this.lastSelectionRange = range;
+                    }
+                }
+            }
+            
+            // 恢复文本选择
+            restoreTextSelection() {
+                if (this.isUserSelecting && this.lastSelectionRange) {
+                    try {
+                        const selection = window.getSelection();
+                        selection.removeAllRanges();
+                        selection.addRange(this.lastSelectionRange);
+                        
+                        setTimeout(() => {
+                            this.isUserSelecting = false;
+                            this.lastSelectionRange = null;
+                        }, 100);
+                    } catch (e) {
+                        this.isUserSelecting = false;
+                        this.lastSelectionRange = null;
+                    }
+                }
+            }
+            
+            // 开始自动刷新
+            startAutoRefresh() {
+                const initialDelay = Math.random() * 3000;
+                
+                setTimeout(() => {
+                    setInterval(() => {
+                        if (this.isUserSelecting) {
+                            const selectionDuration = Date.now() - this.selectionStartTime;
+                            if (selectionDuration < 2000) {
+                                return;
+                            }
+                        }
+                        this.loadMessages();
+                    }, APP_CONFIG.REFRESH_INTERVAL);
+                }, initialDelay);
+            }
+            
+            // 更新连接状态
+            updateStatus(status, type = 'online') {
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+                
+                statusText.textContent = status;
+                
+                if (type === 'online') {
+                    statusDot.className = 'status-dot';
+                } else if (type === 'error') {
+                    statusDot.className = 'status-dot error';
+                } else {
+                    statusDot.className = 'status-dot offline';
+                }
+            }
+            
+            // 启用输入框
+            enableInput() {
+                document.getElementById('sendBtn').disabled = false;
+                document.getElementById('imageBtn').disabled = false;
+                document.getElementById('voiceBtn').disabled = false;
+                document.getElementById('messageInput').disabled = false;
+                document.getElementById('messageInput').placeholder = '输入消息...';
+            }
+            
+            // 禁用输入框
+            disableInput() {
+                document.getElementById('sendBtn').disabled = true;
+                document.getElementById('imageBtn').disabled = true;
+                document.getElementById('voiceBtn').disabled = true;
+                document.getElementById('messageInput').disabled = true;
+                document.getElementById('messageInput').placeholder = '连接已断开...';
+            }
+            
+            // 显示错误
+            showError(message) {
+                const errorElement = document.getElementById('errorMessage');
+                errorElement.textContent = message;
+                errorElement.classList.add('show');
+                
+                setTimeout(() => {
+                    errorElement.classList.remove('show');
+                }, 3000);
+            }
+            
+            // 隐藏错误
+            hideError() {
+                const errorElement = document.getElementById('errorMessage');
+                errorElement.classList.remove('show');
+            }
+            
+            // Base64编码
+            encodeBase64(str) {
+                try {
+                    return btoa(unescape(encodeURIComponent(str)));
+                } catch (error) {
+                    return btoa(str);
+                }
+            }
+            
+            // Base64解码
+            decodeBase64(str) {
+                try {
+                    return decodeURIComponent(escape(atob(str)));
+                } catch (error) {
+                    return atob(str);
+                }
+            }
+            
+            // 设置事件监听器
+            setupEventListeners() {
+                const sendBtn = document.getElementById('sendBtn');
+                const messageInput = document.getElementById('messageInput');
+                const userInfo = document.getElementById('userInfo');
+                const imageBtn = document.getElementById('imageBtn');
+                const voiceBtn = document.getElementById('voiceBtn');
+                const fileInput = document.getElementById('fileInput');
+                const previewContainer = document.getElementById('previewContainer');
+                const compressNotice = document.getElementById('compressNotice');
+                const recordingBtn = document.getElementById('recordingBtn');
+                const recordingStopBtn = document.getElementById('recordingStopBtn');
+                const recordingOverlay = document.getElementById('recordingOverlay');
+                const newMessageIndicator = document.getElementById('newMessageIndicator');
+                
+                let selectedImages = [];
+                
+                // 新消息提示点击事件
+                newMessageIndicator.addEventListener('click', () => {
+                    this.scrollToBottom(true);
+                });
+                
+                // 发送按钮点击事件
+                sendBtn.addEventListener('click', async () => {
+                    const text = messageInput.value.trim();
+                    
+                    if (text || selectedImages.length > 0) {
+                        const success = await this.sendMessage(text, selectedImages);
+                        if (success) {
+                            messageInput.value = '';
+                            selectedImages = [];
+                            previewContainer.innerHTML = '';
+                            previewContainer.classList.remove('active');
+                            compressNotice.classList.remove('active');
+                        }
+                        messageInput.focus();
+                    }
+                });
+                
+                // 输入框回车事件
+                messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendBtn.click();
+                    }
+                });
+                
+                // 图片按钮点击事件
+                imageBtn.addEventListener('click', () => {
+                    fileInput.click();
+                });
+                
+                // 语音按钮点击事件
+                voiceBtn.addEventListener('click', () => {
+                    recordingOverlay.classList.add('active');
+                    voiceBtn.classList.add('recording');
+                });
+                
+                // 开始录音按钮
+                recordingBtn.addEventListener('mousedown', () => {
+                    this.startRecording();
+                });
+                
+                recordingBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.startRecording();
+                });
+                
+                // 停止录音按钮
+                recordingStopBtn.addEventListener('click', () => {
+                    this.stopRecording();
+                });
+                
+                // 录音界面点击外部关闭
+                recordingOverlay.addEventListener('click', (e) => {
+                    if (e.target === recordingOverlay) {
+                        this.stopRecording();
+                        recordingOverlay.classList.remove('active');
+                        voiceBtn.classList.remove('recording');
+                    }
+                });
+                
+                // 文件选择事件
+                fileInput.addEventListener('change', (e) => {
+                    const files = Array.from(e.target.files);
+                    
+                    if (files.length === 0) return;
+                    
+                    if (files.length > 5) {
+                        this.showError('最多只能选择5张图片');
+                        return;
+                    }
+                    
+                    let hasLargeFile = false;
+                    files.forEach(file => {
+                        if (file.size > APP_CONFIG.MAX_IMAGE_SIZE) {
+                            this.showError(`${file.name} 超过${APP_CONFIG.MAX_IMAGE_SIZE / 1024 / 1024}MB限制`);
+                            hasLargeFile = true;
+                        }
+                    });
+                    
+                    if (hasLargeFile) return;
+                    
+                    selectedImages = [];
+                    previewContainer.innerHTML = '';
+                    
+                    files.forEach((file, index) => {
+                        selectedImages.push(file);
+                        
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const previewDiv = document.createElement('div');
+                            previewDiv.className = 'image-preview';
+                            previewDiv.innerHTML = `
+                                <img src="${e.target.result}" alt="预览">
+                                <button class="remove-preview" data-index="${index}">×</button>
+                            `;
+                            previewContainer.appendChild(previewDiv);
+                            
+                            previewDiv.querySelector('.remove-preview').addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                const idx = parseInt(e.target.dataset.index);
+                                selectedImages.splice(idx, 1);
+                                previewDiv.remove();
+                                
+                                const removeBtns = previewContainer.querySelectorAll('.remove-preview');
+                                removeBtns.forEach((btn, i) => {
+                                    btn.dataset.index = i;
+                                });
+                                
+                                if (selectedImages.length === 0) {
+                                    previewContainer.classList.remove('active');
+                                    compressNotice.classList.remove('active');
+                                }
+                            });
+                            
+                            previewContainer.classList.add('active');
+                            
+                            if (file.size > APP_CONFIG.COMPRESS_THRESHOLD) {
+                                compressNotice.textContent = '检测到大图，将自动压缩...';
+                                compressNotice.classList.add('active');
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                    
+                    fileInput.value = '';
+                });
+                
+                // 双击用户名可以更改
+                userInfo.addEventListener('dblclick', () => {
+                    const newName = prompt('请输入新的用户名（不超过10个字符）:', this.username);
+                    if (newName && newName.trim() && newName.trim().length <= 10) {
+                        const oldName = this.username;
+                        this.username = newName.trim();
+                        localStorage.setItem('chat_username', this.username);
+                        this.displayUsername();
+                        this.addSystemMessage(`${oldName} 更名为 ${this.username}`);
+                    }
+                });
+                
+                // 页面可见性变化时刷新
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) {
+                        this.loadMessages();
+                    }
+                });
+                
+                // 网络状态变化
+                window.addEventListener('online', () => {
+                    this.updateStatus('重新连接中...');
+                    this.loadMessages();
+                });
+                
+                window.addEventListener('offline', () => {
+                    this.updateStatus('离线', 'error');
+                    this.showError('网络连接已断开');
+                });
+            }
+            
+            // 格式化时间
+            formatTime(date) {
+                return date.toLocaleTimeString('zh-CN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+            }
+            
+            // HTML转义
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            // 调试日志
+            logDebug(...args) {
+                if (this.debugMode) {
+                    console.log('[DEBUG]', ...args);
+                }
+            }
+            
+            // 错误日志
+            logError(...args) {
+                console.error('[ERROR]', ...args);
+            }
+        }
+        
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                window.chatApp = new GiteeChat();
+            } catch (error) {
+                console.error('聊天室启动失败:', error);
+                document.getElementById('errorMessage').textContent = '聊天室启动失败: ' + error.message;
+                document.getElementById('errorMessage').classList.add('show');
+                document.getElementById('statusDot').className = 'status-dot error';
+                document.getElementById('statusText').textContent = '启动失败';
+            }
+        });
+    </script>
+</body>
+</html>
