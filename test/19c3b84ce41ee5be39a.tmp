@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字显示系统</title>
+    <style>
+        /* ==============================
+           可调参数配置区
+           ============================== */
+        :root {
+            /* 颜色配置 */
+            --bg-color: #000000;          /* 背景颜色 */
+            --text-color: #ffffff;        /* 文字颜色 */
+            --btn-bg-color: rgba(255, 255, 255, 0.1);     /* 按钮背景颜色 */
+            --btn-border-color: rgba(255, 255, 255, 0.3); /* 按钮边框颜色 */
+            --btn-hover-bg-color: rgba(255, 255, 255, 0.2); /* 按钮悬停背景颜色 */
+            --btn-hover-border-color: rgba(255, 255, 255, 0.5); /* 按钮悬停边框颜色 */
+            --glow-color: rgba(255, 255, 255, 0.7);      /* 辉光颜色 */
+            --glow-intensity: 0.6;        /* 辉光强度 (0-1) */
+            
+            /* 字体配置 */
+            --base-font-size: 1rem;       /* 基础字体大小 */
+            --text-scale: 2;              /* 文字放大倍数 (相对于基础字体) */
+            --multiline-scale: 1.6;       /* 多行时文字放大倍数 */
+            --line-height: 1.4;           /* 行高 */
+            
+            /* 布局配置 */
+            --container-max-width: 900px; /* 容器最大宽度 */
+            --text-padding: 20px;         /* 文字内边距 */
+            --btn-size: 40px;             /* 按钮尺寸 (正方形) */
+            
+            /* 动画配置 */
+            --btn-hover-animation: 0.3s;  /* 按钮悬停动画时间 */
+            --btn-active-animation: 0.1s; /* 按钮点击动画时间 */
+            
+            /* 随机算法配置 */
+            --recent-index-limit: 5;      /* 避免重复的最近次数限制 */
+            --recent-range-limit: 3;      /* 避免范围重复的最近次数限制 */
+            --range-size: 3;              /* 范围大小 */
+            
+            /* 错误提示 */
+            --error-text: "有的人活着之前一直装着光鲜亮丽和轻盈，直到死了之后才发现它原本的沉重与内部的腐败";
+        }
+        
+        /* ==============================
+           样式主体部分
+           ============================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        /* 动态字体加载 */
+        @font-face {
+            font-family: 'CustomFont';
+            src: url('font.ttf') format('truetype');
+            font-display: swap;
+        }
+        
+        body {
+            font-family: 'CustomFont', 'Arial', 'Microsoft YaHei', sans-serif;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: var(--container-max-width);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .text-display {
+            font-size: calc(var(--base-font-size) * var(--text-scale));
+            line-height: var(--line-height);
+            margin-bottom: 40px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--text-padding);
+            width: 100%;
+            
+            /* 辉光效果 */
+            text-shadow: 
+                0 0 1px var(--glow-color),
+                0 0 2px rgba(255, 255, 255, var(--glow-intensity)),
+                0 0 3px rgba(255, 255, 255, calc(var(--glow-intensity) * 0.5));
+        }
+        
+        /* 三行以上的文字调整 */
+        .text-display.multiline {
+            font-size: calc(var(--base-font-size) * var(--multiline-scale));
+        }
+        
+        .btn-container {
+            position: relative;
+            width: var(--btn-size);
+            height: var(--btn-size);
+            margin-top: 20px;
+        }
+        
+        .refresh-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--btn-bg-color);
+            border: 1px solid var(--btn-border-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all var(--btn-hover-animation) ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .refresh-btn:hover {
+            background-color: var(--btn-hover-bg-color);
+            border-color: var(--btn-hover-border-color);
+            transform: scale(1.1);
+        }
+        
+        .refresh-btn:active {
+            transform: scale(0.95);
+            transition: all var(--btn-active-animation) ease;
+        }
+        
+        .refresh-btn canvas {
+            display: block;
+            width: 60%;
+            height: 60%;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            :root {
+                --text-scale: 1.8;
+                --multiline-scale: 1.4;
+                --text-padding: 15px;
+                --btn-size: 36px;
+            }
+            
+            .text-display {
+                min-height: 150px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            :root {
+                --text-scale: 1.5;
+                --multiline-scale: 1.2;
+                --text-padding: 10px;
+                --btn-size: 32px;
+            }
+            
+            .text-display {
+                min-height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="text-display" id="textDisplay">
+            加载中...
+        </div>
+        <div class="btn-container">
+            <button class="refresh-btn" id="refreshBtn" title="刷新文字">
+                <!-- Canvas绘制的回收符号将通过JavaScript动态生成 -->
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* ==============================
+           可调参数配置对象
+           修改这里的值来调整系统行为
+           ============================== */
+        const CONFIG = {
+            // 文件路径配置
+            DATA_FILE: 'data.txt',        // 数据文件路径
+            FONT_FILE: 'font.ttf',        // 字体文件路径
+            
+            // 错误提示配置
+            ERROR_TEXT: "有的人活着之前一直装着光鲜亮丽和轻盈，直到死了之后才发现它原本的沉重与内部的腐败",
+            
+            // 随机算法配置
+            RANDOM: {
+                RECENT_INDEX_LIMIT: 5,    // 避免重复的最近次数限制
+                RECENT_RANGE_LIMIT: 3,    // 避免范围重复的最近次数限制
+                RANGE_SIZE: 3,            // 范围大小
+                MIN_SENTENCES_FOR_RULES: 5 // 应用随机规则的最小句子数
+            },
+            
+            // 显示配置
+            DISPLAY: {
+                MAX_LINES: 3,             // 最大显示行数
+                CHECK_LINE_DELAY: 10      // 检查行数的延迟(ms)
+            },
+            
+            // 按钮配置
+            BUTTON: {
+                DISABLE_DURATION: 500,    // 按钮禁用时间(ms)
+                CANVAS_COLOR: '#CCCCCC',  // Canvas绘制颜色 (灰白色)
+                CANVAS_LINE_WIDTH: 0.6,     // Canvas线条宽度
+                CANVAS_SCALE: 0.7         // Canvas绘制缩放比例
+            }
+        };
+        
+        /* ==============================
+           文字显示系统主类
+           ============================== */
+        class TextDisplaySystem {
+            constructor() {
+                this.textDisplay = document.getElementById('textDisplay');
+                this.refreshBtn = document.getElementById('refreshBtn');
+                this.sentences = [];
+                this.sentenceCount = 0;
+                
+                // 随机算法相关变量
+                this.recentIndexes = [];  // 最近选择的索引
+                this.recentRanges = [];   // 最近的范围区间
+                
+                this.init();
+            }
+            
+            async init() {
+                // 绘制回收符号按钮
+                this.drawRecycleSymbol();
+                
+                // 绑定事件
+                this.refreshBtn.addEventListener('click', () => this.refreshText(true));
+                
+                // 页面加载时立即显示随机文字
+                await this.loadSentences();
+                this.refreshText(false);
+            }
+            
+            /* ==============================
+               绘制回收符号按钮
+               ============================== */
+            drawRecycleSymbol() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // 设置Canvas大小
+                const size = Math.min(
+                    this.refreshBtn.offsetWidth,
+                    this.refreshBtn.offsetHeight
+                ) * CONFIG.BUTTON.CANVAS_SCALE;
+                
+                canvas.width = size;
+                canvas.height = size;
+                
+                // 清除Canvas
+                ctx.clearRect(0, 0, size, size);
+                
+                // 设置绘制样式
+                ctx.strokeStyle = CONFIG.BUTTON.CANVAS_COLOR;
+                ctx.lineWidth = CONFIG.BUTTON.CANVAS_LINE_WIDTH;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                // 计算中心点
+                const centerX = size / 2;
+                const centerY = size / 2;
+                const radius = size * 0.3;
+                
+                // 绘制三个箭头组成回收符号
+                for (let i = 0; i < 3; i++) {
+                    // 计算当前箭头的位置
+                    const angle = (Math.PI * 2 / 3) * i;
+                    const arrowX = centerX + Math.cos(angle) * radius;
+                    const arrowY = centerY + Math.sin(angle) * radius;
+                    
+                    // 保存画布状态
+                    ctx.save();
+                    
+                    // 移动到箭头位置并旋转
+                    ctx.translate(arrowX, arrowY);
+                    ctx.rotate(angle + Math.PI / 2);
+                    
+                    // 绘制箭头
+                    this.drawArrow(ctx, radius * 0.6);
+                    
+                    // 恢复画布状态
+                    ctx.restore();
+                }
+                
+                // 将Canvas添加到按钮中
+                this.refreshBtn.appendChild(canvas);
+            }
+            
+            /* ==============================
+               绘制单个箭头
+               ============================== */
+            drawArrow(ctx, size) {
+                ctx.beginPath();
+                
+                // 箭头主体
+                ctx.moveTo(-size * 0.3, -size * 0.2);
+                ctx.lineTo(size * 0.3, -size * 0.2);
+                ctx.lineTo(size * 0.3, size * 0.2);
+                ctx.lineTo(size * 0.5, 0);
+                ctx.lineTo(size * 0.3, -size * 0.2);
+                
+                // 箭头尾部
+                ctx.moveTo(-size * 0.3, -size * 0.2);
+                ctx.lineTo(-size * 0.3, size * 0.2);
+                ctx.lineTo(size * 0.1, size * 0.2);
+                
+                ctx.stroke();
+            }
+            
+            /* ==============================
+               加载句子数据
+               ============================== */
+            async loadSentences() {
+                try {
+                    const response = await fetch(CONFIG.DATA_FILE);
+                    if (!response.ok) {
+                        throw new Error('文件读取失败');
+                    }
+                    
+                    const text = await response.text();
+                    this.sentences = text
+                        .split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line.length > 0);
+                    
+                    this.sentenceCount = this.sentences.length;
+                    
+                    if (this.sentenceCount === 0) {
+                        this.sentences = [CONFIG.ERROR_TEXT];
+                        this.sentenceCount = 1;
+                    }
+                    
+                } catch (error) {
+                    console.error('读取文件失败:', error);
+                    this.sentences = [CONFIG.ERROR_TEXT];
+                    this.sentenceCount = 1;
+                }
+            }
+            
+            /* ==============================
+               获取随机索引 (核心算法)
+               
+               修改建议：
+               1. 如果要增加随机性，可以减少规则限制
+               2. 如果要避免重复，可以增加规则限制
+               3. 可以调整范围大小和限制次数
+               ============================== */
+            getRandomIndex(isManual = false) {
+                // 基础情况处理
+                if (this.sentenceCount === 0) return 0;
+                if (this.sentenceCount === 1) return 0;
+                
+                // 可用索引列表
+                let availableIndexes = Array.from(
+                    {length: this.sentenceCount}, 
+                    (_, i) => i
+                );
+                
+                // 如果是手动刷新，应用随机规则
+                if (isManual && this.sentenceCount >= CONFIG.RANDOM.MIN_SENTENCES_FOR_RULES) {
+                    // 避免最近N次重复 (5次内)
+                    if (this.recentIndexes.length > 0) {
+                        availableIndexes = availableIndexes.filter(
+                            index => !this.recentIndexes.includes(index)
+                        );
+                    }
+                    
+                    // 避免最近M次在同一范围区间 (3次内)
+                    if (this.recentRanges.length > 0) {
+                        availableIndexes = availableIndexes.filter(index => {
+                            return !this.recentRanges.some(range => 
+                                index >= range.start && index <= range.end
+                            );
+                        });
+                    }
+                    
+                    // 如果过滤后没有可选索引，放宽条件
+                    if (availableIndexes.length === 0) {
+                        availableIndexes = Array.from(
+                            {length: this.sentenceCount}, 
+                            (_, i) => i
+                        );
+                        
+                        // 只避免重复，不考虑范围
+                        if (this.recentIndexes.length > 0) {
+                            availableIndexes = availableIndexes.filter(
+                                index => !this.recentIndexes.includes(index)
+                            );
+                        }
+                    }
+                    
+                    // 如果还是没得选，就全部可选
+                    if (availableIndexes.length === 0) {
+                        availableIndexes = Array.from(
+                            {length: this.sentenceCount}, 
+                            (_, i) => i
+                        );
+                    }
+                }
+                
+                // 随机选择一个索引
+                const randomIndex = Math.floor(Math.random() * availableIndexes.length);
+                const selectedIndex = availableIndexes[randomIndex];
+                
+                // 更新历史记录 (仅手动刷新时)
+                if (isManual) {
+                    this.updateHistory(selectedIndex);
+                }
+                
+                return selectedIndex;
+            }
+            
+            /* ==============================
+               更新历史记录
+               ============================== */
+            updateHistory(selectedIndex) {
+                // 更新最近索引记录
+                this.recentIndexes.push(selectedIndex);
+                if (this.recentIndexes.length > CONFIG.RANDOM.RECENT_INDEX_LIMIT) {
+                    this.recentIndexes.shift();
+                }
+                
+                // 计算并更新范围记录
+                const rangeSize = Math.min(
+                    CONFIG.RANDOM.RANGE_SIZE, 
+                    Math.floor(this.sentenceCount / 10)
+                );
+                const rangeStart = Math.max(0, selectedIndex - rangeSize);
+                const rangeEnd = Math.min(
+                    this.sentenceCount - 1, 
+                    selectedIndex + rangeSize
+                );
+                
+                this.recentRanges.push({
+                    start: rangeStart,
+                    end: rangeEnd,
+                    index: selectedIndex
+                });
+                
+                // 保持最近的范围记录
+                if (this.recentRanges.length > CONFIG.RANDOM.RECENT_RANGE_LIMIT) {
+                    this.recentRanges.shift();
+                }
+            }
+            
+            /* ==============================
+               刷新文字
+               ============================== */
+            async refreshText(isManual = false) {
+                if (this.sentenceCount === 0) {
+                    await this.loadSentences();
+                }
+                
+                // 禁用按钮防止重复点击
+                if (isManual) {
+                    this.refreshBtn.disabled = true;
+                    setTimeout(() => {
+                        this.refreshBtn.disabled = false;
+                    }, CONFIG.BUTTON.DISABLE_DURATION);
+                }
+                
+                const index = this.getRandomIndex(isManual);
+                const text = this.sentences[index];
+                
+                this.displayText(text);
+            }
+            
+            /* ==============================
+               显示文字
+               ============================== */
+            displayText(text) {
+                this.textDisplay.textContent = text;
+                
+                // 检查是否需要调整字体大小 (三行以上时缩小)
+                setTimeout(() => {
+                    const lineHeight = parseFloat(
+                        getComputedStyle(this.textDisplay).lineHeight
+                    );
+                    const displayHeight = this.textDisplay.clientHeight;
+                    const lines = Math.round(displayHeight / lineHeight);
+                    
+                    if (lines > CONFIG.DISPLAY.MAX_LINES) {
+                        this.textDisplay.classList.add('multiline');
+                    } else {
+                        this.textDisplay.classList.remove('multiline');
+                    }
+                }, CONFIG.DISPLAY.CHECK_LINE_DELAY);
+            }
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            new TextDisplaySystem();
+        });
+        
+        // 窗口大小改变时重新绘制按钮
+        window.addEventListener('resize', () => {
+            const btn = document.getElementById('refreshBtn');
+            if (btn && btn.querySelector('canvas')) {
+                btn.removeChild(btn.querySelector('canvas'));
+                // 重新绘制
+                setTimeout(() => {
+                    const system = new TextDisplaySystem();
+                    system.drawRecycleSymbol();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>
