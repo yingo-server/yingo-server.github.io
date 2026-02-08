@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字显示系统</title>
+    <style>
+        /* ==============================
+           可调参数配置区
+           ============================== */
+        :root {
+            /* 颜色配置 */
+            --bg-color: #000000;          /* 背景颜色 */
+            --text-color: #ffffff;        /* 文字颜色 */
+            --glow-color: rgba(255, 255, 255, 0.7);      /* 辉光颜色 */
+            --glow-intensity: 0.6;        /* 辉光强度 (0-1) */
+            
+            /* 字体配置 */
+            --base-font-size: 1rem;       /* 基础字体大小 */
+            --text-scale: 2;              /* 文字放大倍数 (相对于基础字体) */
+            --multiline-scale: 1.6;       /* 多行时文字放大倍数 */
+            --line-height: 1.4;           /* 行高 */
+            
+            /* 布局配置 */
+            --container-max-width: 900px; /* 容器最大宽度 */
+            --text-padding: 20px;         /* 文字内边距 */
+            
+            /* 滑动配置 */
+            --swipe-threshold: 0.3;       /* 滑动阈值 (屏幕高度的百分比) */
+            --swipe-animation-duration: 0.5s; /* 滑动动画时长 */
+            --swipe-bounce-duration: 0.3s;    /* 回弹动画时长 */
+            --swipe-fade-duration: 0.3s;      /* 淡入淡出时长 */
+            
+            /* 随机算法配置 */
+            --recent-index-limit: 5;      /* 避免重复的最近次数限制 */
+            --recent-range-limit: 3;      /* 避免范围重复的最近次数限制 */
+            --range-size: 3;              /* 范围大小 */
+            
+            /* 错误提示 */
+            --error-text: "有的人活着之前一直装着光鲜亮丽和轻盈，直到死了之后才发现它原本的沉重与内部的腐败";
+        }
+        
+        /* ==============================
+           样式主体部分
+           ============================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* 移除移动端点击高亮 */
+            -webkit-user-select: none; /* 禁止文本选择 */
+            user-select: none;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* 防止页面滚动 */
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+            position: relative;
+        }
+        
+        /* 动态字体加载 */
+        @font-face {
+            font-family: 'CustomFont';
+            src: url('font.ttf') format('truetype');
+            font-display: swap;
+        }
+        
+        body {
+            font-family: 'CustomFont', 'Arial', 'Microsoft YaHei', sans-serif;
+        }
+        
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .text-display {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--text-padding);
+            font-size: calc(var(--base-font-size) * var(--text-scale));
+            line-height: var(--line-height);
+            text-align: center;
+            will-change: transform, opacity; /* 优化动画性能 */
+            
+            /* 辉光效果 */
+            text-shadow: 
+                0 0 1px var(--glow-color),
+                0 0 2px rgba(255, 255, 255, var(--glow-intensity)),
+                0 0 3px rgba(255, 255, 255, calc(var(--glow-intensity) * 0.5));
+        }
+        
+        /* 三行以上的文字调整 */
+        .text-display.multiline {
+            font-size: calc(var(--base-font-size) * var(--multiline-scale));
+        }
+        
+        /* 当前显示的句子 */
+        .text-display.current {
+            z-index: 2;
+            opacity: 1;
+            transform: translateY(0);
+            transition: transform var(--swipe-animation-duration) cubic-bezier(0.23, 1, 0.32, 1),
+                        opacity var(--swipe-fade-duration) ease;
+        }
+        
+        /* 预取的句子 */
+        .text-display.next {
+            z-index: 1;
+            opacity: 0;
+            transform: translateY(100vh);
+            transition: transform var(--swipe-animation-duration) cubic-bezier(0.23, 1, 0.32, 1),
+                        opacity var(--swipe-fade-duration) ease;
+        }
+        
+        /* 回弹动画 */
+        .text-display.bouncing {
+            transition: transform var(--swipe-bounce-duration) cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        
+        /* 滑动指示器（可选，用于提示用户可滑动） */
+        .swipe-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            text-align: center;
+            z-index: 10;
+            opacity: 0.8;
+            animation: swipeHint 2s infinite;
+        }
+        
+        @keyframes swipeHint {
+            0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.5; }
+            50% { transform: translateX(-50%) translateY(-5px); opacity: 0.8; }
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            :root {
+                --text-scale: 1.8;
+                --multiline-scale: 1.4;
+                --text-padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            :root {
+                --text-scale: 1.5;
+                --multiline-scale: 1.2;
+                --text-padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="text-display current" id="currentText">
+            加载中...
+        </div>
+        <div class="text-display next" id="nextText">
+            <!-- 预取的文字会在这里显示 -->
+        </div>
+        <div class="swipe-hint" id="swipeHint">
+            向上滑动查看下一句
+        </div>
+    </div>
+
+    <script>
+        /* ==============================
+           可调参数配置对象
+           修改这里的值来调整系统行为
+           ============================== */
+        const CONFIG = {
+            // 文件路径配置
+            DATA_FILE: 'data.txt',        // 数据文件路径
+            FONT_FILE: 'font.ttf',        // 字体文件路径
+            
+            // 错误提示配置
+            ERROR_TEXT: "有的人活着之前一直装着光鲜亮丽和轻盈，直到死了之后才发现它原本的沉重与内部的腐败",
+            
+            // 滑动配置
+            SWIPE: {
+                THRESHOLD: 0.3,           // 滑动阈值 (屏幕高度的百分比)
+                ANIMATION_DURATION: 500,  // 滑动动画时长(ms)
+                BOUNCE_DURATION: 300,     // 回弹动画时长(ms)
+                FADE_DURATION: 300,       // 淡入淡出时长(ms)
+                MAX_SWIPE_SPEED: 2        // 最大滑动速度系数
+            },
+            
+            // 随机算法配置
+            RANDOM: {
+                RECENT_INDEX_LIMIT: 5,    // 避免重复的最近次数限制
+                RECENT_RANGE_LIMIT: 3,    // 避免范围重复的最近次数限制
+                RANGE_SIZE: 3,            // 范围大小
+                MIN_SENTENCES_FOR_RULES: 5 // 应用随机规则的最小句子数
+            },
+            
+            // 显示配置
+            DISPLAY: {
+                MAX_LINES: 3,             // 最大显示行数
+                CHECK_LINE_DELAY: 10      // 检查行数的延迟(ms)
+            }
+        };
+        
+        /* ==============================
+           滑动文字显示系统主类
+           ============================== */
+        class SwipeTextDisplaySystem {
+            constructor() {
+                this.container = document.getElementById('container');
+                this.currentText = document.getElementById('currentText');
+                this.nextText = document.getElementById('nextText');
+                this.swipeHint = document.getElementById('swipeHint');
+                
+                this.sentences = [];
+                this.sentenceCount = 0;
+                this.currentIndex = -1;
+                this.nextIndex = -1;
+                
+                // 随机算法相关变量
+                this.recentIndexes = [];  // 最近选择的索引
+                this.recentRanges = [];   // 最近的范围区间
+                
+                // 滑动相关变量
+                this.isSwiping = false;
+                this.startY = 0;
+                this.currentY = 0;
+                this.deltaY = 0;
+                this.swipeVelocity = 0;
+                this.lastTimestamp = 0;
+                this.isAnimating = false;
+                
+                this.init();
+            }
+            
+            async init() {
+                // 加载句子数据
+                await this.loadSentences();
+                
+                // 初始化显示第一句
+                this.currentIndex = this.getRandomIndex(false);
+                this.displayText(this.currentText, this.sentences[this.currentIndex]);
+                
+                // 预取下一句
+                this.prepareNextSentence();
+                
+                // 绑定事件
+                this.bindEvents();
+                
+                // 几秒后隐藏滑动提示
+                setTimeout(() => {
+                    this.swipeHint.style.opacity = '0';
+                    this.swipeHint.style.transition = 'opacity 1s ease';
+                }, 3000);
+            }
+            
+            /* ==============================
+               绑定滑动事件
+               ============================== */
+            bindEvents() {
+                // 触摸事件
+                this.container.addEventListener('touchstart', this.onTouchStart.bind(this));
+                this.container.addEventListener('touchmove', this.onTouchMove.bind(this));
+                this.container.addEventListener('touchend', this.onTouchEnd.bind(this));
+                
+                // 鼠标事件（桌面设备）
+                this.container.addEventListener('mousedown', this.onMouseDown.bind(this));
+                this.container.addEventListener('mousemove', this.onMouseMove.bind(this));
+                this.container.addEventListener('mouseup', this.onMouseUp.bind(this));
+                this.container.addEventListener('mouseleave', this.onMouseUp.bind(this));
+                
+                // 滚轮事件（桌面设备）
+                this.container.addEventListener('wheel', this.onWheel.bind(this));
+            }
+            
+            /* ==============================
+               触摸事件处理
+               ============================== */
+            onTouchStart(e) {
+                if (this.isAnimating) return;
+                
+                this.isSwiping = true;
+                this.startY = e.touches[0].clientY;
+                this.currentY = this.startY;
+                this.deltaY = 0;
+                this.swipeVelocity = 0;
+                this.lastTimestamp = Date.now();
+                
+                // 移除动画类
+                this.currentText.classList.remove('bouncing');
+                this.nextText.classList.remove('bouncing');
+            }
+            
+            onTouchMove(e) {
+                if (!this.isSwiping || this.isAnimating) return;
+                
+                e.preventDefault(); // 防止页面滚动
+                
+                const touch = e.touches[0];
+                const previousY = this.currentY;
+                this.currentY = touch.clientY;
+                this.deltaY = this.currentY - this.startY;
+                
+                // 计算滑动速度
+                const now = Date.now();
+                const timeDelta = now - this.lastTimestamp;
+                if (timeDelta > 0) {
+                    const distanceDelta = this.currentY - previousY;
+                    this.swipeVelocity = distanceDelta / timeDelta;
+                }
+                this.lastTimestamp = now;
+                
+                // 应用滑动变换
+                this.applySwipeTransform();
+            }
+            
+            onTouchEnd(e) {
+                if (!this.isSwiping) return;
+                
+                this.isSwiping = false;
+                this.handleSwipeEnd();
+            }
+            
+            /* ==============================
+               鼠标事件处理
+               ============================== */
+            onMouseDown(e) {
+                if (this.isAnimating || e.button !== 0) return;
+                
+                this.isSwiping = true;
+                this.startY = e.clientY;
+                this.currentY = this.startY;
+                this.deltaY = 0;
+                this.swipeVelocity = 0;
+                this.lastTimestamp = Date.now();
+                
+                // 移除动画类
+                this.currentText.classList.remove('bouncing');
+                this.nextText.classList.remove('bouncing');
+            }
+            
+            onMouseMove(e) {
+                if (!this.isSwiping || this.isAnimating) return;
+                
+                const previousY = this.currentY;
+                this.currentY = e.clientY;
+                this.deltaY = this.currentY - this.startY;
+                
+                // 计算滑动速度
+                const now = Date.now();
+                const timeDelta = now - this.lastTimestamp;
+                if (timeDelta > 0) {
+                    const distanceDelta = this.currentY - previousY;
+                    this.swipeVelocity = distanceDelta / timeDelta;
+                }
+                this.lastTimestamp = now;
+                
+                // 应用滑动变换
+                this.applySwipeTransform();
+            }
+            
+            onMouseUp(e) {
+                if (!this.isSwiping) return;
+                
+                this.isSwiping = false;
+                this.handleSwipeEnd();
+            }
+            
+            /* ==============================
+               滚轮事件处理
+               ============================== */
+            onWheel(e) {
+                if (this.isAnimating) return;
+                
+                e.preventDefault();
+                
+                // 只有向上滚动才处理（e.deltaY > 0 是向下滚动，< 0 是向上滚动）
+                if (e.deltaY >= 0) return;
+                
+                // 模拟滑动效果
+                this.isSwiping = true;
+                this.startY = 0;
+                this.deltaY = -window.innerHeight * 0.4; // 模拟滑动40%屏幕高度
+                this.swipeVelocity = -0.5;
+                
+                // 应用滑动变换
+                this.applySwipeTransform();
+                
+                // 延迟处理结束，以看到滑动效果
+                setTimeout(() => {
+                    this.isSwiping = false;
+                    this.handleSwipeEnd();
+                }, 100);
+            }
+            
+            /* ==============================
+               应用滑动变换
+               ============================== */
+            applySwipeTransform() {
+                // 限制滑动距离为正数（向上滑动应该是负数，但我们取绝对值）
+                const delta = Math.max(0, -this.deltaY); // 向上滑动时deltaY为负，取反为正
+                const maxDelta = window.innerHeight;
+                
+                // 计算变换比例 (0到1之间)
+                const progress = Math.min(delta / maxDelta, 1);
+                
+                // 当前句子向上移动
+                this.currentText.style.transform = `translateY(-${progress * 100}vh)`;
+                this.currentText.style.opacity = (1 - progress * 1.2).toString(); // 逐渐淡出
+                
+                // 下一个句子从下方进入
+                this.nextText.style.transform = `translateY(${(1 - progress) * 100}vh)`;
+                this.nextText.style.opacity = Math.min(progress * 1.2, 1).toString(); // 逐渐淡入
+            }
+            
+            /* ==============================
+               处理滑动结束
+               ============================== */
+            handleSwipeEnd() {
+                const threshold = window.innerHeight * CONFIG.SWIPE.THRESHOLD;
+                const absDelta = Math.abs(this.deltaY);
+                const shouldSwipe = absDelta > threshold || this.swipeVelocity < -0.2;
+                
+                if (shouldSwipe) {
+                    this.completeSwipe();
+                } else {
+                    this.cancelSwipe();
+                }
+            }
+            
+            /* ==============================
+               完成滑动，切换到下一句
+               ============================== */
+            completeSwipe() {
+                if (this.isAnimating) return;
+                this.isAnimating = true;
+                
+                // 当前句子向上移出屏幕
+                this.currentText.style.transform = 'translateY(-100vh)';
+                this.currentText.style.opacity = '0';
+                this.currentText.style.transition = `transform ${CONFIG.SWIPE.ANIMATION_DURATION}ms cubic-bezier(0.23, 1, 0.32, 1), 
+                                                   opacity ${CONFIG.SWIPE.FADE_DURATION}ms ease`;
+                
+                // 下一个句子进入屏幕中央
+                this.nextText.style.transform = 'translateY(0)';
+                this.nextText.style.opacity = '1';
+                this.nextText.style.transition = `transform ${CONFIG.SWIPE.ANIMATION_DURATION}ms cubic-bezier(0.23, 1, 0.32, 1), 
+                                                 opacity ${CONFIG.SWIPE.FADE_DURATION}ms ease`;
+                
+                // 动画完成后更新状态
+                setTimeout(() => {
+                    // 更新当前显示的句子
+                    this.currentIndex = this.nextIndex;
+                    this.currentText.textContent = this.nextText.textContent;
+                    
+                    // 重置位置和透明度
+                    this.currentText.style.transform = 'translateY(0)';
+                    this.currentText.style.opacity = '1';
+                    this.currentText.style.transition = 'none'; // 移除过渡，避免重置时的动画
+                    
+                    // 检查是否需要调整字体大小
+                    this.checkTextSize(this.currentText);
+                    
+                    // 预取下一句
+                    this.prepareNextSentence();
+                    
+                    // 重置下一个句子的位置（屏幕下方）
+                    this.nextText.style.transform = 'translateY(100vh)';
+                    this.nextText.style.opacity = '0';
+                    this.nextText.style.transition = 'none'; // 移除过渡
+                    
+                    this.isAnimating = false;
+                }, CONFIG.SWIPE.ANIMATION_DURATION);
+            }
+            
+            /* ==============================
+               取消滑动，回弹到原位
+               ============================== */
+            cancelSwipe() {
+                if (this.isAnimating) return;
+                this.isAnimating = true;
+                
+                // 添加回弹动画类
+                this.currentText.classList.add('bouncing');
+                this.nextText.classList.add('bouncing');
+                
+                // 回弹到原位
+                this.currentText.style.transform = 'translateY(0)';
+                this.currentText.style.opacity = '1';
+                this.currentText.style.transitionDuration = `${CONFIG.SWIPE.BOUNCE_DURATION}ms`;
+                
+                this.nextText.style.transform = 'translateY(100vh)';
+                this.nextText.style.opacity = '0';
+                this.nextText.style.transitionDuration = `${CONFIG.SWIPE.BOUNCE_DURATION}ms`;
+                
+                // 回弹动画完成后移除动画类
+                setTimeout(() => {
+                    this.currentText.classList.remove('bouncing');
+                    this.nextText.classList.remove('bouncing');
+                    this.isAnimating = false;
+                }, CONFIG.SWIPE.BOUNCE_DURATION);
+            }
+            
+            /* ==============================
+               加载句子数据
+               ============================== */
+            async loadSentences() {
+                try {
+                    const response = await fetch(CONFIG.DATA_FILE);
+                    if (!response.ok) {
+                        throw new Error('文件读取失败');
+                    }
+                    
+                    const text = await response.text();
+                    this.sentences = text
+                        .split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line.length > 0);
+                    
+                    this.sentenceCount = this.sentences.length;
+                    
+                    if (this.sentenceCount === 0) {
+                        this.sentences = [CONFIG.ERROR_TEXT];
+                        this.sentenceCount = 1;
+                    }
+                    
+                } catch (error) {
+                    console.error('读取文件失败:', error);
+                    this.sentences = [CONFIG.ERROR_TEXT];
+                    this.sentenceCount = 1;
+                }
+            }
+            
+            /* ==============================
+               获取随机索引 (核心算法)
+               ============================== */
+            getRandomIndex(isManual = false) {
+                // 基础情况处理
+                if (this.sentenceCount === 0) return 0;
+                if (this.sentenceCount === 1) return 0;
+                
+                // 可用索引列表
+                let availableIndexes = Array.from(
+                    {length: this.sentenceCount}, 
+                    (_, i) => i
+                );
+                
+                // 如果是手动刷新，应用随机规则
+                if (isManual && this.sentenceCount >= CONFIG.RANDOM.MIN_SENTENCES_FOR_RULES) {
+                    // 避免最近N次重复 (5次内)
+                    if (this.recentIndexes.length > 0) {
+                        availableIndexes = availableIndexes.filter(
+                            index => !this.recentIndexes.includes(index)
+                        );
+                    }
+                    
+                    // 避免最近M次在同一范围区间 (3次内)
+                    if (this.recentRanges.length > 0) {
+                        availableIndexes = availableIndexes.filter(index => {
+                            return !this.recentRanges.some(range => 
+                                index >= range.start && index <= range.end
+                            );
+                        });
+                    }
+                    
+                    // 如果过滤后没有可选索引，放宽条件
+                    if (availableIndexes.length === 0) {
+                        availableIndexes = Array.from(
+                            {length: this.sentenceCount}, 
+                            (_, i) => i
+                        );
+                        
+                        // 只避免重复，不考虑范围
+                        if (this.recentIndexes.length > 0) {
+                            availableIndexes = availableIndexes.filter(
+                                index => !this.recentIndexes.includes(index)
+                            );
+                        }
+                    }
+                    
+                    // 如果还是没得选，就全部可选
+                    if (availableIndexes.length === 0) {
+                        availableIndexes = Array.from(
+                            {length: this.sentenceCount}, 
+                            (_, i) => i
+                        );
+                    }
+                }
+                
+                // 随机选择一个索引
+                const randomIndex = Math.floor(Math.random() * availableIndexes.length);
+                const selectedIndex = availableIndexes[randomIndex];
+                
+                // 更新历史记录 (仅手动刷新时)
+                if (isManual) {
+                    this.updateHistory(selectedIndex);
+                }
+                
+                return selectedIndex;
+            }
+            
+            /* ==============================
+               更新历史记录
+               ============================== */
+            updateHistory(selectedIndex) {
+                // 更新最近索引记录
+                this.recentIndexes.push(selectedIndex);
+                if (this.recentIndexes.length > CONFIG.RANDOM.RECENT_INDEX_LIMIT) {
+                    this.recentIndexes.shift();
+                }
+                
+                // 计算并更新范围记录
+                const rangeSize = Math.min(
+                    CONFIG.RANDOM.RANGE_SIZE, 
+                    Math.floor(this.sentenceCount / 10)
+                );
+                const rangeStart = Math.max(0, selectedIndex - rangeSize);
+                const rangeEnd = Math.min(
+                    this.sentenceCount - 1, 
+                    selectedIndex + rangeSize
+                );
+                
+                this.recentRanges.push({
+                    start: rangeStart,
+                    end: rangeEnd,
+                    index: selectedIndex
+                });
+                
+                // 保持最近的范围记录
+                if (this.recentRanges.length > CONFIG.RANDOM.RECENT_RANGE_LIMIT) {
+                    this.recentRanges.shift();
+                }
+            }
+            
+            /* ==============================
+               预取下一句
+               ============================== */
+            prepareNextSentence() {
+                // 获取下一句的随机索引
+                this.nextIndex = this.getRandomIndex(true);
+                
+                // 显示在预取区域
+                this.displayText(this.nextText, this.sentences[this.nextIndex]);
+                
+                // 设置初始位置（屏幕下方）
+                this.nextText.style.transform = 'translateY(100vh)';
+                this.nextText.style.opacity = '0';
+            }
+            
+            /* ==============================
+               显示文字
+               ============================== */
+            displayText(element, text) {
+                element.textContent = text;
+                
+                // 检查是否需要调整字体大小 (三行以上时缩小)
+                setTimeout(() => {
+                    this.checkTextSize(element);
+                }, CONFIG.DISPLAY.CHECK_LINE_DELAY);
+            }
+            
+            /* ==============================
+               检查并调整文字大小
+               ============================== */
+            checkTextSize(element) {
+                const lineHeight = parseFloat(
+                    getComputedStyle(element).lineHeight
+                );
+                const displayHeight = element.clientHeight;
+                const lines = Math.round(displayHeight / lineHeight);
+                
+                if (lines > CONFIG.DISPLAY.MAX_LINES) {
+                    element.classList.add('multiline');
+                } else {
+                    element.classList.remove('multiline');
+                }
+            }
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            new SwipeTextDisplaySystem();
+        });
+    </script>
+</body>
+</html>
