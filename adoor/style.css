@@ -1,0 +1,250 @@
+/* ========== Material Design 3 · Flex 垂直流 ========== */
+/* 亮/暗自动切换基于时间（06:30–17:45 亮色，其余暗色） */
+:root {
+    /* ------------------ 形状 ------------------ */
+    --md3-shape-corner-extra-small: 4px;
+    --md3-shape-corner-small: 8px;
+    --md3-shape-corner-medium: 12px;
+    --md3-shape-corner-large: 16px;
+    --md3-shape-corner-extra-large: 28px;
+    --md3-shape-corner-full: 999px;
+
+    /* ------------------ 字体 ------------------ */
+    --md3-font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --md3-title-large: 500 1.5rem/2rem var(--md3-font-family);
+    --md3-title-medium: 500 1.25rem/1.75rem var(--md3-font-family);
+    --md3-title-small: 500 1rem/1.5rem var(--md3-font-family);
+    --md3-body-large: 400 1rem/1.5rem var(--md3-font-family);
+    --md3-body-medium: 400 0.875rem/1.25rem var(--md3-font-family);
+    --md3-body-small: 400 0.75rem/1rem var(--md3-font-family);
+
+    /* ------------------ 间距与断点 ------------------ */
+    --md3-spacing-xs: 4px;
+    --md3-spacing-sm: 8px;
+    --md3-spacing-md: 16px;
+    --md3-spacing-lg: 24px;
+    --md3-spacing-xl: 32px;
+
+    /* 卡片网格最小宽度 & 最大列数 */
+    --md3-grid-min-column-width: 130px;
+    --md3-grid-max-columns: 5;
+
+    /* ------------------ 亮色主题（默认） ------------------ */
+    --md3-primary: #0059c7;
+    --md3-on-primary: #ffffff;
+    --md3-primary-container: #d9e2ff;
+    --md3-on-primary-container: #001a43;
+
+    --md3-secondary: #575e71;
+    --md3-on-secondary: #ffffff;
+    --md3-secondary-container: #dbe2f9;
+    --md3-on-secondary-container: #141b2c;
+
+    --md3-tertiary: #725573;
+    --md3-on-tertiary: #ffffff;
+    --md3-tertiary-container: #fcd7fb;
+    --md3-on-tertiary-container: #2a132d;
+
+    --md3-background: #fefbff;
+    --md3-surface: #fefbff;
+    --md3-on-surface: #1b1b1f;
+    --md3-surface-variant: #e1e2ec;
+    --md3-on-surface-variant: #44464f;
+    --md3-outline: #757780;
+    --md3-outline-variant: #c5c6d0;
+
+    --md3-error: #ba1a1a;
+    --md3-error-container: #ffdad6;
+    --md3-on-error-container: #410002;
+
+    /* ------------------ 播放器专用变量（亮色） ------------------ */
+    --md3-surface-container-low: #f7f2fa;           /* 播放器背景 */
+    --md3-state-layer-hover: rgba(28, 27, 31, 0.08); /* 悬停状态层 */
+    --md3-inverse-surface: #313033;                  /* 反色表面（用于 toast） */
+    --md3-inverse-on-surface: #f4eff4;                /* 反色表面上的文本 */
+}
+
+/* 暗色主题（通过类激活） */
+.dark-theme {
+    --md3-primary: #afc6ff;
+    --md3-on-primary: #002d6c;
+    --md3-primary-container: #004398;
+    --md3-on-primary-container: #d9e2ff;
+
+    --md3-secondary: #bfc6dc;
+    --md3-on-secondary: #293042;
+    --md3-secondary-container: #3f4759;
+    --md3-on-secondary-container: #dbe2f9;
+
+    --md3-tertiary: #dfbbde;
+    --md3-on-tertiary: #402743;
+    --md3-tertiary-container: #593e5a;
+    --md3-on-tertiary-container: #fcd7fb;
+
+    --md3-background: #1b1b1f;
+    --md3-surface: #1b1b1f;
+    --md3-on-surface: #e3e2e6;
+    --md3-surface-variant: #44464f;
+    --md3-on-surface-variant: #c5c6d0;
+    --md3-outline: #8f9099;
+    --md3-outline-variant: #44464f;
+
+    --md3-error: #ffb4ab;
+    --md3-error-container: #93000a;
+    --md3-on-error-container: #ffb4ab;
+
+    /* ------------------ 播放器专用变量（暗色） ------------------ */
+    --md3-surface-container-low: #2b2b2f;           /* 比表面稍亮的暗色背景 */
+    --md3-state-layer-hover: rgba(227, 226, 230, 0.08); /* 暗色悬停状态层 */
+    --md3-inverse-surface: #f4eff4;                  /* 反色表面（亮色） */
+    --md3-inverse-on-surface: #313033;                /* 反色表面上的文本（暗色） */
+}
+
+/* ----- 全局重置 & Flex 垂直流布局 ----- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--md3-font-family);
+    background: var(--md3-background);
+    color: var(--md3-on-surface);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    line-height: 1.5;
+}
+
+/* 头部：自动高度，宽度100% */
+#app-header {
+    flex: 0 0 auto;
+    width: 100%;
+}
+
+/* 主内容区：占据剩余所有垂直空间，且内容居中 */
+#app-main {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--md3-spacing-md);
+}
+
+/* ----- 设置面板按钮（固定定位，脱离文档流）----- */
+.settings-toggle {
+    position: fixed;
+    top: var(--md3-spacing-lg);
+    right: var(--md3-spacing-lg);
+    width: 48px;
+    height: 48px;
+    border-radius: var(--md3-shape-corner-full);
+    background: var(--md3-primary-container);
+    color: var(--md3-on-primary-container);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    z-index: 1000;
+}
+.settings-toggle:hover {
+    background: var(--md3-secondary-container);
+}
+.settings-toggle .material-symbols-outlined {
+    font-size: 24px;
+}
+
+/* ----- 设置抽屉 ----- */
+.settings-drawer {
+    position: fixed;
+    top: 0;
+    right: -360px;
+    width: 320px;
+    height: 100vh;
+    background: var(--md3-surface);
+    color: var(--md3-on-surface);
+    border-left: 1px solid var(--md3-outline-variant);
+    transition: right 0.3s ease;
+    z-index: 1002;
+    display: flex;
+    flex-direction: column;
+    padding: var(--md3-spacing-lg);
+}
+.settings-drawer.open { right: 0; }
+
+.drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--md3-spacing-lg);
+}
+.drawer-header h3 {
+    font: var(--md3-title-large);
+    color: var(--md3-on-surface);
+}
+.drawer-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--md3-on-surface-variant);
+    padding: var(--md3-spacing-xs);
+    border-radius: var(--md3-shape-corner-full);
+}
+.drawer-close:hover {
+    background: var(--md3-surface-variant);
+}
+.drawer-content { flex: 1; overflow-y: auto; }
+
+.extension-item {
+    display: flex;
+    align-items: center;
+    gap: var(--md3-spacing-sm);
+    padding: var(--md3-spacing-sm) 0;
+    font: var(--md3-body-large);
+    border-bottom: 1px solid var(--md3-surface-variant);
+    cursor: pointer;
+}
+.extension-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--md3-primary);
+    border-radius: var(--md3-shape-corner-extra-small);
+    margin-right: var(--md3-spacing-sm);
+}
+
+.drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 1001;
+}
+.drawer-overlay.show {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ----- 工具类 ----- */
+.hidden { display: none !important; }
+
+/* 小屏幕适配 */
+@media (max-width: 480px) {
+    .settings-drawer {
+        width: 85%;
+        right: -85%;
+    }
+    .settings-toggle {
+        top: var(--md3-spacing-md);
+        right: var(--md3-spacing-md);
+    }
+}
