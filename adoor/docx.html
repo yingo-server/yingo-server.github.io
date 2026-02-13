@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>轻屿 · 聚合入口 · 项目文档</title>
+    <!-- Material Symbols 图标库 (用于点缀) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        /* ===== MD3 风格变量 (与项目保持一致) ===== */
+        :root {
+            --md3-primary: #6750A4;
+            --md3-on-primary: #FFFFFF;
+            --md3-primary-container: #EADDFF;
+            --md3-on-primary-container: #21005E;
+            --md3-secondary: #625B71;
+            --md3-on-secondary: #FFFFFF;
+            --md3-secondary-container: #E8DEF8;
+            --md3-on-secondary-container: #1E192B;
+            --md3-surface: #FEF7FF;
+            --md3-on-surface: #1C1B1F;
+            --md3-surface-variant: #E7E0EC;
+            --md3-on-surface-variant: #49454F;
+            --md3-background: #FEF7FF;
+            --md3-outline: #79747E;
+            --md3-outline-variant: #CAC4D0;
+            --md3-error-container: #FFDAD6;
+            --md3-on-error-container: #410002;
+            
+            --md3-shape-corner-small: 8px;
+            --md3-shape-corner-medium: 12px;
+            --md3-shape-corner-large: 16px;
+            --md3-shape-corner-full: 999px;
+            
+            --md3-title-large: 500 1.5rem/2rem 'Roboto', -apple-system, sans-serif;
+            --md3-title-medium: 500 1.25rem/1.75rem 'Roboto', sans-serif;
+            --md3-title-small: 500 1rem/1.5rem 'Roboto', sans-serif;
+            --md3-body-large: 400 1rem/1.5rem 'Roboto', sans-serif;
+            --md3-body-medium: 400 0.875rem/1.25rem 'Roboto', sans-serif;
+            --md3-body-small: 400 0.75rem/1rem 'Roboto', sans-serif;
+            
+            --md3-spacing-xs: 4px;
+            --md3-spacing-sm: 8px;
+            --md3-spacing-md: 16px;
+            --md3-spacing-lg: 24px;
+            
+            --sidebar-width: 280px;
+            --header-height: 64px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--md3-background);
+            color: var(--md3-on-surface);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+            flex-direction: row;
+        }
+
+        /* ===== 侧边栏 ===== */
+        .docs-sidebar {
+            width: var(--sidebar-width);
+            background: var(--md3-surface);
+            border-right: 1px solid var(--md3-outline-variant);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            padding: var(--md3-spacing-lg) 0;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 0 var(--md3-spacing-lg) var(--md3-spacing-md);
+            border-bottom: 1px solid var(--md3-surface-variant);
+            margin-bottom: var(--md3-spacing-md);
+        }
+
+        .sidebar-header h1 {
+            font: var(--md3-title-large);
+            color: var(--md3-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--md3-spacing-xs);
+        }
+        .sidebar-header h1 span {
+            font-size: 32px;
+        }
+        .sidebar-header p {
+            font: var(--md3-body-small);
+            color: var(--md3-on-surface-variant);
+            margin-top: var(--md3-spacing-xs);
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0 var(--md3-spacing-sm);
+        }
+        .nav-item {
+            margin-bottom: 2px;
+        }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--md3-spacing-sm);
+            padding: var(--md3-spacing-sm) var(--md3-spacing-lg);
+            font: var(--md3-body-medium);
+            color: var(--md3-on-surface);
+            text-decoration: none;
+            border-radius: var(--md3-shape-corner-full) 0 0 var(--md3-shape-corner-full);
+            transition: background 0.15s;
+            border-left: 4px solid transparent;
+        }
+        .nav-link:hover {
+            background: var(--md3-secondary-container);
+            color: var(--md3-on-secondary-container);
+        }
+        .nav-link.active {
+            background: var(--md3-primary-container);
+            color: var(--md3-on-primary-container);
+            border-left-color: var(--md3-primary);
+            font-weight: 500;
+        }
+        .nav-link .material-symbols-outlined {
+            font-size: 20px;
+        }
+
+        /* ===== 主内容区 ===== */
+        .docs-main {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 0;
+            min-height: 100vh;
+            background: var(--md3-background);
+        }
+
+        .content-header {
+            background: var(--md3-surface);
+            border-bottom: 1px solid var(--md3-outline-variant);
+            padding: var(--md3-spacing-md) var(--md3-spacing-xl);
+            position: sticky;
+            top: 0;
+            backdrop-filter: blur(8px);
+            z-index: 5;
+        }
+        .content-header h2 {
+            font: var(--md3-title-large);
+            color: var(--md3-on-surface);
+            display: flex;
+            align-items: center;
+            gap: var(--md3-spacing-sm);
+        }
+
+        .content-body {
+            padding: var(--md3-spacing-xl);
+            max-width: 1000px;
+        }
+
+        /* ===== 文章卡片/内容样式 ===== */
+        .doc-section {
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+        .doc-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0.3; }
+            to { opacity: 1; }
+        }
+
+        h3 {
+            font: var(--md3-title-medium);
+            color: var(--md3-on-surface);
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+        h4 {
+            font: var(--md3-title-small);
+            color: var(--md3-on-surface-variant);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        p {
+            font: var(--md3-body-large);
+            color: var(--md3-on-surface);
+            margin-bottom: 1rem;
+        }
+        code {
+            background: var(--md3-surface-variant);
+            color: var(--md3-on-surface-variant);
+            padding: 0.2rem 0.4rem;
+            border-radius: var(--md3-shape-corner-small);
+            font-size: 0.9em;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+        pre {
+            background: #1e1e2f;
+            color: #f8f8f2;
+            padding: 1.2rem;
+            border-radius: var(--md3-shape-corner-medium);
+            overflow-x: auto;
+            margin: 1.2rem 0;
+            border: 1px solid var(--md3-outline-variant);
+        }
+        pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            border-radius: var(--md3-shape-corner-medium);
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        th {
+            background: var(--md3-primary-container);
+            color: var(--md3-on-primary-container);
+            font-weight: 600;
+            padding: 0.8rem 1rem;
+            text-align: left;
+        }
+        td {
+            background: var(--md3-surface);
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--md3-outline-variant);
+        }
+        .note {
+            background: var(--md3-secondary-container);
+            color: var(--md3-on-secondary-container);
+            padding: 1rem 1.5rem;
+            border-radius: var(--md3-shape-corner-medium);
+            margin: 1.5rem 0;
+            border-left: 6px solid var(--md3-secondary);
+        }
+        .tag {
+            display: inline-block;
+            background: var(--md3-primary);
+            color: white;
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid var(--md3-surface-variant);
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 720px) {
+            body {
+                flex-direction: column;
+            }
+            .docs-sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--md3-outline-variant);
+                padding: var(--md3-spacing-md) 0;
+            }
+            .docs-main {
+                margin-left: 0;
+            }
+            .nav-link {
+                border-radius: var(--md3-shape-corner-full);
+                margin: 0 var(--md3-spacing-sm);
+            }
+        }
+
+        .icon-inline {
+            vertical-align: middle;
+            margin-right: 4px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- ========== 侧边栏导航（分支文章） ========= -->
+    <aside class="docs-sidebar">
+        <div class="sidebar-header">
+            <h1>
+                <span class="material-symbols-outlined">dashboard_customize</span>
+                轻屿·聚合
+            </h1>
+            <p>模块化新标签页 · MD3</p>
+            <p style="margin-top: 8px; font-size: 0.8rem;">v2.0.0 · 开源文档</p>
+        </div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="#" class="nav-link active" data-section="home">
+                    <span class="material-symbols-outlined">home</span>
+                    项目规范 · 主页
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="install">
+                    <span class="material-symbols-outlined">download</span>
+                    安装
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="config">
+                    <span class="material-symbols-outlined">settings</span>
+                    配置
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="modify">
+                    <span class="material-symbols-outlined">edit_note</span>
+                    修改 · 项目网格
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="adjust">
+                    <span class="material-symbols-outlined">sliders</span>
+                    调整 · 主题/响应式
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="extension">
+                    <span class="material-symbols-outlined">extension</span>
+                    扩展开发
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="faq">
+                    <span class="material-symbols-outlined">help</span>
+                    常见问题
+                </a>
+            </li>
+            <li class="nav-item" style="margin-top: 24px;">
+                <a href="#" class="nav-link" data-section="changelog">
+                    <span class="material-symbols-outlined">history</span>
+                    更新日志
+                </a>
+            </li>
+        </ul>
+        <div style="margin-top: auto; padding: var(--md3-spacing-lg); border-top: 1px solid var(--md3-surface-variant); font: var(--md3-body-small); color: var(--md3-on-surface-variant);">
+            <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">github</span> 
+            <a href="#" style="color: var(--md3-primary); text-decoration: none;">GitHub 仓库</a>
+        </div>
+    </aside>
+
+    <!-- ========== 主内容区域 ========= -->
+    <main class="docs-main">
+        <div class="content-header">
+            <h2 id="main-title">
+                <span class="material-symbols-outlined" id="header-icon">home</span>
+                <span id="header-text">项目规范 · 主页</span>
+            </h2>
+        </div>
+        <div class="content-body" id="content-body">
+            <!-- ===== 所有分支文章 ===== -->
+            <!-- 1. 主页 / 项目规范 -->
+            <div id="section-home" class="doc-section active">
+                <h3>📌 轻屿·聚合入口 —— 项目规范与架构</h3>
+                <p><span class="tag">Material Design 3</span> <span class="tag">纯前端模块化</span> <span class="tag">动态扩展</span></p>
+                <p>轻屿是一个极简、优雅的个人起始页/导航聚合，完全基于静态 HTML/CSS/JS，<strong>无构建、无后端</strong>。所有功能以“扩展”形式即插即用，遵循统一契约。</p>
+                
+                <h4>📁 核心文件清单</h4>
+                <table>
+                    <thead><tr><th>文件</th><th>职责</th><th>契约</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>index.html</code></td><td>页面骨架、扩展管理器、设置抽屉、全局缓存控制</td><td>扩展注册中心</td></tr>
+                        <tr><td><code>style.css</code></td><td>MD3 全局变量 + Flex 垂直流布局，<strong>不含模块样式</strong></td><td>仅 :root 变量与骨架</td></tr>
+                        <tr><td><code>head.js</code></td><td>头部日期时间（置顶）</td><td>内嵌样式，实现 destroy</td></tr>
+                        <tr><td><code>body.js</code></td><td>项目网格（18有效+30预留空位）</td><td>正方形卡片，响应式列数</td></tr>
+                        <tr><td><code>foot.js</code></td><td>底部音乐播放器（GitHub镜像+缓存）</td><td>自动播放、竖屏两排</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>🧩 扩展契约（强制）</h4>
+                <pre><code>const MODULE_ENABLED = true;
+(function() {
+    if (!MODULE_ENABLED) {
+        window.__registerExtension?.('文件名.js', ()=>{});
+        return;
+    }
+    // 私有状态、内嵌style、DOM创建、事件绑定
+    function destroy() { /* 完全清理副作用 */ }
+    window.__registerExtension?.('文件名.js', destroy);
+})();</code></pre>
+                <p>✓ 每个扩展必须包含 <code>destroy</code> 并注册；✓ 样式必须内嵌；✓ 不得污染全局 CSS。</p>
+
+                <h4>🎨 MD3 变量系统</h4>
+                <p>全部可调参数以 <code>--md3-*</code> 形式定义于 <code>style.css</code> 的 <code>:root</code>，覆盖即可换肤/壁纸。</p>
+                <pre><code>:root {
+    --md3-primary: #6750A4;
+    --md3-background: #FEF7FF;  /* 可替换为壁纸url */
+    --md3-shape-corner-large: 16px;
+    /* ... */  
+}</code></pre>
+            </div>
+
+            <!-- 2. 安装 -->
+            <div id="section-install" class="doc-section">
+                <h3>📦 安装指南</h3>
+                <h4>🔹 获取源码</h4>
+                <p>从 <strong>Releases</strong> 下载最新压缩包或直接克隆：</p>
+                <pre><code>git clone https://github.com/yourname/light-aggregator.git
+cd light-aggregator</code></pre>
+                <h4>🔹 文件结构</h4>
+                <pre><code>/
+├── index.html
+├── style.css
+├── body.js
+├── head.js
+├── foot.js
+└── (其他扩展.js)</code></pre>
+                <h4>🔹 启动</h4>
+                <p>直接双击 <code>index.html</code> 或在本地服务器（如 Live Server）中打开。无需任何构建步骤。</p>
+                <div class="note">
+                    <span class="material-symbols-outlined" style="vertical-align: middle;">info</span> 
+                    所有扩展默认启用（foot.js 默认开启），您可通过右上角菜单随时开关。
+                </div>
+            </div>
+
+            <!-- 3. 配置 -->
+            <div id="section-config" class="doc-section">
+                <h3>⚙️ 配置详解</h3>
+                <h4>3.1 全局样式 —— <code>style.css</code></h4>
+                <p>修改 <code>:root</code> 变量即可调整主题色、圆角、背景、栅格最小宽度等。</p>
+                <pre><code>--md3-grid-min-column-width: 130px;  /* 卡片最小宽度 */
+--md3-grid-max-columns: 5;           /* 最大列数（实际由媒体查询控制）*/</code></pre>
+                
+                <h4>3.2 扩展开关配置 —— <code>index.html</code> 中的 <code>EXTENSIONS_DEFAULT</code></h4>
+                <pre><code>window.EXTENSIONS_DEFAULT = [
+    { name: "项目网格", src: "body.js", enabled: true },
+    { name: "头部时间", src: "head.js", enabled: true },
+    { name: "音乐播放器", src: "foot.js", enabled: true }
+];</code></pre>
+                <p>修改后刷新即生效。开关状态会自动持久化到 <code>localStorage</code>。</p>
+
+                <h4>3.3 音乐播放器仓库配置（foot.js）</h4>
+                <p>编辑 <code>foot.js</code> 开头的 <code>GITHUB_REPO</code> 和 <code>MIRROR_PREFIX</code>：</p>
+                <pre><code>const GITHUB_REPO = {
+    owner: "你的GitHub名",
+    repo: "仓库名",
+    path: "存放音乐的目录"
+};
+const MIRROR_PREFIX = "https://ghproxy.net/raw.githubusercontent.com";</code></pre>
+            </div>
+
+            <!-- 4. 修改 · 项目网格（预留空位） -->
+            <div id="section-modify" class="doc-section">
+                <h3>✏️ 修改项目网格 —— 填空式添加</h3>
+                <p><code>body.js</code> 已为您预留 <strong>30 个空位对象</strong>，直接填入数据即可出现新按钮，无需其他操作。</p>
+                <pre><code>// 在 body.js 中找到 EMPTY_SLOTS 数组
+const EMPTY_SLOTS = [
+    { name: "", url: "", icon: "" }, // 1
+    { name: "", url: "", icon: "" }, // 2
+    // ... 共30个
+];
+
+// 例如您想在第5个空位添加“我的笔记”：
+{ name: "我的笔记", url: "https://note.com", icon: "edit_note" },</code></pre>
+                <p>✔️ 保存 → 刷新页面，按钮自动显示。<br>✔️ 未填写的空位保持隐藏（<code>.hidden</code>类）。<br>✔️ 图标名称参考 <a href="https://fonts.google.com/icons" target="_blank">Material Symbols</a>（空心风格）。</p>
+                <div class="note">
+                    <strong>⚠️ 不要修改 VALID_PROJECTS 的顺序，仅填充 EMPTY_SLOTS 中的空对象。</strong> 您也可以增加空位数量，直接在数组末尾追加 <code>{ name: "", url: "", icon: "" }</code>。
+                </div>
+            </div>
+
+            <!-- 5. 调整 · 主题/响应式 -->
+            <div id="section-adjust" class="doc-section">
+                <h3>🎛️ 调整主题与响应式行为</h3>
+                <h4>5.1 深色模式 / 壁纸</h4>
+                <p>修改 <code>style.css</code> 的 <code>--md3-background</code> 为深色值或壁纸 URL：</p>
+                <pre><code>--md3-background: url('./wallpaper.jpg') center/cover fixed;
+--md3-surface: rgba(30,30,35,0.8);  /* 毛玻璃效果需自行添加 backdrop-filter */</code></pre>
+                
+                <h4>5.2 响应式断点自定义</h4>
+                <p><strong>项目网格列数</strong>：编辑 <code>body.js</code> 中的媒体查询。</p>
+                <pre><code>@media (max-width: 599px) { grid-template-columns: repeat(3, 1fr) !important; }
+@media (min-width: 600px) and (max-width: 719px) { repeat(4, 1fr); }
+@media (min-width: 720px) { repeat(5, 1fr); }</code></pre>
+                <p><strong>播放器竖屏两排</strong>：<code>foot.js</code> 中 <code>@media (max-width: 480px)</code> 部分，可修改断点。</p>
+                
+                <h4>5.3 字体与形状</h4>
+                <p>替换 <code>--md3-font-family</code> 或修改 <code>--md3-shape-corner-*</code> 系列变量。</p>
+            </div>
+
+            <!-- 6. 扩展开发 -->
+            <div id="section-extension" class="doc-section">
+                <h3>🧪 开发您的第一个扩展</h3>
+                <p>遵循扩展契约，您可以任意添加侧边栏、语录、天气、便签等。</p>
+                <h4>📐 最小扩展示例 —— <code>hello.js</code></h4>
+                <pre><code>const HELLO_ENABLED = true;
+(function(){
+    if(!HELLO_ENABLED) {
+        window.__registerExtension?.('hello.js', ()=>{});
+        return;
+    }
+    // 内嵌样式
+    const style = document.createElement('style');
+    style.textContent = `.hello-banner { background: #EADDFF; padding: 12px; }`;
+    document.head.appendChild(style);
+    
+    // 创建DOM
+    const div = document.createElement('div');
+    div.className = 'hello-banner';
+    div.textContent = '👋 动态加载的扩展！';
+    document.querySelector('#app-main').prepend(div);
+    
+    // destroy 必须清理所有
+    function destroy() {
+        div.remove();
+        style.remove();
+    }
+    window.__registerExtension?.('hello.js', destroy);
+})();</code></pre>
+                <h4>➕ 添加到项目</h4>
+                <p>1. 将 <code>hello.js</code> 放入项目目录。<br>2. 在 <code>index.html</code> 的 <code>EXTENSIONS_DEFAULT</code> 中添加：<br>
+                <code>{ name: "示例横幅", src: "hello.js", enabled: false }</code><br>3. 刷新页面，在设置面板中启用。</p>
+                <div class="note">
+                    <strong>⚠️ 重要：</strong> 扩展管理器已添加<strong>时间戳反缓存</strong>，二次勾选也会重新执行脚本，无需担心浏览器缓存。
+                </div>
+            </div>
+
+            <!-- 7. 常见问题 FAQ -->
+            <div id="section-faq" class="doc-section">
+                <h3>❓ 常见问题</h3>
+                <div class="note" style="background: #FFF3E0; border-left-color: #FF9800;">
+                    <strong>Q：我取消了勾选扩展，但页面元素没有消失？</strong><br>
+                    A：请检查扩展是否实现了完整的 <code>destroy</code> 函数并正确注册。必须移除自己添加的所有 DOM、样式、事件监听。
+                </div>
+                <div class="note">
+                    <strong>Q：为什么 foot.js 不能自动播放？</strong><br>
+                    A：现代浏览器限制自动播放策略。用户必须与页面有过交互（点击任意位置）后才能播放。您可点击播放器按钮手动播放。
+                </div>
+                <div class="note">
+                    <strong>Q：刷新音乐列表按钮在哪里？</strong><br>
+                    A：设置面板底部，「刷新音乐列表」按钮独立于「清除所有缓存」，点击后会立即更新歌单并显示“歌单已刷新”弹窗。
+                </div>
+                <div class="note">
+                    <strong>Q：如何完全重置所有设置？</strong><br>
+                    A：点击设置面板底部的「清除所有缓存」→ 确认。所有扩展开关、音乐缓存将被清空，并恢复默认启用的扩展。
+                </div>
+                <div class="note">
+                    <strong>Q：我想使用自己的图标库，不用 Material Symbols？</strong><br>
+                    A：可以。修改 <code>body.js</code> 中的图标渲染部分，替换为 Font Awesome 等。但需保持契约。
+                </div>
+                <div class="note">
+                    <strong>Q：30个预留空位不够用？</strong><br>
+                    A：在 <code>body.js</code> 的 <code>EMPTY_SLOTS</code> 数组末尾继续添加 <code>{ name: "", url: "", icon: "" }</code> 即可，不限数量。
+                </div>
+            </div>
+
+            <!-- 8. 更新日志 -->
+            <div id="section-changelog" class="doc-section">
+                <h3>📋 更新日志</h3>
+                <p><strong>2026.02.14 · 最终定稿版</strong></p>
+                <ul style="margin-left: 1.5rem; font: var(--md3-body-large);">
+                    <li>✅ Flex 垂直流布局，彻底解决重叠问题</li>
+                    <li>✅ body.js 预留30空位，填空即用</li>
+                    <li>✅ foot.js 镜像代理+24h缓存，竖屏两排适配</li>
+                    <li>✅ 扩展管理器支持二次加载（时间戳绕过缓存）</li>
+                    <li>✅ 新增“刷新音乐列表”独立按钮</li>
+                    <li>✅ 所有扩展销毁函数无残留（包括全局监听）</li>
+                    <li>✅ 文档全面汉化，侧边栏分支导航</li>
+                </ul>
+                <p><strong>2025.12.10</strong> · 初始架构发布，支持动态开关。</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        (function() {
+            'use strict';
+            // 侧边栏导航切换 + 标题更新
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = {
+                home: 'section-home',
+                install: 'section-install',
+                config: 'section-config',
+                modify: 'section-modify',
+                adjust: 'section-adjust',
+                extension: 'section-extension',
+                faq: 'section-faq',
+                changelog: 'section-changelog'
+            };
+
+            const headerIcon = document.getElementById('header-icon');
+            const headerText = document.getElementById('header-text');
+
+            // 图标映射
+            const iconMap = {
+                home: 'home',
+                install: 'download',
+                config: 'settings',
+                modify: 'edit_note',
+                adjust: 'sliders',
+                extension: 'extension',
+                faq: 'help',
+                changelog: 'history'
+            };
+
+            function activateSection(sectionId) {
+                // 隐藏所有 .doc-section
+                document.querySelectorAll('.doc-section').forEach(el => {
+                    el.classList.remove('active');
+                });
+                // 显示选中的
+                const target = document.getElementById(sections[sectionId]);
+                if (target) target.classList.add('active');
+
+                // 更新 header
+                headerIcon.textContent = iconMap[sectionId] || 'description';
+                let title = '';
+                const activeLink = Array.from(navLinks).find(link => link.dataset.section === sectionId);
+                if (activeLink) {
+                    // 提取纯文本（去掉图标）
+                    title = activeLink.childNodes[2]?.nodeValue?.trim() || activeLink.innerText.replace(/[^a-zA-Z\u4e00-\u9fa5·\s]/g, '').trim();
+                }
+                headerText.textContent = title || '轻屿文档';
+                
+                // 侧边栏 active 样式
+                navLinks.forEach(link => link.classList.remove('active'));
+                if (activeLink) activeLink.classList.add('active');
+            }
+
+            // 绑定点击事件
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const section = link.dataset.section;
+                    if (section && sections[section]) {
+                        activateSection(section);
+                        // 更新URL hash (可选)
+                        history.pushState(null, '', '#' + section);
+                    }
+                });
+            });
+
+            // 根据 URL hash 初始化
+            function initFromHash() {
+                const hash = window.location.hash.slice(1);
+                if (hash && sections[hash]) {
+                    activateSection(hash);
+                } else {
+                    activateSection('home'); // 默认主页
+                }
+            }
+            initFromHash();
+            window.addEventListener('hashchange', initFromHash);
+        })();
+    </script>
+    <!-- 简单修正：确保侧边栏激活与hash同步 -->
+</body>
+</html>
