@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover">
+    <title>轻屿 · 聚合 · 缓存管理</title>
+    <!-- Material Symbols 图标库 -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <!-- 全局样式（含亮/暗颜色变量） -->
+    <link rel="stylesheet" href="style.css">
+    <!-- 根据时间自动切换主题（亮色 06:30–17:45，其余暗色） -->
+    <script>
+        (function() {
+            function updateThemeByTime() {
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const currentMinutes = hours * 60 + minutes;
+                // 亮色时段：06:30 (390) 到 17:45 (1065)
+                const isLight = currentMinutes >= 390 && currentMinutes < 1065;
+                if (isLight) {
+                    document.documentElement.classList.remove('dark-theme');
+                } else {
+                    document.documentElement.classList.add('dark-theme');
+                }
+            }
+            updateThemeByTime();
+            setInterval(updateThemeByTime, 60000); // 每分钟检查一次
+        })();
+    </script>
+</head>
+<body>
+    <!-- 头部占位：由 head.js 动态注入 -->
+    <!-- 主内容区：按钮网格容器，由 body.js 填充 -->
+    <main id="app-main">
+        <div class="buttons-grid" id="buttons-container"></div>
+    </main>
+
+    <!-- 设置面板入口 -->
+    <button id="settings-toggle" class="settings-toggle" aria-label="扩展管理">
+        <span class="material-symbols-outlined">menu</span>
+    </button>
+
+    <!-- 设置抽屉 -->
+    <div id="settings-drawer" class="settings-drawer">
+        <div class="drawer-header">
+            <h3>扩展管理</h3>
+            <button id="drawer-close" class="drawer-close">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="drawer-content" id="extensions-list"></div>
+        <!-- ========== 全局缓存管理按钮 ========== -->
+        <div style="padding: 16px; border-top: 1px solid var(--md3-surface-variant); margin-top: 8px; display: flex; flex-direction: column; gap: 12px;">
+            <!-- 新增：刷新音乐列表按钮 -->
+            <button id="refresh-music-cache" style="width:100%; background: var(--md3-secondary-container); color: var(--md3-on-secondary-container); border: none; border-radius: 20px; padding: 12px; font: var(--md3-body-medium); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
+                <span class="material-symbols-outlined">refresh</span> 刷新音乐列表
+            </button>
+            <!-- 原有清除所有缓存按钮，保持错误色 -->
+            <button id="clear-all-cache" style="width:100%; background: var(--md3-error-container); color: var(--md3-on-error-container); border: none; border-radius: 20px; padding: 12px; font: var(--md3-body-medium); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
+                <span class="material-symbols-outlined">delete_sweep</span> 清除所有缓存
+            </button>
+            <p style="font: var(--md3-body-small); color: var(--md3-on-surface-variant); margin-top: 8px; text-align: center;">
+                将清除扩展开关状态、音乐列表等全部本地数据
+            </p>
+        </div>
+    </div>
+    <div id="drawer-overlay" class="drawer-overlay"></div>
+
+    <!-- ========== 扩展配置数组（默认配置，会被 localStorage 覆盖）========== -->
+    <script>
+        window.EXTENSIONS_DEFAULT = [
+            { name: "项目网格", src: "body.js", enabled: true },
+            { name: "头部时间", src: "head.js", enabled: true },
+            { name: "音乐播放器", src: "foot.js", enabled: true }  // 默认开启（符合 foot.js 需求）
+        ];
+
+        // 初始化 EXTENSIONS：从 localStorage 读取，若无则使用默认
+        (function loadExtensionState() {
+            const saved = localStorage.getItem('EXTENSIONS_STATE');
+            if (saved) {
+                try {
+                    const savedState = JSON.parse(saved);
+                    // 合并默认配置与保存的状态（以保存状态为准，但确保所有扩展都存在）
+                    window.EXTENSIONS = window.EXTENSIONS_DEFAULT.map(def => {
+                        const savedItem = savedState.find(s => s.src === def.src);
+                        return savedItem ? { ...def, enabled: savedItem.enabled } : def;
+                    });
+                } catch (e) {
+                    window.EXTENSIONS = [...window.EXTENSIONS_DEFAULT];
+                }
+            } else {
+                window.EXTENSIONS = [...window.EXTENSIONS_DEFAULT];
+            }
+        })();
+
+        // 持久化扩展开关状态
+        function saveExtensionState() {
+            const state = window.EXTENSIONS.map(({ name, src, enabled }) => ({ name, src, enabled }));
+            localStorage.setItem('EXTENSIONS_STATE', JSON.stringify(state));
+        }
+    </script>
+
+    <!-- 扩展加载器与设置面板控制器（增强版：支持缓存绕过 + 刷新音乐列表） -->
+    <script>
+        (function() {
+            'use strict';
+
+            window.ExtensionManager = {
+                loadedModules: new Map(), // key: 原始src, value: { destroy, script, extItem }
+                
+                // 初始化：加载 enabled 的扩展，渲染面板，绑定UI
+                init: function() {
+                    window.EXTENSIONS.forEach(ext => {
+                        if (ext.enabled) this.loadScript(ext.src, ext);
+                    });
+                    this.renderSettingsPanel();
+                    this.bindUI();
+                },
+
+                // 动态加载脚本（添加时间戳绕过缓存）
+                loadScript: function(src, extItem) {
+                    if (this.loadedModules.has(src)) return;
+                    
+                    const script = document.createElement('script');
+                    // 核心修复：附加时间戳，强制浏览器重新请求
+                    script.src = src + '?t=' + Date.now();
+                    script.dataset.extensionSrc = src; // 保留原始src用于调试
+                    script.async = false;
+                    
+                    script.onload = () => {
+                        if (window.__extensionUnloaders && window.__extensionUnloaders[src]) {
+                            const destroy = window.__extensionUnloaders[src];
+                            this.loadedModules.set(src, { destroy, script, extItem });
+                            extItem.loaded = true;
+                        } else {
+                            this.loadedModules.set(src, { destroy: () => {}, script, extItem });
+                            extItem.loaded = true;
+                        }
+                    };
+                    script.onerror = () => console.error(`扩展加载失败: ${src}`);
+                    document.body.appendChild(script);
+                },
+
+                // 卸载脚本
+                unloadScript: function(src) {
+                    if (!this.loadedModules.has(src)) return;
+                    const mod = this.loadedModules.get(src);
+                    try { mod.destroy(); } catch (e) { console.warn(`卸载扩展 ${src} 出错:`, e); }
+                    if (mod.script && mod.script.parentNode) mod.script.parentNode.removeChild(mod.script);
+                    if (window.__extensionUnloaders && window.__extensionUnloaders[src]) {
+                        delete window.__extensionUnloaders[src];
+                    }
+                    this.loadedModules.delete(src);
+                    const ext = window.EXTENSIONS.find(e => e.src === src);
+                    if (ext) ext.loaded = false;
+                },
+
+                // 渲染设置面板（扩展开关）
+                renderSettingsPanel: function() {
+                    const listEl = document.getElementById('extensions-list');
+                    if (!listEl) return;
+                    listEl.innerHTML = '';
+                    window.EXTENSIONS.forEach(ext => {
+                        const item = document.createElement('label');
+                        item.className = 'extension-item';
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.checked = ext.enabled;
+                        checkbox.dataset.src = ext.src;
+                        checkbox.addEventListener('change', (e) => {
+                            this.toggleExtension(ext.src, e.target.checked);
+                            // 状态变化后立即保存到 localStorage
+                            saveExtensionState();
+                        });
+                        item.appendChild(checkbox);
+                        item.appendChild(document.createTextNode(ext.name));
+                        listEl.appendChild(item);
+                    });
+                },
+
+                // 切换扩展开关
+                toggleExtension: function(src, enable) {
+                    const ext = window.EXTENSIONS.find(e => e.src === src);
+                    if (!ext) return;
+                    ext.enabled = enable;
+                    if (enable) {
+                        this.loadScript(src, ext);
+                    } else {
+                        this.unloadScript(src);
+                    }
+                },
+
+                // 清除所有缓存（核心功能）
+                clearAllCache: function() {
+                    // 1. 卸载所有已加载的扩展
+                    this.loadedModules.forEach((_, src) => {
+                        this.unloadScript(src);
+                    });
+                    this.loadedModules.clear();
+
+                    // 2. 清除所有本应用使用的 localStorage 键
+                    const keysToRemove = [
+                        'EXTENSIONS_STATE',    // 扩展开关状态
+                        'musicPlayerCache',    // 音乐播放器缓存（foot.js 使用）
+                    ];
+                    keysToRemove.forEach(key => localStorage.removeItem(key));
+
+                    // 3. 重置 EXTENSIONS 为默认配置
+                    window.EXTENSIONS = window.EXTENSIONS_DEFAULT.map(def => ({ ...def }));
+
+                    // 4. 重新渲染设置面板
+                    this.renderSettingsPanel();
+
+                    // 5. 重新加载默认启用的扩展
+                    window.EXTENSIONS.forEach(ext => {
+                        if (ext.enabled) this.loadScript(ext.src, ext);
+                    });
+
+                    // 6. 保存初始状态到 localStorage
+                    saveExtensionState();
+
+                    console.log('所有缓存已清除，已重置为默认配置');
+                },
+
+                // 绑定UI事件（设置面板打开/关闭 + 清除缓存按钮 + 刷新音乐列表）
+                bindUI: function() {
+                    const toggleBtn = document.getElementById('settings-toggle');
+                    const drawer = document.getElementById('settings-drawer');
+                    const overlay = document.getElementById('drawer-overlay');
+                    const closeBtn = document.getElementById('drawer-close');
+                    
+                    if (toggleBtn && drawer && overlay) {
+                        toggleBtn.addEventListener('click', () => {
+                            drawer.classList.add('open');
+                            overlay.classList.add('show');
+                        });
+                        closeBtn.addEventListener('click', () => {
+                            drawer.classList.remove('open');
+                            overlay.classList.remove('show');
+                        });
+                        overlay.addEventListener('click', () => {
+                            drawer.classList.remove('open');
+                            overlay.classList.remove('show');
+                        });
+                    }
+
+                    // 绑定清除缓存按钮
+                    const clearBtn = document.getElementById('clear-all-cache');
+                    if (clearBtn) {
+                        clearBtn.addEventListener('click', () => {
+                            if (confirm('确定清除所有缓存吗？这将重置所有扩展为默认状态。')) {
+                                this.clearAllCache();
+                                drawer.classList.remove('open');
+                                overlay.classList.remove('show');
+                            }
+                        });
+                    }
+
+                    // 绑定刷新音乐列表按钮
+                    const refreshMusicBtn = document.getElementById('refresh-music-cache');
+                    if (refreshMusicBtn) {
+                        refreshMusicBtn.addEventListener('click', () => {
+                            if (typeof window.refreshMusicCache === 'function') {
+                                window.refreshMusicCache();  // foot.js 内部会显示 toast 弹窗
+                                drawer.classList.remove('open');
+                                overlay.classList.remove('show');
+                            } else {
+                                alert('音乐播放器未加载，请先启用 foot.js');
+                            }
+                        });
+                    }
+                }
+            };
+
+            // 全局注册器（供扩展调用）
+            window.__registerExtension = function(src, destroyFn) {
+                if (!window.__extensionUnloaders) window.__extensionUnloaders = {};
+                window.__extensionUnloaders[src] = destroyFn;
+            };
+
+            // 启动扩展管理器
+            window.ExtensionManager.init();
+        })();
+    </script>
+</body>
+</html>
