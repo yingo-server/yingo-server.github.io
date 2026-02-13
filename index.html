@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <!-- 完全透明样式：页面所有内容不可见，用户只看得到浏览器默认背景（或底层） -->
+    <style>
+        html, body {
+            opacity: 0;                /* 完全透明，无任何视觉元素 */
+            height: 100%;               /* 铺满窗口，避免露出未定义区域 */
+            margin: 0;
+            padding: 0;
+            background: transparent;    /* 背景透明，辅助无感 */
+        }
+    </style>
+    <!-- 立即执行静默跳转（无等待，无历史记录） -->
+    <script>
+        // 使用 location.replace 替换当前页面，用户无法通过返回按钮回到此中间页
+        // 请将下方 URL 替换为您实际需要跳转的地址
+        window.location.replace("/adoor");
+    </script>
+    <!-- 极少数情况 JavaScript 未启用时，用 0 秒 meta 刷新作为后备（同样无感） -->
+    <noscript>
+        <meta http-equiv="refresh" content="0;url=/adoor">
+    </noscript>
+</head>
+<body>
+    <!-- 主体完全留空，配合透明样式，确保无任何内容闪现 -->
+</body>
+</html>
