@@ -1,0 +1,125 @@
+/* 暗黑模式全局样式 */
+body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+body.dark-mode .card {
+    background-color: #1e1e1e;
+    border-color: #333;
+    box-shadow: 0 2px 2px 0 rgba(255,255,255,0.05), 0 1px 5px 0 rgba(255,255,255,0.03);
+}
+
+body.dark-mode .card-title {
+    color: #ffffff;
+}
+
+body.dark-mode .btn {
+    background-color: #333;
+    color: #e0e0e0;
+    border-color: #444;
+}
+
+body.dark-mode .btn-primary {
+    background-color: #bb86fc;
+    color: #000;
+}
+
+body.dark-mode .text-input {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border-color: #444;
+}
+
+body.dark-mode .text-input:focus {
+    border-color: #bb86fc;
+}
+
+/* 底栏暗黑模式样式 */
+body.dark-mode .bottom-bar {
+    background-color: #1e1e1e;
+    border-top: 1px solid #333;
+}
+
+body.dark-mode .bottom-nav {
+    background-color: #1e1e1e;
+}
+
+body.dark-mode .nav-item {
+    color: #aaa;
+}
+
+body.dark-mode .nav-item.active {
+    color: #bb86fc;
+}
+
+body.dark-mode .nav-icon,
+body.dark-mode .nav-label {
+    color: inherit;
+}
+
+/* 其他组件 */
+body.dark-mode #post-list {
+    background-color: #2d2d2d;
+    border-left-color: #444;
+}
+
+body.dark-mode .collapse-icon {
+    color: #aaa;
+}
+
+body.dark-mode .card-header {
+    border-bottom-color: #333;
+}
+
+body.dark-mode p, 
+body.dark-mode span:not(.nav-icon):not(.nav-label) {
+    color: #e0e0e0;
+}
+
+body.dark-mode .btn-fab {
+    background-color: #bb86fc;
+    color: #000;
+}
+
+body.dark-mode .btn-fab:hover {
+    background-color: #9a67ea;
+}
+
+/* 表格和列表 */
+body.dark-mode table {
+    background-color: #1e1e1e;
+}
+
+body.dark-mode th {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+body.dark-mode td {
+    border-bottom-color: #333;
+}
+
+/* 模态框 */
+body.dark-mode .modal-content {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+}
+
+body.dark-mode .modal-content input,
+body.dark-mode .modal-content textarea {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border-color: #444;
+}
+
+/* 状态提示 */
+body.dark-mode .status {
+    background-color: #333;
+    color: #e0e0e0;
+}
+
+/* 链接 */
+body.dark-mode a {
+    color: #bb86fc;
+}
