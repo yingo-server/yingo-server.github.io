@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gitee 注册创建文件测试</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+        body { background-color: #f5f5f5; color: #212121; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 4px; box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 1px 5px 0 rgba(0,0,0,0.12), 0 3px 1px -2px rgba(0,0,0,0.2); padding: 20px; }
+        h2 { font-weight: 400; margin-bottom: 20px; color: #212121; }
+        .config-panel { background-color: #fafafa; padding: 16px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #e0e0e0; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; color: #757575; font-size: 13px; }
+        input { width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; background: white; color: #212121; font-size: 14px; }
+        input:focus { border-color: #2196f3; outline: none; }
+        .btn { border: none; border-radius: 4px; padding: 10px 20px; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.025em; background-color: #e0e0e0; color: #212121; box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 1px 5px 0 rgba(0,0,0,0.12), 0 3px 1px -2px rgba(0,0,0,0.2); cursor: pointer; transition: all 0.2s; margin-right: 8px; }
+        .btn:hover { background-color: #d5d5d5; }
+        .btn-primary { background-color: #2196f3; color: white; }
+        .btn-primary:hover { background-color: #1976d2; }
+        .btn-success { background-color: #4caf50; color: white; }
+        .btn-success:hover { background-color: #388e3c; }
+        .log-container { background-color: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 4px; margin-top: 20px; font-family: monospace; font-size: 13px; line-height: 1.5; max-height: 500px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+        .log-entry { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .log-time { color: #888; }
+        .log-url { color: #0af; word-break: break-all; }
+        .log-status { font-weight: bold; }
+        .log-status-2xx { color: #0f0; }
+        .log-status-4xx { color: #f90; }
+        .log-status-5xx { color: #f00; }
+        .log-headers { color: #aa0; margin-left: 15px; font-size: 12px; white-space: pre-wrap; }
+        .log-body { background: #2d2d2d; padding: 8px; border-radius: 3px; margin-top: 5px; color: #0f0; white-space: pre-wrap; }
+        .flex-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+        .export-btn { margin-top: 10px; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📝 Gitee 注册文件创建测试</h2>
+        <div class="config-panel">
+            <div class="flex-row">
+                <div style="flex:1">
+                    <label>Access Token</label>
+                    <input type="text" id="token" readonly value="e823c3a1265e30f429305ddebc27f855">
+                </div>
+                <div style="flex:1">
+                    <label>仓库所有者</label>
+                    <input type="text" id="owner" readonly value="yingo-server">
+                </div>
+                <div style="flex:1">
+                    <label>仓库名</label>
+                    <input type="text" id="repo" readonly value="dust-light">
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 12px;">
+                <label>要测试的用户名（请确保该用户不存在）</label>
+                <input type="text" id="username" placeholder="例如 testuser" value="testuser">
+            </div>
+            <div class="flex-row">
+                <button class="btn btn-primary" id="testBtn">开始模拟注册</button>
+                <button class="btn" id="clearBtn">清空日志</button>
+                <button class="btn btn-success" id="exportBtn">导出日志为 TXT</button>
+            </div>
+            <p style="margin-top: 10px; color: #757575; font-size: 12px;">测试将依次尝试创建 passwd.txt、come.txt、post.txt、active.txt、set.txt，均使用 POST 方法。</p>
+        </div>
+
+        <div class="log-container" id="log"></div>
+    </div>
+
+    <script>
+        // 工具函数
+        function utf8ToB64(str) {
+            return window.btoa(unescape(encodeURIComponent(str)));
+        }
+
+        const logDiv = document.getElementById('log');
+        let logEntries = [];
+
+        function addLog(entry) {
+            logEntries.push(entry);
+            renderLog();
+        }
+
+        function renderLog() {
+            logDiv.innerHTML = logEntries.map(entry => {
+                let html = `<div class="log-entry">`;
+                html += `<span class="log-time">[${entry.time}]</span><br>`;
+                if (entry.url) html += `URL: <span class="log-url">${escapeHtml(entry.url)}</span><br>`;
+                if (entry.status !== undefined) {
+                    let statusClass = '';
+                    if (entry.status >= 200 && entry.status < 300) statusClass = 'log-status-2xx';
+                    else if (entry.status >= 400 && entry.status < 500) statusClass = 'log-status-4xx';
+                    else if (entry.status >= 500) statusClass = 'log-status-5xx';
+                    html += `状态码: <span class="log-status ${statusClass}">${entry.status} ${escapeHtml(entry.statusText)}</span><br>`;
+                }
+                if (entry.headers) {
+                    html += `响应头:<br><span class="log-headers">${escapeHtml(entry.headers)}</span><br>`;
+                }
+                if (entry.body !== undefined) {
+                    let bodyStr = typeof entry.body === 'string' ? entry.body : JSON.stringify(entry.body, null, 2);
+                    html += `响应体:<br><span class="log-body">${escapeHtml(bodyStr)}</span><br>`;
+                }
+                if (entry.note) {
+                    html += `备注: ${escapeHtml(entry.note)}<br>`;
+                }
+                html += `</div>`;
+                return html;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+
+        function getTimeStr() {
+            return new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+        }
+
+        async function makeRequest(url, method, body = null) {
+            const token = document.getElementById('token').value.trim();
+            const separator = url.indexOf('?') === -1 ? '?' : '&';
+            const fullUrl = url + separator + 'access_token=' + token;
+            const headers = { 'Content-Type': 'application/json' };
+            const options = { method, headers };
+            if (body) options.body = JSON.stringify(body);
+
+            const response = await fetch(fullUrl, options);
+            const status = response.status;
+            const statusText = response.statusText;
+            const headersArr = [];
+            response.headers.forEach((value, key) => headersArr.push(`${key}: ${value}`));
+            const headersStr = headersArr.join('\n');
+            const text = await response.text();
+            let data;
+            try { data = JSON.parse(text); } catch { data = text; }
+            return { status, statusText, headers: headersStr, body: data };
+        }
+
+        async function testRegistration() {
+            const owner = document.getElementById('owner').value.trim();
+            const repo = document.getElementById('repo').value.trim();
+            const username = document.getElementById('username').value.trim();
+
+            if (!username) {
+                alert('请输入用户名');
+                return;
+            }
+
+            const now = new Date().toISOString();
+            const basePath = `user_data/${username}/`;
+            const files = [
+                { name: 'passwd.txt', content: 'test123' },
+                { name: 'come.txt', content: now + '\n' + now },
+                { name: 'post.txt', content: '0\n' },
+                { name: 'active.txt', content: '' },
+                { name: 'set.txt', content: '' }
+            ];
+
+            addLog({ time: getTimeStr(), note: `开始测试用户 ${username} 的文件创建（共 ${files.length} 个文件）` });
+
+            for (let file of files) {
+                const filePath = basePath + file.name;
+                const encodedPath = filePath.split('/').map(seg => encodeURIComponent(seg)).join('/');
+                const url = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${encodedPath}`;
+
+                // 先检查文件是否存在（GET）
+                addLog({ time: getTimeStr(), url, note: `检查文件 ${file.name} 是否存在...` });
+                try {
+                    const check = await makeRequest(url, 'GET');
+                    addLog({
+                        time: getTimeStr(),
+                        url,
+                        status: check.status,
+                        statusText: check.statusText,
+                        headers: check.headers,
+                        body: check.body,
+                        note: `检查 ${file.name} 的响应`
+                    });
+                } catch (err) {
+                    addLog({ time: getTimeStr(), url, note: `检查请求异常: ${err.message}` });
+                }
+
+                // 创建文件（POST）
+                const contentBase64 = utf8ToB64(file.content);
+                const postBody = {
+                    content: contentBase64,
+                    message: `Create ${file.name}`
+                };
+                addLog({ time: getTimeStr(), url, note: `开始创建 ${file.name} 使用 POST...` });
+                try {
+                    const create = await makeRequest(url, 'POST', postBody);
+                    addLog({
+                        time: getTimeStr(),
+                        url,
+                        status: create.status,
+                        statusText: create.statusText,
+                        headers: create.headers,
+                        body: create.body,
+                        note: `创建 ${file.name} 的响应`
+                    });
+                } catch (err) {
+                    addLog({ time: getTimeStr(), url, note: `创建请求异常: ${err.message}` });
+                }
+            }
+
+            addLog({ time: getTimeStr(), note: '测试完成。' });
+        }
+
+        document.getElementById('testBtn').onclick = testRegistration;
+
+        document.getElementById('clearBtn').onclick = () => {
+            logEntries = [];
+            renderLog();
+        };
+
+        document.getElementById('exportBtn').onclick = () => {
+            let content = '';
+            logEntries.forEach(entry => {
+                content += `[${entry.time}] `;
+                if (entry.url) content += `\nURL: ${entry.url}`;
+                if (entry.status !== undefined) content += `\n状态码: ${entry.status} ${entry.statusText}`;
+                if (entry.headers) content += `\n响应头: ${entry.headers}`;
+                if (entry.body !== undefined) {
+                    let bodyStr = typeof entry.body === 'string' ? entry.body : JSON.stringify(entry.body, null, 2);
+                    content += `\n响应体: ${bodyStr}`;
+                }
+                if (entry.note) content += `\n备注: ${entry.note}`;
+                content += '\n\n';
+            });
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `gitee-reg-test-${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.txt`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        };
+    </script>
+</body>
+</html>
