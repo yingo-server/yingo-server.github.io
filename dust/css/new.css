@@ -1,0 +1,17 @@
+/* 确保表格内的标签对齐良好 */
+.circles-group td {
+    padding: 8px;
+    vertical-align: middle;
+}
+
+.circles-group label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.circles-group input[type="radio"] {
+    margin-right: 6px;
+    accent-color: #2196f3;
+}
