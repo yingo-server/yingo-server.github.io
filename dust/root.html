@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gitee 文件管理器（带预览）</title>
+    <style>
+        /* 全局样式 - Material Design 2 风格 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+            color: #212121;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 4px;
+            box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 1px 5px 0 rgba(0,0,0,0.12), 0 3px 1px -2px rgba(0,0,0,0.2);
+            padding: 20px;
+        }
+        h2 {
+            font-weight: 400;
+            margin-bottom: 20px;
+            color: #212121;
+        }
+        .config-panel {
+            background-color: #fafafa;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        .config-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .config-row input {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background: #ffffff;
+            color: #212121;
+            font-size: 14px;
+        }
+        .config-row input:focus {
+            border-color: #2196f3;
+            outline: none;
+        }
+        .btn {
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            background-color: #e0e0e0;
+            color: #212121;
+            box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 1px 5px 0 rgba(0,0,0,0.12), 0 3px 1px -2px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 8px;
+        }
+        .btn:hover {
+            background-color: #d5d5d5;
+            box-shadow: 0 4px 5px 0 rgba(0,0,0,0.14), 0 1px 10px 0 rgba(0,0,0,0.12), 0 2px 4px -1px rgba(0,0,0,0.2);
+        }
+        .btn-primary {
+            background-color: #2196f3;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #1976d2;
+        }
+        .btn-danger {
+            background-color: #f44336;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #d32f2f;
+        }
+        .btn-warning {
+            background-color: #ff9800;
+            color: white;
+        }
+        .btn-warning:hover {
+            background-color: #f57c00;
+        }
+        .btn-success {
+            background-color: #4caf50;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #388e3c;
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .breadcrumb {
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .breadcrumb a {
+            color: #2196f3;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 8px;
+            background-color: #f5f5f5;
+            font-weight: 500;
+            color: #212121;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        .icon-folder {
+            color: #ff9800;
+            margin-right: 8px;
+        }
+        .icon-file {
+            color: #757575;
+            margin-right: 8px;
+        }
+        .item-actions button {
+            margin-right: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+        .status.success {
+            background-color: #4caf50;
+            color: white;
+            display: block;
+        }
+        .status.error {
+            background-color: #f44336;
+            color: white;
+            display: block;
+        }
+        /* 模态框样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.hidden {
+            display: none;
+        }
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 4px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 38px 3px rgba(0,0,0,0.14), 0 9px 46px 8px rgba(0,0,0,0.12), 0 11px 15px -7px rgba(0,0,0,0.2);
+        }
+        .modal-content h3 {
+            margin-bottom: 16px;
+        }
+        .modal-content pre {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 16px;
+        }
+        .modal-actions .btn {
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📁 Gitee 文件管理器（带预览）</h2>
+        
+        <!-- 配置区域 -->
+        <div class="config-panel">
+            <div class="config-row">
+                <input type="text" id="token" placeholder="Access Token" value="">
+                <input type="text" id="owner" placeholder="仓库所有者" value="">
+                <input type="text" id="repo" placeholder="仓库名" value="">
+                <button class="btn btn-primary" id="loadBtn">加载仓库</button>
+            </div>
+            <p style="margin-top: 8px; color: #757575; font-size: 12px;">提示：可复用项目 config.js，或手动输入。</p>
+        </div>
+
+        <!-- 当前路径和操作栏 -->
+        <div class="toolbar">
+            <button class="btn btn-primary" id="newFileBtn">📄 新建文件</button>
+            <button class="btn btn-primary" id="newFolderBtn">📁 新建文件夹</button>
+            <button class="btn" id="refreshBtn">🔄 刷新</button>
+            <span style="flex:1"></span>
+            <span id="currentPathDisplay" style="color: #2196f3;">/</span>
+        </div>
+
+        <!-- 面包屑导航 -->
+        <div class="breadcrumb" id="breadcrumb"></div>
+
+        <!-- 文件列表表格 -->
+        <table id="fileTable">
+            <thead>
+                <tr>
+                    <th>名称</th>
+                    <th>类型</th>
+                    <th>大小</th>
+                    <th>最后更新</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="fileList"></tbody>
+        </table>
+
+        <!-- 状态提示 -->
+        <div id="statusMessage" class="status"></div>
+    </div>
+
+    <!-- 模态框：预览文件内容 -->
+    <div id="previewModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="previewTitle">文件预览</h3>
+            <pre id="previewContent" style="max-height: 60vh; overflow: auto;"></pre>
+            <div class="modal-actions">
+                <button class="btn" id="previewClose">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 原有新建/重命名模态框（保持不变） -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="modalTitle">新建文件</h3>
+            <input type="text" id="modalName" placeholder="名称">
+            <textarea id="modalContent" placeholder="文件内容（仅新建文件时需要）" style="display: none;"></textarea>
+            <div class="modal-actions">
+                <button class="btn" id="modalCancel">取消</button>
+                <button class="btn btn-primary" id="modalConfirm">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="JS/config.js"></script>
+    <script>
+        // 工具函数：Base64 编解码（Unicode 安全）
+        function utf8ToB64(str) {
+            return window.btoa(unescape(encodeURIComponent(str)));
+        }
+        function b64ToUtf8(str) {
+            var clean = str.replace(/\s/g, '');
+            return decodeURIComponent(escape(window.atob(clean)));
+        }
+
+        // Gitee API 请求封装
+        async function giteeRequest(url, options = {}) {
+            const token = document.getElementById('token').value.trim() || (window.GITEE_CONFIG ? GITEE_CONFIG.ACCESS_TOKEN : '');
+            const separator = url.indexOf('?') === -1 ? '?' : '&';
+            const fullUrl = url + separator + 'access_token=' + token;
+            const response = await fetch(fullUrl, {
+                method: options.method || 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                body: options.body
+            });
+            const text = await response.text();
+            let data;
+            try { data = JSON.parse(text); } catch (e) { data = text; }
+            if (!response.ok) {
+                const err = new Error(data.message || 'HTTP ' + response.status);
+                err.status = response.status;
+                err.data = data;
+                throw err;
+            }
+            return data;
+        }
+
+        // 全局状态
+        let currentPath = '';
+        let owner = '', repo = '';
+
+        // 初始化时尝试从 config.js 读取默认值
+        if (window.GITEE_CONFIG) {
+            document.getElementById('token').value = GITEE_CONFIG.ACCESS_TOKEN || '';
+            document.getElementById('owner').value = GITEE_CONFIG.OWNER || '';
+            document.getElementById('repo').value = GITEE_CONFIG.REPO || '';
+            owner = GITEE_CONFIG.OWNER || '';
+            repo = GITEE_CONFIG.REPO || '';
+            if (owner && repo) loadFiles();
+        }
+
+        // 加载文件列表
+        async function loadFiles() {
+            owner = document.getElementById('owner').value.trim();
+            repo = document.getElementById('repo').value.trim();
+            if (!owner || !repo) {
+                showStatus('请填写仓库信息', 'error');
+                return;
+            }
+
+            let url = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${encodeURIComponent(currentPath)}`;
+            try {
+                const data = await giteeRequest(url);
+                renderFileList(data);
+                updateBreadcrumb();
+                showStatus('加载成功', 'success');
+            } catch (err) {
+                showStatus('加载失败：' + err.message, 'error');
+            }
+        }
+
+        // 渲染文件列表
+        function renderFileList(items) {
+            const tbody = document.getElementById('fileList');
+            if (!Array.isArray(items)) {
+                tbody.innerHTML = '<tr><td colspan="5">无法识别的内容</td></tr>';
+                return;
+            }
+            let html = '';
+            // 如果有父路径，显示返回上级
+            if (currentPath) {
+                html += `<tr>
+                    <td colspan="5"><a href="#" onclick="goUp()" style="color:#2196f3;">⬆ 返回上级</a></td>
+                </tr>`;
+            }
+            items.forEach(item => {
+                const isDir = item.type === 'dir';
+                const icon = isDir ? '📁' : '📄';
+                const size = isDir ? '-' : (item.size ? item.size + ' B' : '-');
+                const time = item.download_url ? '' : '-'; // 简化，实际可用commit时间
+                const name = item.name;
+                const isPreviewable = !isDir && (name.endsWith('.txt') || name.endsWith('.json'));
+                html += `<tr>
+                    <td>
+                        <span class="${isDir ? 'icon-folder' : 'icon-file'}">${icon}</span>
+                        ${isDir ? `<a href="#" onclick="enterDir('${item.path}')">${name}</a>` : name}
+                    </td>
+                    <td>${isDir ? '文件夹' : '文件'}</td>
+                    <td>${size}</td>
+                    <td>${time}</td>
+                    <td class="item-actions">
+                        ${!isDir ? `<button class="btn btn-success" onclick="previewFile('${item.path}', '${item.sha}')">预览</button>` : ''}
+                        ${!isDir ? `<button class="btn btn-warning" onclick="renameItem('${item.path}', '${name}', false)">重命名</button>` : ''}
+                        ${isDir ? `<button class="btn btn-warning" onclick="renameItem('${item.path}', '${name}', true)">重命名</button>` : ''}
+                        <button class="btn btn-danger" onclick="deleteItem('${item.path}', '${item.sha}', ${isDir})">删除</button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // 预览文件内容
+        async function previewFile(path, sha) {
+            try {
+                const url = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+                const data = await giteeRequest(url);
+                if (!data.content) {
+                    alert('文件内容为空或无法读取');
+                    return;
+                }
+                const content = b64ToUtf8(data.content);
+                const fileName = path.split('/').pop();
+                const isJson = fileName.endsWith('.json');
+                
+                // 格式化 JSON
+                let displayContent = content;
+                if (isJson) {
+                    try {
+                        const jsonObj = JSON.parse(content);
+                        displayContent = JSON.stringify(jsonObj, null, 2);
+                    } catch (e) {
+                        // 不是合法 JSON，仍显示原始内容
+                    }
+                }
+                
+                document.getElementById('previewTitle').innerText = '预览: ' + fileName;
+                document.getElementById('previewContent').innerText = displayContent;
+                document.getElementById('previewModal').classList.remove('hidden');
+            } catch (err) {
+                showStatus('预览失败：' + err.message, 'error');
+            }
+        }
+
+        // 进入文件夹
+        window.enterDir = function(path) {
+            currentPath = path;
+            loadFiles();
+        };
+
+        // 返回上一级
+        window.goUp = function() {
+            const parts = currentPath.split('/').filter(p => p);
+            parts.pop();
+            currentPath = parts.join('/');
+            loadFiles();
+        };
+
+        // 更新面包屑
+        function updateBreadcrumb() {
+            const parts = currentPath.split('/').filter(p => p);
+            let html = '<a href="#" onclick="enterDir(\'\')">根目录</a>';
+            let accum = '';
+            parts.forEach((p, i) => {
+                accum += (i ? '/' : '') + p;
+                html += ` / <a href="#" onclick="enterDir('${accum}')">${p}</a>`;
+            });
+            document.getElementById('breadcrumb').innerHTML = html;
+            document.getElementById('currentPathDisplay').innerText = '/' + currentPath;
+        }
+
+        // 显示状态
+        function showStatus(msg, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.className = 'status ' + type;
+            statusDiv.innerText = msg;
+            setTimeout(() => { statusDiv.className = 'status'; }, 3000);
+        }
+
+        // 新建文件
+        document.getElementById('newFileBtn').onclick = () => {
+            showModal('新建文件', true, async (name, content) => {
+                if (!name) { alert('文件名不能为空'); return; }
+                const filePath = currentPath ? currentPath + '/' + name : name;
+                await createFile(filePath, content || '');
+            });
+        };
+
+        // 新建文件夹（通过创建 .gitkeep 文件）
+        document.getElementById('newFolderBtn').onclick = () => {
+            showModal('新建文件夹', false, async (name) => {
+                if (!name) { alert('文件夹名不能为空'); return; }
+                const folderPath = currentPath ? currentPath + '/' + name : name;
+                const keepPath = folderPath + '/.gitkeep';
+                await createFile(keepPath, '');
+            });
+        };
+
+        // 创建文件通用函数
+        async function createFile(path, content) {
+            try {
+                const url = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+                const body = {
+                    content: utf8ToB64(content),
+                    message: `Create ${path}`
+                };
+                await giteeRequest(url, { method: 'POST', body: JSON.stringify(body) });
+                showStatus('创建成功', 'success');
+                loadFiles();
+            } catch (err) {
+                showStatus('创建失败：' + err.message, 'error');
+            }
+        }
+
+        // 删除文件或文件夹
+        window.deleteItem = async function(path, sha, isDir) {
+            if (!confirm(`确定要删除 ${path} 吗？${isDir ? '文件夹内的所有文件将被删除！' : ''}`)) return;
+            try {
+                if (isDir) {
+                    await deleteFolderRecursive(path);
+                } else {
+                    const url = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+                    await giteeRequest(url, {
+                        method: 'DELETE',
+                        body: JSON.stringify({ sha, message: `Delete ${path}` })
+                    });
+                }
+                showStatus('删除成功', 'success');
+                loadFiles();
+            } catch (err) {
+                showStatus('删除失败：' + err.message, 'error');
+            }
+        };
+
+        // 递归删除文件夹
+        async function deleteFolderRecursive(folderPath) {
+            const url = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${encodeURIComponent(folderPath)}`;
+            const items = await giteeRequest(url);
+            for (let item of items) {
+                if (item.type === 'dir') {
+                    await deleteFolderRecursive(item.path);
+                } else {
+                    const deleteUrl = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${encodeURIComponent(item.path)}`;
+                    await giteeRequest(deleteUrl, {
+                        method: 'DELETE',
+                        body: JSON.stringify({ sha: item.sha, message: `Delete ${item.path}` })
+                    });
+                }
+            }
+        }
+
+        // 重命名（移动）文件或文件夹
+        window.renameItem = function(path, oldName, isDir) {
+            const newName = prompt(`输入新的${isDir ? '文件夹' : '文件名'}`, oldName);
+            if (!newName || newName === oldName) return;
+            const parts = path.split('/');
+            parts.pop();
+            const parent = parts.join('/');
+            const newPath = parent ? parent + '/' + newName : newName;
+
+            if (isDir) {
+                moveFolder(path, newPath);
+            } else {
+                moveFile(path, newPath);
+            }
+        };
+
+        async function moveFile(oldPath, newPath) {
+            try {
+                const url = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${encodeURIComponent(oldPath)}`;
+                const data = await giteeRequest(url);
+                const content = b64ToUtf8(data.content);
+                const createUrl = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${encodeURIComponent(newPath)}`;
+                await giteeRequest(createUrl, {
+                    method: 'PUT',
+                    body: JSON.stringify({ content: utf8ToB64(content), message: `Move ${oldPath} to ${newPath}` })
+                });
+                await giteeRequest(url, {
+                    method: 'DELETE',
+                    body: JSON.stringify({ sha: data.sha, message: `Delete ${oldPath}` })
+                });
+                showStatus('重命名成功', 'success');
+                loadFiles();
+            } catch (err) {
+                showStatus('重命名失败：' + err.message, 'error');
+            }
+        }
+
+        async function moveFolder(oldPath, newPath) {
+            try {
+                const url = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/${encodeURIComponent(oldPath)}`;
+                const items = await giteeRequest(url);
+                for (let item of items) {
+                    const itemOldPath = item.path;
+                    const relativePath = itemOldPath.substring(oldPath.length + 1);
+                    const itemNewPath = newPath + '/' + relativePath;
+                    if (item.type === 'dir') {
+                        await moveFolder(itemOldPath, itemNewPath);
+                    } else {
+                        await moveFile(itemOldPath, itemNewPath);
+                    }
+                }
+                showStatus('文件夹重命名完成', 'success');
+                loadFiles();
+            } catch (err) {
+                showStatus('文件夹重命名失败：' + err.message, 'error');
+            }
+        }
+
+        // 刷新
+        document.getElementById('refreshBtn').onclick = loadFiles;
+
+        // 模态框处理（新建/重命名）
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalName = document.getElementById('modalName');
+        const modalContent = document.getElementById('modalContent');
+        let modalResolve = null;
+
+        function showModal(title, hasContent, callback) {
+            modalTitle.innerText = title;
+            modalName.value = '';
+            modalContent.value = '';
+            modalContent.style.display = hasContent ? 'block' : 'none';
+            modal.classList.remove('hidden');
+            modalResolve = callback;
+        }
+
+        document.getElementById('modalConfirm').onclick = () => {
+            const name = modalName.value.trim();
+            const content = modalContent.value;
+            modal.classList.add('hidden');
+            if (modalResolve) {
+                if (modalContent.style.display === 'block') {
+                    modalResolve(name, content);
+                } else {
+                    modalResolve(name);
+                }
+                modalResolve = null;
+            }
+        };
+
+        document.getElementById('modalCancel').onclick = () => {
+            modal.classList.add('hidden');
+            modalResolve = null;
+        };
+
+        // 预览模态框关闭
+        document.getElementById('previewClose').onclick = () => {
+            document.getElementById('previewModal').classList.add('hidden');
+        };
+        // 点击外部也可关闭（可选）
+        document.getElementById('previewModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('previewModal')) {
+                document.getElementById('previewModal').classList.add('hidden');
+            }
+        });
+
+        // 点击加载按钮
+        document.getElementById('loadBtn').onclick = loadFiles;
+
+        // 初始加载（如果已有配置）
+        if (owner && repo) loadFiles();
+    </script>
+</body>
+</html>
