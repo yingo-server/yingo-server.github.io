@@ -1,0 +1,5 @@
+/* 圈子页专属样式 */
+.active-page .btn-primary {
+    background-color: #ffeb3b; /* 黄色强调 */
+    color: #212121;
+}
