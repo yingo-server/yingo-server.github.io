@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员控制台</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/toolbar.css">
+    <style>
+        body { background-color: #f5f5f5; padding: 20px; }
+        .admin-container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 20px; }
+        h2 { color: #212121; margin-bottom: 20px; }
+        .tab-bar { display: flex; border-bottom: 1px solid #e0e0e0; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; cursor: pointer; color: #757575; }
+        .tab.active { color: #2196f3; border-bottom: 2px solid #2196f3; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background-color: #f5f5f5; color: #212121; font-weight: 500; }
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .btn-delete { background-color: #f44336; color: white; }
+        .btn-delete:hover { background-color: #d32f2f; }
+        .btn-warning { background-color: #ff9800; color: white; }
+        .btn-warning:hover { background-color: #f57c00; }
+        .login-form { max-width: 300px; margin: 50px auto; text-align: center; }
+        .login-form input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #e0e0e0; border-radius: 4px; }
+        .login-form button { width: 100%; padding: 10px; background-color: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .status { margin-top: 10px; color: #f44336; }
+        /* 响应式：横屏显示所有列，竖屏只显示用户名和密码 */
+        @media (orientation: portrait) {
+            .user-table th:nth-child(3),
+            .user-table td:nth-child(3),
+            .user-table th:nth-child(4),
+            .user-table td:nth-child(4),
+            .user-table th:nth-child(5),
+            .user-table td:nth-child(5) {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loginPanel" class="admin-container" style="display: block;">
+        <h2>管理员登录</h2>
+        <div class="login-form">
+            <input type="password" id="adminPassword" placeholder="管理员密码">
+            <button onclick="adminLogin()">登录</button>
+            <div id="loginStatus" class="status"></div>
+        </div>
+    </div>
+
+    <div id="adminPanel" class="admin-container" style="display: none;">
+        <h2>管理员控制台</h2>
+        <div class="tab-bar">
+            <div class="tab active" onclick="switchTab('users')">用户管理</div>
+            <div class="tab" onclick="switchTab('posts')">文章管理</div>
+        </div>
+
+        <!-- 用户管理面板 -->
+        <div id="usersPanel" class="panel active">
+            <button class="btn btn-warning" onclick="loadUsers()" style="margin-bottom: 10px;">刷新列表</button>
+            <div style="overflow-x: auto;">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>用户名</th>
+                            <th>密码</th>
+                            <th>注册时间</th>
+                            <th>最后登录</th>
+                            <th>文章数</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 文章管理面板 -->
+        <div id="postsPanel" class="panel">
+            <button class="btn btn-warning" onclick="loadPosts()" style="margin-bottom: 10px;">刷新列表</button>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>标题</th>
+                            <th>作者</th>
+                            <th>发布时间</th>
+                            <th>圈子</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="postsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="JS/config.js"></script>
+    <script>
+        // 管理员密码（请修改为强密码）
+        const ADMIN_PASSWORD = 'admin123';
+
+        function adminLogin() {
+            var pwd = document.getElementById('adminPassword').value;
+            if (pwd === ADMIN_PASSWORD) {
+                document.getElementById('loginPanel').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                loadUsers();
+                loadPosts();
+            } else {
+                document.getElementById('loginStatus').innerText = '密码错误';
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            if (tab === 'users') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('usersPanel').classList.add('active');
+                loadUsers();
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('postsPanel').classList.add('active');
+                loadPosts();
+            }
+        }
+
+        // 工具函数
+        function utf8ToB64(str) {
+            return window.btoa(unescape(encodeURIComponent(str)));
+        }
+        function b64ToUtf8(str) {
+            if (!str) return '';
+            var clean = str.replace(/\s/g, '');
+            return decodeURIComponent(escape(window.atob(clean)));
+        }
+
+        async function giteeRequest(url, options = {}) {
+            var separator = url.indexOf('?') === -1 ? '?' : '&';
+            var fullUrl = url + separator + 'access_token=' + GITEE_CONFIG.ACCESS_TOKEN;
+            var response = await fetch(fullUrl, {
+                method: options.method || 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                body: options.body
+            });
+            var text = await response.text();
+            var data;
+            try { data = JSON.parse(text); } catch (e) { data = text; }
+            if (!response.ok) {
+                var err = new Error(data.message || 'HTTP ' + response.status);
+                err.status = response.status; err.data = data; throw err;
+            }
+            return data;
+        }
+
+        // 加载用户列表
+        async function loadUsers() {
+            var tbody = document.getElementById('usersBody');
+            tbody.innerHTML = '<tr><td colspan="6">加载中...</td></tr>';
+            try {
+                var url = `${GITEE_CONFIG.BASE_URL}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/user_data`;
+                var items = await giteeRequest(url);
+                var userDirs = items.filter(item => item.type === 'dir');
+                
+                var html = '';
+                for (var dir of userDirs) {
+                    var username = dir.name;
+                    try {
+                        // 读取 passwd.txt
+                        var passwdData = await giteeRequest(dir.url + '/passwd.txt?ref=master');
+                        var passwd = b64ToUtf8(passwdData.content);
+                        
+                        // 读取 come.txt
+                        var comeData = await giteeRequest(dir.url + '/come.txt?ref=master');
+                        var comeContent = b64ToUtf8(comeData.content);
+                        var comeLines = comeContent.split('\n');
+                        var regTime = comeLines[0] || '';
+                        var lastTime = comeLines[1] || '';
+                        
+                        // 读取 post.txt
+                        var postData = await giteeRequest(dir.url + '/post.txt?ref=master');
+                        var postContent = b64ToUtf8(postData.content);
+                        var postLines = postContent.split('\n');
+                        var postCount = postLines[0] || '0';
+                        
+                        html += `<tr>
+                            <td>${username}</td>
+                            <td>${passwd}</td>
+                            <td>${new Date(regTime).toLocaleString()}</td>
+                            <td>${new Date(lastTime).toLocaleString()}</td>
+                            <td>${postCount}</td>
+                            <td>
+                                <button class="btn btn-delete" onclick="deleteUser('${username}')">删除用户</button>
+                            </td>
+                        </tr>`;
+                    } catch (e) {
+                        html += `<tr><td colspan="6">${username} 数据读取失败</td></tr>`;
+                    }
+                }
+                tbody.innerHTML = html || '<tr><td colspan="6">暂无用户</td></tr>';
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="6">加载失败：${error.message}</td></tr>`;
+            }
+        }
+
+        // 删除用户
+        async function deleteUser(username) {
+            if (!confirm(`确定要永久删除用户 ${username} 吗？`)) return;
+            try {
+                var basePath = `user_data/${username}`;
+                var url = `${GITEE_CONFIG.BASE_URL}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/${basePath}`;
+                var items = await giteeRequest(url);
+                
+                for (var item of items) {
+                    if (item.type === 'file') {
+                        var deleteUrl = `${GITEE_CONFIG.BASE_URL}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/${item.path}`;
+                        await giteeRequest(deleteUrl, {
+                            method: 'DELETE',
+                            body: JSON.stringify({
+                                sha: item.sha,
+                                message: `Delete user file: ${item.name}`
+                            })
+                        });
+                    }
+                }
+                alert('用户删除成功');
+                loadUsers();
+            } catch (error) {
+                alert('删除失败：' + error.message);
+            }
+        }
+
+        // 加载文章列表
+        async function loadPosts() {
+            var tbody = document.getElementById('postsBody');
+            tbody.innerHTML = '<tr><td colspan="5">加载中...</td></tr>';
+            try {
+                var url = `${GITEE_CONFIG.BASE_URL}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/post_data`;
+                var items = await giteeRequest(url);
+                var postFiles = items.filter(item => item.type === 'file' && item.name.endsWith('.json'));
+                
+                var html = '';
+                for (var file of postFiles) {
+                    var fileUrl = `${GITEE_CONFIG.BASE_URL}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/${file.path}`;
+                    var fileData = await giteeRequest(fileUrl);
+                    var content = b64ToUtf8(fileData.content);
+                    var post = JSON.parse(content);
+                    html += `<tr>
+                        <td>${post.title}</td>
+                        <td>${post.user}</td>
+                        <td>${new Date(post.time).toLocaleString()}</td>
+                        <td>${post.circle}</td>
+                        <td>
+                            <button class="btn btn-delete" onclick="deletePost('${file.path}', '${fileData.sha}', '${post.user}', '${post.title}')">删除</button>
+                        </td>
+                    </tr>`;
+                }
+                tbody.innerHTML = html || '<tr><td colspan="5">暂无文章</td></tr>';
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="5">加载失败：${error.message}</td></tr>`;
+            }
+        }
+
+        // ==================== 修复：删除文章同时更新用户 post.txt ====================
+        async function deletePost(path, sha, username, title) {
+            if (!confirm('确定要删除此文章吗？')) return;
+            try {
+                // 1. 删除文件
+                var deleteUrl = `${GITEE_CONFIG.BASE_URL}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/${path}`;
+                await giteeRequest(deleteUrl, {
+                    method: 'DELETE',
+                    body: JSON.stringify({ sha: sha, message: 'Delete post' })
+                });
+                
+                // 2. 更新用户的 post.txt
+                await updateUserPostsAfterDelete(username, title);
+                
+                alert('文章删除成功');
+                loadPosts();
+            } catch (error) {
+                alert('删除失败：' + error.message);
+            }
+        }
+
+        // 删除文章后更新用户的帖子列表
+        async function updateUserPostsAfterDelete(username, title) {
+            var filePath = `user_data/${username}/post.txt`;
+            var encodedPath = filePath.split('/').map(seg => encodeURIComponent(seg)).join('/');
+            var url = `${GITEE_CONFIG.BASE_URL}/repos/${GITEE_CONFIG.OWNER}/${GITEE_CONFIG.REPO}/contents/${encodedPath}`;
+            
+            try {
+                var data = await giteeRequest(url, { method: 'GET' });
+                var content = b64ToUtf8(data.content);
+                var lines = content.split('\n');
+                var count = parseInt(lines[0]) || 0;
+                var titles = lines[1] ? lines[1].split('!').filter(t => t) : [];
+                
+                // 移除标题
+                var index = titles.indexOf(title);
+                if (index !== -1) {
+                    titles.splice(index, 1);
+                    count = Math.max(0, count - 1);
+                }
+                var newTitles = titles.join('!');
+                var newContent = count + '\n' + newTitles;
+                
+                var newContentBase64 = utf8ToB64(newContent);
+                var putBody = {
+                    content: newContentBase64,
+                    sha: data.sha,
+                    message: 'Update post list after delete'
+                };
+                await giteeRequest(url, {
+                    method: 'PUT',
+                    body: JSON.stringify(putBody)
+                });
+                console.log(`用户 ${username} 的 post.txt 已更新`);
+            } catch (e) {
+                console.error('更新用户 post.txt 失败', e);
+            }
+        }
+    </script>
+</body>
+</html>
