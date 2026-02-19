@@ -7,6 +7,7 @@ var isAdmin = false;         // 管理员标志
 var likedPostsKey = 'liked_posts_' + (currentUser ? currentUser.username : ''); // 点赞记录缓存key
 var likedPosts = {};         // 当前用户点赞的帖子ID集合（从localStorage加载）
 var imageCache = {};         // 图片缓存：键为图片路径，值为Blob URL或Promise
+var followedList = [];       // 当前用户关注的用户名列表（从 active.txt 加载）
 
 // ==================== 初始化 ====================
 async function initMain() {
@@ -36,6 +37,7 @@ async function initMain() {
     
     loadLikedPosts();
     await checkAdminStatus();
+    await loadFollowedList();  // 新增：加载关注列表
     
     if (allPosts.length === 0) {
         // 首次加载
@@ -103,6 +105,64 @@ function loadLikedPosts() {
 }
 function saveLikedPosts() {
     localStorage.setItem(likedPostsKey, JSON.stringify(likedPosts));
+}
+
+// ==================== 关注列表 ====================
+// 加载当前用户的关注列表
+async function loadFollowedList() {
+    if (!currentUser) return;
+    var filePath = 'user_data/' + currentUser.username + '/active.txt';
+    var encodedPath = filePath.split('/').map(seg => encodeURIComponent(seg)).join('/');
+    var url = GITEE_CONFIG.BASE_URL + '/repos/' + GITEE_CONFIG.OWNER + '/' + GITEE_CONFIG.REPO + '/contents/' + encodedPath;
+    try {
+        var data = await giteeRequest(url, { method: 'GET' });
+        if (Array.isArray(data)) {
+            followedList = [];
+            return;
+        }
+        var content = b64ToUtf8(data.content);
+        followedList = content.split('\n').filter(line => line.trim() !== '');
+    } catch (e) {
+        if (e.status === 404) {
+            followedList = []; // 文件不存在则为空
+        } else {
+            console.error('加载关注列表失败', e);
+            followedList = [];
+        }
+    }
+}
+
+// 关注作者：将作者用户名添加到 active.txt
+async function followAuthor(author) {
+    if (!author) return;
+    if (followedList.includes(author)) {
+        alert('已关注');
+        return;
+    }
+    var newList = followedList.concat(author);
+    var content = newList.join('\n');
+    var filePath = 'user_data/' + currentUser.username + '/active.txt';
+    var encodedPath = filePath.split('/').map(seg => encodeURIComponent(seg)).join('/');
+    var url = GITEE_CONFIG.BASE_URL + '/repos/' + GITEE_CONFIG.OWNER + '/' + GITEE_CONFIG.REPO + '/contents/' + encodedPath;
+    
+    var sha = null;
+    try {
+        var existing = await giteeRequest(url, { method: 'GET' });
+        if (!Array.isArray(existing) && existing && existing.sha) {
+            sha = existing.sha;
+        }
+    } catch (e) {
+        if (e.status !== 404) throw e;
+    }
+    
+    var putBody = {
+        content: utf8ToB64(content),
+        message: 'Follow ' + author
+    };
+    if (sha) putBody.sha = sha;
+    
+    await giteeRequest(url, { method: 'PUT', body: JSON.stringify(putBody) });
+    followedList = newList; // 更新缓存
 }
 
 // ==================== 获取所有帖子元数据 ====================
@@ -203,19 +263,26 @@ async function renderPosts(posts) {
         card.dataset.folder = post.folderPath;
         card.dataset.title = post.title;
         
+        // 头部：作者 + 关注按钮
+        var isFollowed = followedList.includes(post.user);
+        var followBtnHtml = isFollowed 
+            ? '<button class="follow-btn followed" disabled><i class="material-icons">person_add</i> 已关注</button>'
+            : '<button class="follow-btn" data-author="' + escapeHtml(post.user) + '"><i class="material-icons">person_add</i> 关注</button>';
         var header = document.createElement('div');
         header.className = 'post-header';
         header.innerHTML = `
             <span class="post-author">${escapeHtml(post.user)}</span>
-            <button class="follow-btn"><i class="material-icons">person_add</i> 关注</button>
+            ${followBtnHtml}
         `;
         card.appendChild(header);
         
+        // 文章内容
         var contentDiv = document.createElement('div');
         contentDiv.className = 'post-content';
         contentDiv.innerText = post.content;
         card.appendChild(contentDiv);
         
+        // 图片网格
         if (post.images && post.images.length > 0) {
             var imagesDiv = document.createElement('div');
             imagesDiv.className = 'post-images';
@@ -237,6 +304,7 @@ async function renderPosts(posts) {
             card.appendChild(imagesDiv);
         }
         
+        // 脚部按钮
         var liked = likedPosts[post.folderName] ? true : false;
         var footer = document.createElement('div');
         footer.className = 'post-footer';
@@ -253,11 +321,30 @@ async function renderPosts(posts) {
         
         container.appendChild(card);
         
+        // 绑定点赞事件
         var likeBtn = footer.querySelector('.like-btn');
         if (likeBtn) {
             likeBtn.onclick = (function(postData) {
                 return function() { handleLike(postData); };
             })(post);
+        }
+        
+        // 绑定关注按钮事件
+        var followBtn = card.querySelector('.follow-btn:not(.followed)');
+        if (followBtn) {
+            followBtn.onclick = async function(e) {
+                e.stopPropagation();
+                var author = this.dataset.author;
+                try {
+                    await followAuthor(author);
+                    // 更新按钮状态
+                    this.disabled = true;
+                    this.classList.add('followed');
+                    this.innerHTML = '<i class="material-icons">person_add</i> 已关注';
+                } catch (err) {
+                    alert('关注失败：' + err.message);
+                }
+            };
         }
     }
     
@@ -497,4 +584,5 @@ window.clearMainCache = function() {
     }
     imageCache = {};
     isAdmin = false;
+    followedList = []; // 清理关注列表缓存
 };
