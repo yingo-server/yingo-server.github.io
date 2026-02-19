@@ -1,0 +1,175 @@
+/* 主页专属样式 */
+.main-page .btn-primary {
+    background-color: #f44336; /* 红色强调 */
+}
+
+/* 加号按钮（FAB风格） */
+.btn-fab {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: #f44336; /* 红色强调 */
+    color: white;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 3px 5px -1px rgba(0,0,0,0.2), 0 6px 10px 0 rgba(0,0,0,0.14), 0 1px 18px 0 rgba(0,0,0,0.12);
+    transition: box-shadow 0.2s, background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-fab:active {
+    box-shadow: 0 5px 5px -3px rgba(0,0,0,0.2), 0 8px 10px 1px rgba(0,0,0,0.14), 0 3px 14px 2px rgba(0,0,0,0.12);
+    background-color: #d32f2f;
+}
+
+/* 帖子卡片 */
+.posts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0;
+}
+.post-card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+    padding: 12px;
+}
+.dark-mode .post-card {
+    background-color: #1e1e1e;
+    box-shadow: 0 2px 4px rgba(255,255,255,0.05);
+}
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.post-author {
+    font-weight: 500;
+    color: #212121;
+}
+.dark-mode .post-author {
+    color: #e0e0e0;
+}
+.follow-btn {
+    background: none;
+    border: none;
+    color: #2196f3;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.follow-btn i {
+    font-size: 18px;
+}
+.post-content {
+    margin-bottom: 12px;
+    line-height: 1.5;
+    color: #333;
+}
+.dark-mode .post-content {
+    color: #ccc;
+}
+.post-images {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    margin-bottom: 12px;
+}
+.image-wrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    overflow: hidden;
+    border-radius: 8px;
+    background-color: #f0f0f0;
+}
+.dark-mode .image-wrapper {
+    background-color: #2d2d2d;
+}
+.image-wrapper img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.image-wrapper img.loaded {
+    opacity: 1;
+}
+.post-footer {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 8px;
+}
+.dark-mode .post-footer {
+    border-top-color: #333;
+}
+.post-footer button {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #757575;
+    cursor: pointer;
+    font-size: 12px;
+    gap: 2px;
+}
+.post-footer button i {
+    font-size: 20px;
+}
+.post-footer button.liked {
+    color: #f44336;
+}
+.post-footer .like-count {
+    font-size: 10px;
+    color: #9e9e9e;
+}
+.dark-mode .post-footer button {
+    color: #aaa;
+}
+.post-footer .delete-btn {
+    color: #f44336;
+}
+/* 图片预览模态框 */
+.image-modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.image-modal-content {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+}
+.image-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
