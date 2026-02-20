@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Material 2 应用</title>
+    <!-- Material Icons 字体库 -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- 全局样式 -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dark.css">
+    <link rel="stylesheet" href="css/chat.css">
+    <link rel="stylesheet" href="css/toolbar.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/active.css">
+    <link rel="stylesheet" href="css/setting.css">
+    <link rel="stylesheet" href="css/sign.css">
+    <link rel="stylesheet" href="css/register.css">
+    <link rel="stylesheet" href="css/new.css">
+</head>
+<body>
+    <main id="content" class="content fade"></main>
+    <div id="bottom-bar" class="bottom-bar"></div>
+
+    <script src="JS/chat.js"></script>
+    <script src="JS/active.js"></script>
+    <script src="JS/config.js"></script>
+    <script src="JS/circle.js"></script>
+    <script src="JS/toolbar.js"></script>
+    <script src="JS/main.js"></script>
+    <script src="JS/active.js"></script>
+    <script src="JS/setting.js"></script>
+    <script src="JS/sign.js"></script>
+    <script src="JS/register.js"></script>
+    <script src="JS/new.js"></script>
+    <script>
+        (function() {
+            loadToolbar();
+            setTimeout(function() {
+                loadPageByUrl('main/sign.html');
+            }, 100);
+        })();
+    </script>
+</body>
+</html>
