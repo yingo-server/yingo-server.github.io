@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建房间测试 · 五子棋</title>
+    <style>
+        * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #f5f5f5; padding: 20px; display: flex; justify-content: center; }
+        .test-container { max-width: 1000px; width: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); padding: 24px; }
+        h1 { font-size: 1.8rem; color: #f4b740; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        h2 { font-size: 1.3rem; margin: 20px 0 10px; color: #333; }
+        .config-panel { background: #fef7e9; border-radius: 8px; padding: 16px; margin: 16px 0; border: 1px solid #f4b740; }
+        .config-item { font-family: monospace; background: rgba(255,255,255,0.6); padding: 4px 8px; border-radius: 4px; margin-bottom: 4px; }
+        .input-group { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; align-items: center; }
+        .input-group label { font-weight: 500; min-width: 60px; }
+        .input-group input { flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; min-width: 200px; }
+        .input-group input:focus { outline: 2px solid #f4b740; border-color: transparent; }
+        .button-group { display: flex; gap: 12px; flex-wrap: wrap; margin: 20px 0; }
+        button { background: #f4b740; border: none; color: #2c1e0e; padding: 10px 20px; border-radius: 30px; font-size: 1rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); border-bottom: 3px solid #d89c2c; transition: 0.1s; }
+        button:hover { background: #d89c2c; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        button:active { transform: translateY(2px); border-bottom-width: 1px; }
+        .log-area { background: #1e1e1e; color: #d4d4d4; font-family: 'Fira Code', monospace; font-size: 0.8rem; padding: 16px; border-radius: 8px; height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; border: 1px solid #444; margin-top: 20px; }
+        .log-entry { margin-bottom: 4px; border-left: 3px solid #f4b740; padding-left: 8px; }
+        .log-time { color: #9cdcfe; margin-right: 8px; }
+        .log-level { display: inline-block; padding: 0 4px; border-radius: 3px; font-weight: bold; margin-right: 8px; }
+        .level-info { background: #007acc; color: white; }
+        .level-success { background: #388e3c; color: white; }
+        .level-warning { background: #f57c00; color: white; }
+        .level-error { background: #d32f2f; color: white; }
+        .note { background: #e8f5e9; padding: 10px; border-radius: 6px; border-left: 4px solid #4caf50; margin: 15px 0; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🏗️ 创建房间专项测试</h1>
+        
+        <!-- 配置显示 -->
+        <div class="config-panel" id="configPanel">
+            <h3>当前 Gitee 配置 (从 config.js 加载)</h3>
+            <div id="configDisplay">加载中...</div>
+        </div>
+
+        <!-- 输入区 -->
+        <div class="input-group">
+            <label>房间名：</label>
+            <input type="text" id="roomName" placeholder="例如 我的房间" value="测试房间">
+        </div>
+        <div class="input-group">
+            <label>玩家名：</label>
+            <input type="text" id="playerName" placeholder="你的名字" value="测试玩家">
+        </div>
+
+        <div class="button-group">
+            <button id="createRoomBtn"><span>➕</span> 执行完整创建房间流程</button>
+            <button id="checkListBtn"><span>📋</span> 检查 rooms/list.txt</button>
+            <button id="clearLogBtn"><span>🗑️</span> 清空日志</button>
+        </div>
+
+        <div class="note">
+            <strong>📌 测试说明：</strong><br>
+            - 点击“执行完整创建房间流程”将模拟程序中的创建房间步骤：<br>
+            &nbsp;&nbsp;1. 检查 rooms/list.txt（获取现有房间列表）<br>
+            &nbsp;&nbsp;2. 生成唯一房间名（如果重复则添加日期后缀）<br>
+            &nbsp;&nbsp;3. 生成随机5位数房间号，确保不重复<br>
+            &nbsp;&nbsp;4. 创建 rooms/房间号/vs.txt（内容为 blackis=玩家名!white=）<br>
+            &nbsp;&nbsp;5. 更新 rooms/list.txt，追加“房间名!房间号”<br>
+            &nbsp;&nbsp;6. 立即尝试获取刚创建的房间信息（最多重试3次，每次间隔500ms）<br>
+            - 每个步骤的 API 请求和响应都会详细记录在下方日志中。<br>
+            - 如果最后获取的房间信息中 black 不是你的玩家名，说明出现了“not player”错误。
+        </div>
+
+        <!-- 日志区 -->
+        <div class="log-area" id="logArea">
+            <div class="log-entry"><span class="log-time">[系统]</span> 测试页面已加载，点击按钮开始测试。</div>
+        </div>
+    </div>
+
+    <!-- 加载全局配置 -->
+    <script src="../js/config.js"></script>
+
+    <!-- 内联测试脚本 -->
+    <script>
+        (function() {
+            // ---------- DOM 元素 ----------
+            const roomNameInput = document.getElementById('roomName');
+            const playerNameInput = document.getElementById('playerName');
+            const logArea = document.getElementById('logArea');
+            const configDisplay = document.getElementById('configDisplay');
+
+            // ---------- 工具函数 ----------
+            function formatTime() {
+                const d = new Date();
+                return `[${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}.${d.getMilliseconds().toString().padStart(3,'0')}]`;
+            }
+
+            function addLog(message, level = 'info', data = null) {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'log-time';
+                timeSpan.textContent = formatTime();
+                entry.appendChild(timeSpan);
+
+                const levelSpan = document.createElement('span');
+                levelSpan.className = `log-level level-${level}`;
+                levelSpan.textContent = level.toUpperCase();
+                entry.appendChild(levelSpan);
+
+                const textSpan = document.createElement('span');
+                textSpan.textContent = message;
+                entry.appendChild(textSpan);
+
+                if (data !== null) {
+                    const pre = document.createElement('div');
+                    pre.style.marginLeft = '20px';
+                    pre.style.fontSize = '0.8rem';
+                    pre.style.color = '#b5cea8';
+                    pre.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+                    entry.appendChild(pre);
+                }
+
+                logArea.appendChild(entry);
+                logArea.scrollTop = logArea.scrollHeight;
+            }
+
+            function clearLog() {
+                logArea.innerHTML = '';
+                addLog('日志已清空', 'info');
+            }
+
+            // 更新配置显示
+            function updateConfigDisplay() {
+                const config = window.GITEE_CONFIG;
+                if (!config) {
+                    configDisplay.innerHTML = '<span style="color:red;">❌ 配置未加载，请检查 js/config.js 路径或内容</span>';
+                    return;
+                }
+                let tokenDisplay = config.token;
+                if (tokenDisplay && tokenDisplay.length > 8) {
+                    tokenDisplay = tokenDisplay.substring(0, 4) + '...' + tokenDisplay.substring(tokenDisplay.length-4);
+                }
+                const html = `
+                    <div class="config-item">owner: ${config.owner || ''}</div>
+                    <div class="config-item">repo: ${config.repo || ''}</div>
+                    <div class="config-item">branch: ${config.branch || ''}</div>
+                    <div class="config-item">token: ${tokenDisplay || ''}</div>
+                `;
+                configDisplay.innerHTML = html;
+            }
+
+            // ---------- Gitee API 直接调用 ----------
+            const BASE_URL = 'https://gitee.com/api/v5';
+
+            async function giteeRequest(method, path, bodyData = null, sha = null) {
+                const config = window.GITEE_CONFIG;
+                if (!config) throw new Error('配置不存在');
+
+                let url = `${BASE_URL}/repos/${config.owner}/${config.repo}/contents/${path}?access_token=${config.token}`;
+                if (method === 'GET') {
+                    url += `&ref=${config.branch}`;
+                }
+
+                const fetchOptions = {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+
+                if (method !== 'GET') {
+                    // 对于 POST/PUT，需要处理 body
+                    fetchOptions.body = JSON.stringify(bodyData);
+                }
+
+                addLog(`🌐 ${method} ${path}`, 'debug', { url: url.replace(config.token, '***'), body: bodyData ? { ...bodyData, content: '(base64)' } : undefined });
+
+                const start = Date.now();
+                const res = await fetch(url, fetchOptions);
+                const elapsed = Date.now() - start;
+
+                let responseData = null;
+                const contentType = res.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    responseData = await res.json();
+                } else {
+                    responseData = await res.text();
+                }
+
+                addLog(`📥 响应 ${res.status} (${elapsed}ms)`, res.ok ? 'success' : 'warning', responseData);
+
+                if (!res.ok) {
+                    const err = new Error(`HTTP ${res.status}`);
+                    err.status = res.status;
+                    err.data = responseData;
+                    throw err;
+                }
+
+                return responseData;
+            }
+
+            // 获取文件（如果是文件返回对象，如果是目录或404返回null）
+            async function getFile(path) {
+                try {
+                    const data = await giteeRequest('GET', path);
+                    if (Array.isArray(data)) {
+                        addLog(`ℹ️ ${path} 是一个目录`, 'info', data.map(item => item.name));
+                        return null; // 是目录，当作不存在处理
+                    }
+                    return data; // 文件对象
+                } catch (e) {
+                    if (e.status === 404) return null;
+                    throw e;
+                }
+            }
+
+            // 创建文件（POST）
+            async function createFile(path, content, message) {
+                const base64Content = utf8ToBase64(content);
+                const body = {
+                    access_token: window.GITEE_CONFIG.token,
+                    content: base64Content,
+                    message: message,
+                    branch: window.GITEE_CONFIG.branch
+                };
+                return await giteeRequest('POST', path, body);
+            }
+
+            // 更新文件（PUT）
+            async function updateFile(path, content, sha, message) {
+                const base64Content = utf8ToBase64(content);
+                const body = {
+                    access_token: window.GITEE_CONFIG.token,
+                    content: base64Content,
+                    sha: sha,
+                    message: message,
+                    branch: window.GITEE_CONFIG.branch
+                };
+                return await giteeRequest('PUT', path, body);
+            }
+
+            // UTF8 转 Base64
+            function utf8ToBase64(str) {
+                const encoder = new TextEncoder();
+                const utf8Bytes = encoder.encode(str);
+                let binaryString = '';
+                utf8Bytes.forEach(byte => binaryString += String.fromCharCode(byte));
+                return btoa(binaryString);
+            }
+
+            // 生成随机5位数
+            function randomId() {
+                return Math.floor(10000 + Math.random() * 90000).toString();
+            }
+
+            // 解析 vs.txt 内容
+            function parseVsContent(content) {
+                const lines = content.trim().split('\n');
+                const header = lines[0];
+                const match = header.match(/blackis=([^!]*)!white=(.*)/);
+                if (!match) return null;
+                const [, black, white] = match;
+                const moves = [];
+                let gameOver = false;
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line === 'gg') { gameOver = true; break; }
+                    if (line) moves.push(line);
+                }
+                return { black, white, moves, gameOver };
+            }
+
+            // 获取房间信息
+            async function getRoomInfo(roomId) {
+                const data = await getFile(`rooms/${roomId}/vs.txt`);
+                if (!data) return null;
+                const content = atob(data.content);
+                return parseVsContent(content);
+            }
+
+            // 检查 rooms/list.txt 并返回房间列表
+            async function getRoomList() {
+                const data = await getFile('rooms/list.txt');
+                if (!data) return [];
+                const content = atob(data.content);
+                return content.trim().split('\n').filter(line => line).map(line => {
+                    const [name, id] = line.split('!');
+                    return { name, id };
+                });
+            }
+
+            // 生成唯一房间名（与主程序逻辑一致）
+            async function generateUniqueRoomName(baseName) {
+                if (!baseName) return baseName;
+                const roomList = await getRoomList();
+                const existingNames = roomList.map(r => r.name);
+                let uniqueName = baseName;
+                let counter = 1;
+                while (existingNames.includes(uniqueName)) {
+                    const now = new Date();
+                    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+                    const day = now.getDate().toString().padStart(2, '0');
+                    uniqueName = `${baseName}-${month}-${day}`;
+                    if (existingNames.includes(uniqueName)) {
+                        uniqueName = `${baseName}-${month}-${day}-${counter}`;
+                        counter++;
+                    }
+                }
+                return uniqueName;
+            }
+
+            // ---------- 核心测试：创建房间流程 ----------
+            async function testCreateRoom() {
+                const roomName = roomNameInput.value.trim();
+                const playerName = playerNameInput.value.trim();
+                if (!roomName || !playerName) {
+                    addLog('❌ 请填写房间名和玩家名', 'error');
+                    return;
+                }
+
+                addLog('========== 开始创建房间测试 ==========', 'info');
+
+                try {
+                    // 1. 检查 rooms/list.txt
+                    addLog('--- 步骤1: 检查 rooms/list.txt ---', 'info');
+                    const listData = await getFile('rooms/list.txt');
+                    let listContent = '';
+                    let listSha = null;
+                    if (listData) {
+                        listContent = atob(listData.content);
+                        listSha = listData.sha;
+                        addLog('✅ rooms/list.txt 已存在，内容如下', 'info', listContent);
+                    } else {
+                        addLog('ℹ️ rooms/list.txt 不存在，将在后续创建', 'info');
+                    }
+
+                    // 2. 获取现有房间列表，避免房间号重复
+                    addLog('--- 步骤2: 解析现有房间列表 ---', 'info');
+                    const existingRooms = await getRoomList();
+                    const existingIds = new Set(existingRooms.map(r => r.id));
+                    addLog(`现有房间数: ${existingRooms.length}`, 'info', existingRooms);
+
+                    // 3. 生成唯一房间名
+                    addLog('--- 步骤3: 生成唯一房间名 ---', 'info');
+                    const uniqueRoomName = await generateUniqueRoomName(roomName);
+                    if (uniqueRoomName !== roomName) {
+                        addLog(`房间名已存在，自动修改为: ${uniqueRoomName}`, 'warning');
+                    } else {
+                        addLog(`房间名可用: ${uniqueRoomName}`, 'success');
+                    }
+
+                    // 4. 生成唯一房间号
+                    addLog('--- 步骤4: 生成唯一房间号 ---', 'info');
+                    let roomId;
+                    do {
+                        roomId = randomId();
+                    } while (existingIds.has(roomId));
+                    addLog(`生成房间号: ${roomId}`, 'success');
+
+                    // 5. 创建 vs.txt
+                    addLog('--- 步骤5: 创建 rooms/${roomId}/vs.txt ---', 'info');
+                    const vsPath = `rooms/${roomId}/vs.txt`;
+                    const vsContent = `blackis=${playerName}!white=\n`;
+                    await createFile(vsPath, vsContent, `创建房间 ${uniqueRoomName}`);
+                    addLog(`✅ vs.txt 创建成功`, 'success');
+
+                    // 6. 更新 rooms/list.txt
+                    addLog('--- 步骤6: 更新 rooms/list.txt ---', 'info');
+                    const listEntry = `${uniqueRoomName}!${roomId}`;
+                    let newListContent;
+                    if (listData) {
+                        newListContent = listContent + listEntry + '\n';
+                        await updateFile('rooms/list.txt', newListContent, listSha, '添加房间');
+                    } else {
+                        newListContent = listEntry + '\n';
+                        await createFile('rooms/list.txt', newListContent, '创建房间列表');
+                    }
+                    addLog(`✅ list.txt 更新成功`, 'success', listEntry);
+
+                    // 7. 立即获取刚创建的房间信息（最多重试3次）
+                    addLog('--- 步骤7: 验证房间信息（最多重试3次）---', 'info');
+                    let roomInfo = null;
+                    for (let i = 1; i <= 3; i++) {
+                        addLog(`尝试 #${i} ...`, 'info');
+                        try {
+                            roomInfo = await getRoomInfo(roomId);
+                            if (roomInfo) {
+                                addLog(`获取到房间信息`, 'success', roomInfo);
+                                break;
+                            } else {
+                                addLog(`房间信息为空`, 'warning');
+                            }
+                        } catch (e) {
+                            addLog(`获取异常: ${e.message}`, 'error');
+                        }
+                        if (i < 3) {
+                            addLog(`等待 500ms 后重试...`, 'debug');
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        }
+                    }
+
+                    // 8. 检查玩家是否在黑方
+                    if (roomInfo) {
+                        if (roomInfo.black === playerName) {
+                            addLog(`✅ 验证成功：玩家 "${playerName}" 是黑方`, 'success');
+                        } else {
+                            addLog(`❌ 验证失败：玩家 "${playerName}" 不是黑方，当前 black=${roomInfo.black}`, 'error');
+                        }
+                        if (roomInfo.white === '') {
+                            addLog(`✅ 白方为空，符合预期`, 'success');
+                        } else {
+                            addLog(`⚠️ 白方不为空：${roomInfo.white}`, 'warning');
+                        }
+                    } else {
+                        addLog(`❌ 无法获取房间信息，请手动检查`, 'error');
+                    }
+
+                    addLog('========== 测试完成 ==========', 'info');
+                } catch (e) {
+                    addLog(`❌ 测试过程中发生错误: ${e.message}`, 'error', e.data || e);
+                }
+            }
+
+            // 单独检查 rooms/list.txt
+            async function checkListFile() {
+                addLog('========== 检查 rooms/list.txt ==========', 'info');
+                try {
+                    const data = await getFile('rooms/list.txt');
+                    if (!data) {
+                        addLog('❌ rooms/list.txt 不存在', 'warning');
+                        return;
+                    }
+                    const content = atob(data.content);
+                    addLog('✅ rooms/list.txt 内容', 'success', content);
+                    const lines = content.trim().split('\n').filter(l => l);
+                    addLog(`共有 ${lines.length} 个房间`, 'info', lines);
+                } catch (e) {
+                    addLog(`❌ 检查失败: ${e.message}`, 'error');
+                }
+            }
+
+            // ---------- 事件绑定 ----------
+            document.getElementById('createRoomBtn').addEventListener('click', testCreateRoom);
+            document.getElementById('checkListBtn').addEventListener('click', checkListFile);
+            document.getElementById('clearLogBtn').addEventListener('click', clearLog);
+
+            // 初始化配置显示
+            updateConfigDisplay();
+            setTimeout(updateConfigDisplay, 100);
+        })();
+    </script>
+</body>
+</html>
