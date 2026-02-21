@@ -1,0 +1,106 @@
+.remote-2p-page .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.12);
+    margin-bottom: 24px;
+}
+
+.lobby-section {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.lobby-section .md2-card {
+    width: 300px;
+    max-width: 100%;
+    padding: 24px;
+}
+
+.input-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+    padding: 4px 0;
+}
+.input-field .material-icons {
+    color: var(--md-primary);
+}
+.md2-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    padding: 8px 0;
+}
+.md2-input:focus {
+    outline: none;
+    border-bottom-color: var(--md-primary);
+}
+
+.game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.game-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.board-wrapper {
+    width: 100%;
+    max-width: 600px;
+}
+
+.status-message {
+    font-size: 1rem;
+    color: var(--md-secondary);
+    min-height: 24px;
+}
+
+#leaveBtn {
+    background-color: var(--md-error);
+    color: white;
+}
+#leaveBtn:hover {
+    background-color: #8b0000;
+}
+
+/* 横屏适配 */
+@media (orientation: landscape) and (max-height: 600px) {
+    .game-main {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    .board-wrapper {
+        max-width: 50vh;
+    }
+}
+
+/* 房间号显示 */
+.room-id-badge {
+    display: none; /* 默认隐藏 */
+    align-items: center;
+    gap: 8px;
+    background-color: var(--md-surface);
+    padding: 8px 16px;
+    border-radius: 30px;
+    box-shadow: var(--md-shadow-1);
+    font-size: 1rem;
+    color: var(--md-on-surface);
+    margin-bottom: 8px;
+}
+.room-id-badge .material-icons {
+    color: var(--md-primary);
+    font-size: 20px;
+}
