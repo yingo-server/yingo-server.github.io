@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>房间管理 · 五子棋</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- 基础样式 -->
+    <link rel="stylesheet" href="css/base/reset.css">
+    <link rel="stylesheet" href="css/base/typography.css">
+    <link rel="stylesheet" href="css/theme/material-colors.css">
+    <link rel="stylesheet" href="css/theme/animations.css">
+    <link rel="stylesheet" href="css/layout/container.css">
+    <link rel="stylesheet" href="css/components/buttons.css">
+    <link rel="stylesheet" href="css/components/toast.css">
+    <!-- 管理页面专用样式 -->
+    <style>
+        .admin-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(0,0,0,0.12);
+            padding-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .page-header h1 {
+            font-size: 1.8rem;
+            color: var(--md-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .refresh-btn {
+            background-color: var(--md-surface);
+            border: 1px solid var(--md-primary);
+            color: var(--md-primary);
+        }
+        .delete-all-btn {
+            background-color: var(--md-error);
+            color: white;
+        }
+        .room-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--md-surface);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--md-shadow-1);
+        }
+        .room-table th {
+            background-color: var(--md-primary);
+            color: var(--md-on-primary);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 500;
+        }
+        .room-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.12);
+        }
+        .room-table tr:last-child td {
+            border-bottom: none;
+        }
+        .room-table .delete-btn {
+            background-color: var(--md-error);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: opacity 0.2s;
+        }
+        .room-table .delete-btn:hover {
+            opacity: 0.8;
+        }
+        .room-table .delete-btn:disabled {
+            background-color: var(--md-disabled);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--md-disabled-text);
+            font-size: 1.2rem;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .stats {
+            margin-top: 16px;
+            font-size: 0.9rem;
+            color: var(--md-disabled-text);
+        }
+    </style>
+</head>
+<body class="md2-theme">
+    <div class="admin-container">
+        <header class="page-header">
+            <h1>
+                <span class="material-icons">admin_panel_settings</span>
+                房间管理
+            </h1>
+            <div class="header-actions">
+                <button class="md2-button refresh-btn" id="refreshBtn">
+                    <span class="material-icons">refresh</span> 刷新列表
+                </button>
+                <button class="md2-button delete-all-btn" id="deleteAllBtn">
+                    <span class="material-icons">delete_sweep</span> 清空所有房间
+                </button>
+            </div>
+        </header>
+
+        <!-- 房间列表区域 -->
+        <div id="roomListContainer">
+            <table class="room-table">
+                <thead>
+                    <tr>
+                        <th>房间名</th>
+                        <th>房间号</th>
+                        <th style="width: 120px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="roomTableBody">
+                    <tr>
+                        <td colspan="3" class="empty-message">加载中...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="stats" id="stats"></div>
+    </div>
+
+    <!-- Toast 容器 -->
+    <div id="toast-container" class="md2-toast-container"></div>
+
+    <!-- 加载全局配置 -->
+    <script src="js/config.js"></script>
+    <!-- 管理页面脚本 (模块化) -->
+    <script type="module">
+        import { getRoomList, deleteRoom, deleteAllRooms } from './js/network/room-manager.js';
+        import { showToast, showError } from './js/ui/toast.js';
+
+        const roomTableBody = document.getElementById('roomTableBody');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const deleteAllBtn = document.getElementById('deleteAllBtn');
+        const statsDiv = document.getElementById('stats');
+
+        // 加载房间列表
+        async function loadRooms() {
+            roomTableBody.innerHTML = '<tr><td colspan="3" class="empty-message">加载中...</td></tr>';
+            try {
+                const rooms = await getRoomList();
+                if (rooms.length === 0) {
+                    roomTableBody.innerHTML = '<tr><td colspan="3" class="empty-message">暂无房间</td></tr>';
+                    statsDiv.textContent = '共 0 个房间';
+                    return;
+                }
+
+                let html = '';
+                rooms.forEach(room => {
+                    html += `
+                        <tr data-room-id="${room.id}">
+                            <td>${escapeHtml(room.name)}</td>
+                            <td>${room.id}</td>
+                            <td>
+                                <button class="delete-btn" data-room-id="${room.id}" data-room-name="${escapeHtml(room.name)}">
+                                    <span class="material-icons" style="font-size: 18px;">delete</span> 删除
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                roomTableBody.innerHTML = html;
+                statsDiv.textContent = `共 ${rooms.length} 个房间`;
+
+                // 为所有删除按钮绑定事件
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const roomId = btn.dataset.roomId;
+                        const roomName = btn.dataset.roomName;
+                        if (confirm(`确定要删除房间 "${roomName}" (${roomId}) 吗？此操作不可撤销。`)) {
+                            await handleDelete(roomId, btn);
+                        }
+                    });
+                });
+            } catch (e) {
+                showError(e, '加载房间列表失败');
+                roomTableBody.innerHTML = '<tr><td colspan="3" class="empty-message">加载失败，请重试</td></tr>';
+            }
+        }
+
+        // 简单的HTML转义（防止XSS）
+        function escapeHtml(unsafe) {
+            return unsafe.replace(/[&<>"']/g, function(m) {
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                if(m === '"') return '&quot;';
+                if(m === "'") return '&#039;';
+                return m;
+            });
+        }
+
+        // 处理单个删除
+        async function handleDelete(roomId, btn) {
+            // 禁用按钮，显示加载状态
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="loading-spinner"></span> 删除中...';
+            btn.disabled = true;
+
+            try {
+                await deleteRoom(roomId);
+                showToast(`房间 ${roomId} 已删除`, 'success');
+                // 重新加载列表
+                await loadRooms();
+            } catch (e) {
+                showError(e, '删除失败');
+                // 恢复按钮状态
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // 清空所有房间
+        async function handleDeleteAll() {
+            if (!confirm('⚠️ 确定要清空所有房间吗？此操作将删除所有房间文件，且不可撤销！')) {
+                return;
+            }
+
+            // 禁用按钮，显示加载
+            const originalBtnText = deleteAllBtn.innerHTML;
+            deleteAllBtn.innerHTML = '<span class="loading-spinner"></span> 清空中...';
+            deleteAllBtn.disabled = true;
+            refreshBtn.disabled = true;
+
+            try {
+                const result = await deleteAllRooms();
+                showToast(`成功清空 ${result.deleted} 个房间`, 'success');
+                await loadRooms();
+            } catch (e) {
+                showError(e, '清空失败');
+            } finally {
+                deleteAllBtn.innerHTML = originalBtnText;
+                deleteAllBtn.disabled = false;
+                refreshBtn.disabled = false;
+            }
+        }
+
+        // 刷新按钮
+        refreshBtn.addEventListener('click', loadRooms);
+
+        // 清空按钮
+        deleteAllBtn.addEventListener('click', handleDeleteAll);
+
+        // 初始化加载
+        loadRooms();
+    </script>
+</body>
+</html>
