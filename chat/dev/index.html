@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>墨谭 · 房间式聊天</title>
+    <!-- Material Icons & Roboto 字体 (Google family) -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container" id="appContainer">
+        <!-- 左侧房间列表 (类似微信首页) -->
+        <aside class="rooms-panel" id="roomsPanel">
+            <div class="panel-header">
+                <h2 class="panel-title">所有房间</h2>
+                <button class="fab-mini" id="createRoomBtn" title="新建房间">
+                    <span class="material-icons">add</span>
+                </button>
+            </div>
+            <div class="rooms-list" id="roomsList">
+                <!-- 动态生成房间项 -->
+                <div class="loading-placeholder">加载房间中...</div>
+            </div>
+            <div class="user-profile" id="userProfile">
+                <span class="material-icons profile-icon">account_circle</span>
+                <span class="username" id="usernameDisplay">加载中...</span>
+                <span class="material-icons edit-icon" title="双击修改昵称">edit</span>
+            </div>
+        </aside>
+
+        <!-- 右侧聊天区域 -->
+        <main class="chat-panel" id="chatPanel">
+            <div class="chat-header" id="chatHeader">
+                <div class="current-room" id="currentRoomName">请选择房间</div>
+                <div class="header-status" id="headerStatus">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">就绪</span>
+                </div>
+            </div>
+
+            <!-- 错误提示浮层 (简洁) -->
+            <div class="error-snackbar" id="errorSnackbar"></div>
+
+            <!-- 消息列表容器 -->
+            <div class="messages-container" id="messagesContainer">
+                <div class="messages-list" id="messagesList">
+                    <!-- 动态渲染消息 -->
+                </div>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="input-area">
+                <input type="text" class="message-input" id="messageInput" placeholder="输入消息..." maxlength="500" autocomplete="off" disabled>
+                <button class="send-btn" id="sendBtn" disabled>
+                    <span class="material-icons">send</span>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- 引入主要逻辑 -->
+    <script src="app.js"></script>
+</body>
+</html>
