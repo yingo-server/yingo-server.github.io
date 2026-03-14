@@ -24,7 +24,7 @@ const BODY_ENABLED = true;
         { name: "单摆", url: "/bai", icon: "monitoring" },
         { name: "Github主页", url: "http://bgithub.xyz/yingo-server", icon: "music_note" },
         { name: "网站后台", url: "https://yingo2.netlify.app", icon: "video_library" },
-        { name: "openlist", url: "https://cloud.344977.xyz", icon: "cloud" },
+        { name: "openlist", url: "https://ctryvzcn.sealosbja.site", icon: "cloud" },
         { name: "聊天室", url: "/chat", icon: "forum" },
         { name: "music1", url: "/music", icon: "library_music" },
         { name: "洛伦兹吸引子", url: "/luo", icon: "air" },
@@ -41,7 +41,7 @@ const BODY_ENABLED = true;
         { name: "旧版入口", url: "/history", icon: "code" }, // 1
         { name: "尘光", url: "/dust", icon: "smartphone" }, // 2
         { name: "五子棋", url: "/5pieces", icon: "forum" }, // 3
-        { name: "弱法AI", url: "ai-yingo.netlify.app", icon: "code" }, // 4
+        { name: "弱法AI", url: "https://ai-yingo.netlify.app", icon: "code" }, // 4
         { name: "", url: "", icon: "" }, // 5
         { name: "", url: "", icon: "" }, // 6
         { name: "", url: "", icon: "" }, // 7
