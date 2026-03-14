@@ -17,17 +17,16 @@ const BODY_ENABLED = true;
 
     // ---------- 有效项目（18个）----------
     const VALID_PROJECTS = [
-        { name: "home", url: "https://uegov.world", icon: "rocket" },
+        { name: "home", url: "https://blog.344977.xyz", icon: "rocket" },
         { name: "我的三体", url: "/3d", icon: "sports_esports" },
         { name: "三体2", url: "/2d", icon: "palette" },
         { name: "永远的单摆", url: "/bai/dev", icon: "cube" },
         { name: "单摆", url: "/bai", icon: "monitoring" },
         { name: "Github主页", url: "http://bgithub.xyz/yingo-server", icon: "music_note" },
         { name: "网站后台", url: "https://yingo2.netlify.app", icon: "video_library" },
-        { name: "openlist", url: "/cloud", icon: "cloud" },
+        { name: "openlist", url: "https://cloud.344977.xyz", icon: "cloud" },
         { name: "聊天室", url: "/chat", icon: "forum" },
         { name: "music1", url: "/music", icon: "library_music" },
-        { name: "music2", url: "http://yingo6.netlify.app", icon: "smartphone" },
         { name: "洛伦兹吸引子", url: "/luo", icon: "air" },
         { name: "追捕", url: "/zhui", icon: "code" },
         { name: "字醒", url: "/word", icon: "lock" },
@@ -42,7 +41,7 @@ const BODY_ENABLED = true;
         { name: "旧版入口", url: "/history", icon: "code" }, // 1
         { name: "尘光", url: "/dust", icon: "smartphone" }, // 2
         { name: "五子棋", url: "/5pieces", icon: "forum" }, // 3
-        { name: "", url: "", icon: "" }, // 4
+        { name: "弱法AI", url: "ai-yingo.netlify.app", icon: "code" }, // 4
         { name: "", url: "", icon: "" }, // 5
         { name: "", url: "", icon: "" }, // 6
         { name: "", url: "", icon: "" }, // 7
