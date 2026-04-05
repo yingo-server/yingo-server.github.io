@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>tiktok</title>
+    <style>
+        /* ========== 可调参数 ========== */
+        :root {
+            --bg-color: #000000;
+            --swipe-threshold: 0.3;
+            --swipe-animation-duration: 0.5s;
+            --swipe-bounce-duration: 0.3s;
+            --swipe-fade-duration: 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg-color);
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .media-display {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-color);
+            will-change: transform, opacity;
+        }
+
+        .media-display img,
+        .media-display video,
+        .media-display audio {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .media-display audio {
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .media-display.current {
+            z-index: 2;
+            opacity: 1;
+            transform: translateY(0);
+            transition: transform var(--swipe-animation-duration) cubic-bezier(0.23, 1, 0.32, 1),
+                        opacity var(--swipe-fade-duration) ease;
+        }
+
+        .media-display.next {
+            z-index: 1;
+            opacity: 0;
+            transform: translateY(100vh);
+            transition: transform var(--swipe-animation-duration) cubic-bezier(0.23, 1, 0.32, 1),
+                        opacity var(--swipe-fade-duration) ease;
+        }
+
+        .media-display.bouncing {
+            transition: transform var(--swipe-bounce-duration) cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .swipe-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+            background: rgba(0,0,0,0.5);
+            padding: 6px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+            z-index: 10;
+            opacity: 0.8;
+            pointer-events: none;
+            white-space: nowrap;
+            animation: swipeHint 2s infinite;
+        }
+
+        @keyframes swipeHint {
+            0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.5; }
+            50% { transform: translateX(-50%) translateY(-5px); opacity: 0.9; }
+        }
+
+        .error-message {
+            text-align: center;
+            color: #ccc;
+            font-size: 1.2rem;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .swipe-hint { font-size: 0.7rem; bottom: 15px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="container">
+    <div class="media-display current" id="currentMedia">
+        <div class="error-message">加载中...</div>
+    </div>
+    <div class="media-display next" id="nextMedia"></div>
+    <div class="swipe-hint" id="swipeHint">↑ 滑动切换媒体 ↑</div>
+</div>
+
+<script>
+    const CONFIG = {
+        WEBDAV: {
+            ROOT: 'https://ctryvzcn.sealosbja.site/dav/',
+            SUBDIR: '自建存储/img/',
+            USERNAME: 'admin',
+            PASSWORD: '00000000'
+        },
+        MEDIA_EXT: {
+            images: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'],
+            videos: ['mp4', 'webm', 'mov', 'avi', 'mkv', 'm4v'],
+            audios: ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac']
+        },
+        SWIPE_THRESHOLD: 0.3,
+        SWIPE_ANIMATION_MS: 500,
+        SWIPE_BOUNCE_MS: 300,
+        SWIPE_FADE_MS: 300,
+        RANDOM: {
+            RECENT_INDEX_LIMIT: 5,      // 最近N次不重复
+            RECENT_RANGE_LIMIT: 3,      // 最近范围不重复（仅当媒体数量≥10时生效）
+            RANGE_SIZE: 3
+        }
+    };
+
+    class WebDAVMediaSwipe {
+        constructor() {
+            this.container = document.getElementById('container');
+            this.currentDiv = document.getElementById('currentMedia');
+            this.nextDiv = document.getElementById('nextMedia');
+            this.swipeHint = document.getElementById('swipeHint');
+
+            this.mediaList = [];
+            this.mediaCount = 0;
+            this.currentIndex = -1;
+            this.nextIndex = -1;
+
+            this.recentIndexes = [];
+            this.recentRanges = [];
+
+            this.isSwiping = false;
+            this.startY = 0;
+            this.currentY = 0;
+            this.deltaY = 0;
+            this.swipeVelocity = 0;
+            this.lastTimestamp = 0;
+            this.isAnimating = false;
+
+            // 自动播放控制：用户是否已经与页面交互过（点击、滑动、滚轮等）
+            this.userInteracted = false;
+            this.bindUserInteraction();
+
+            this.init();
+        }
+
+        // 监听任意用户交互，启用自动播放标志
+        bindUserInteraction() {
+            const events = ['click', 'touchstart', 'mousedown', 'wheel'];
+            const enableAutoPlay = () => {
+                if (!this.userInteracted) {
+                    this.userInteracted = true;
+                    console.log('用户已交互，后续视频将自动播放');
+                }
+            };
+            events.forEach(ev => {
+                this.container.addEventListener(ev, enableAutoPlay, { once: false, passive: false });
+            });
+            // 同时监听视频播放按钮的点击（因为点击视频播放按钮也是交互）
+            document.addEventListener('click', (e) => {
+                if (e.target.tagName === 'VIDEO') enableAutoPlay();
+            });
+        }
+
+        async init() {
+            await this.loadMediaFromWebDAV();
+            if (this.mediaCount === 0) {
+                this.showError("目录无支持的媒体文件");
+                return;
+            }
+
+            this.currentIndex = this.getRandomIndex(true);
+            this.renderMedia(this.currentDiv, this.mediaList[this.currentIndex]);
+            this.prepareNextMedia();
+            this.bindEvents();
+
+            setTimeout(() => {
+                this.swipeHint.style.opacity = '0';
+                this.swipeHint.style.transition = 'opacity 1s ease';
+            }, 3000);
+        }
+
+        // ========== WebDAV 文件列表获取 ==========
+        async loadMediaFromWebDAV() {
+            try {
+                const { ROOT, SUBDIR, USERNAME, PASSWORD } = CONFIG.WEBDAV;
+                let baseUrl = ROOT.endsWith('/') ? ROOT : ROOT + '/';
+                let sub = SUBDIR || '';
+                if (sub.startsWith('/')) sub = sub.substring(1);
+                const requestUrl = baseUrl + sub;
+                this.requestOrigin = new URL(ROOT).origin;
+
+                const response = await fetch(requestUrl, {
+                    method: 'PROPFIND',
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(`${USERNAME}:${PASSWORD}`),
+                        'Depth': '1',
+                        'Content-Type': 'text/xml'
+                    }
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const xmlText = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                const responses = xmlDoc.getElementsByTagNameNS('DAV:', 'response');
+                if (responses.length === 0) {
+                    this.parseResponses(xmlDoc.getElementsByTagName('response'));
+                } else {
+                    this.parseResponses(responses);
+                }
+
+                this.mediaCount = this.mediaList.length;
+                console.log(`加载 ${this.mediaCount} 个媒体`, this.mediaList);
+            } catch (err) {
+                console.error(err);
+                this.showError(`WebDAV 连接失败: ${err.message}`);
+            }
+        }
+
+        parseResponses(responses) {
+            const allExt = [...CONFIG.MEDIA_EXT.images, ...CONFIG.MEDIA_EXT.videos, ...CONFIG.MEDIA_EXT.audios];
+            for (let resp of responses) {
+                let hrefElem = resp.getElementsByTagNameNS('DAV:', 'href')[0] || resp.getElementsByTagName('href')[0];
+                if (!hrefElem) continue;
+                let href = hrefElem.textContent.trim();
+                if (href.endsWith('/')) continue; // 跳过目录
+
+                let fullUrl = this.requestOrigin + href;
+                const fileName = decodeURIComponent(fullUrl.split('/').pop());
+                const ext = fileName.split('.').pop().toLowerCase();
+                if (!allExt.includes(ext)) continue;
+
+                let type = 'unknown';
+                if (CONFIG.MEDIA_EXT.images.includes(ext)) type = 'image';
+                else if (CONFIG.MEDIA_EXT.videos.includes(ext)) type = 'video';
+                else if (CONFIG.MEDIA_EXT.audios.includes(ext)) type = 'audio';
+
+                this.mediaList.push({ type, url: fullUrl, name: fileName });
+            }
+        }
+
+        // ========== 改进的随机算法（避免重复，适应小列表） ==========
+        getRandomIndex(isManual = false) {
+            if (this.mediaCount === 0) return 0;
+            if (this.mediaCount === 1) return 0;
+
+            let available = Array.from({ length: this.mediaCount }, (_, i) => i);
+
+            // 总是避免最近索引重复（除非只有一个候选）
+            if (this.recentIndexes.length > 0 && this.mediaCount > 1) {
+                const filtered = available.filter(i => !this.recentIndexes.includes(i));
+                if (filtered.length > 0) available = filtered;
+            }
+
+            // 范围回避仅在媒体数量足够多时生效（至少10个，且最近范围记录存在）
+            if (isManual && this.mediaCount >= 10 && this.recentRanges.length > 0) {
+                const rangeFiltered = available.filter(idx => {
+                    return !this.recentRanges.some(range => idx >= range.start && idx <= range.end);
+                });
+                if (rangeFiltered.length > 0) available = rangeFiltered;
+            }
+
+            // 如果可用列表空了（极端情况），降级：只排除最近一个索引
+            if (available.length === 0 && this.recentIndexes.length > 0) {
+                available = Array.from({ length: this.mediaCount }, (_, i) => i)
+                    .filter(i => i !== this.recentIndexes[this.recentIndexes.length - 1]);
+            }
+            if (available.length === 0) available = Array.from({ length: this.mediaCount }, (_, i) => i);
+
+            const selected = available[Math.floor(Math.random() * available.length)];
+            if (isManual) this.updateHistory(selected);
+            return selected;
+        }
+
+        updateHistory(selectedIndex) {
+            this.recentIndexes.push(selectedIndex);
+            if (this.recentIndexes.length > CONFIG.RANDOM.RECENT_INDEX_LIMIT) this.recentIndexes.shift();
+
+            if (this.mediaCount >= 10) {
+                const rangeSize = Math.min(CONFIG.RANDOM.RANGE_SIZE, Math.floor(this.mediaCount / 10));
+                const start = Math.max(0, selectedIndex - rangeSize);
+                const end = Math.min(this.mediaCount - 1, selectedIndex + rangeSize);
+                this.recentRanges.push({ start, end });
+                if (this.recentRanges.length > CONFIG.RANDOM.RECENT_RANGE_LIMIT) this.recentRanges.shift();
+            }
+        }
+
+        // ========== 渲染媒体 ==========
+        renderMedia(containerDiv, media) {
+            containerDiv.innerHTML = '';
+            if (!media) {
+                containerDiv.innerHTML = '<div class="error-message">媒体无效</div>';
+                return;
+            }
+
+            let element;
+            if (media.type === 'image') {
+                element = document.createElement('img');
+                element.src = media.url;
+                element.alt = media.name;
+            } else if (media.type === 'video') {
+                element = document.createElement('video');
+                element.src = media.url;
+                element.controls = true;
+                element.preload = 'metadata';
+                // 不设置 autoplay，等用户交互后由代码控制
+            } else if (media.type === 'audio') {
+                element = document.createElement('audio');
+                element.src = media.url;
+                element.controls = true;
+                element.preload = 'metadata';
+                element.style.width = '80%';
+                element.style.maxWidth = '400px';
+            } else {
+                containerDiv.innerHTML = '<div class="error-message">不支持的媒体类型</div>';
+                return;
+            }
+            containerDiv.appendChild(element);
+        }
+
+        // 尝试自动播放视频（仅当用户已交互且媒体为视频时）
+        attemptAutoPlay(containerDiv) {
+            if (!this.userInteracted) return;
+            const video = containerDiv.querySelector('video');
+            if (video && video.paused) {
+                video.play().catch(e => console.log('自动播放失败:', e));
+            }
+        }
+
+        pauseCurrentMedia() {
+            const mediaElem = this.currentDiv.querySelector('video, audio');
+            if (mediaElem) {
+                mediaElem.pause();
+                mediaElem.currentTime = 0;
+            }
+        }
+
+        prepareNextMedia() {
+            this.nextIndex = this.getRandomIndex(true);
+            this.renderMedia(this.nextDiv, this.mediaList[this.nextIndex]);
+            this.nextDiv.style.transform = 'translateY(100vh)';
+            this.nextDiv.style.opacity = '0';
+        }
+
+        // ========== 滑动交互（与原逻辑相同，仅增加自动播放） ==========
+        bindEvents() {
+            this.container.addEventListener('touchstart', this.onTouchStart.bind(this));
+            this.container.addEventListener('touchmove', this.onTouchMove.bind(this));
+            this.container.addEventListener('touchend', this.onTouchEnd.bind(this));
+            this.container.addEventListener('mousedown', this.onMouseDown.bind(this));
+            window.addEventListener('mousemove', this.onMouseMove.bind(this));
+            window.addEventListener('mouseup', this.onMouseUp.bind(this));
+            this.container.addEventListener('wheel', this.onWheel.bind(this), { passive: false });
+        }
+
+        onTouchStart(e) {
+            if (this.isAnimating) return;
+            this.isSwiping = true;
+            this.startY = e.touches[0].clientY;
+            this.currentY = this.startY;
+            this.deltaY = 0;
+            this.swipeVelocity = 0;
+            this.lastTimestamp = Date.now();
+            this.currentDiv.classList.remove('bouncing');
+            this.nextDiv.classList.remove('bouncing');
+        }
+
+        onTouchMove(e) {
+            if (!this.isSwiping || this.isAnimating) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const prevY = this.currentY;
+            this.currentY = touch.clientY;
+            this.deltaY = this.currentY - this.startY;
+            const now = Date.now();
+            const dt = now - this.lastTimestamp;
+            if (dt > 0) this.swipeVelocity = (this.currentY - prevY) / dt;
+            this.lastTimestamp = now;
+            this.applySwipeTransform();
+        }
+
+        onTouchEnd() {
+            if (!this.isSwiping) return;
+            this.isSwiping = false;
+            this.finishSwipe();
+        }
+
+        onMouseDown(e) {
+            if (this.isAnimating || e.button !== 0) return;
+            this.isSwiping = true;
+            this.startY = e.clientY;
+            this.currentY = this.startY;
+            this.deltaY = 0;
+            this.swipeVelocity = 0;
+            this.lastTimestamp = Date.now();
+            this.currentDiv.classList.remove('bouncing');
+            this.nextDiv.classList.remove('bouncing');
+            e.preventDefault();
+        }
+
+        onMouseMove(e) {
+            if (!this.isSwiping || this.isAnimating) return;
+            const prevY = this.currentY;
+            this.currentY = e.clientY;
+            this.deltaY = this.currentY - this.startY;
+            const now = Date.now();
+            const dt = now - this.lastTimestamp;
+            if (dt > 0) this.swipeVelocity = (this.currentY - prevY) / dt;
+            this.lastTimestamp = now;
+            this.applySwipeTransform();
+        }
+
+        onMouseUp() {
+            if (!this.isSwiping) return;
+            this.isSwiping = false;
+            this.finishSwipe();
+        }
+
+        onWheel(e) {
+            if (this.isAnimating) return;
+            if (e.deltaY >= 0) return;
+            e.preventDefault();
+            this.isSwiping = true;
+            this.startY = 0;
+            this.deltaY = -window.innerHeight * 0.4;
+            this.swipeVelocity = -0.5;
+            this.applySwipeTransform();
+            setTimeout(() => {
+                this.isSwiping = false;
+                this.finishSwipe();
+            }, 100);
+        }
+
+        applySwipeTransform() {
+            const delta = Math.max(0, -this.deltaY);
+            const maxDelta = window.innerHeight;
+            const progress = Math.min(delta / maxDelta, 1);
+            this.currentDiv.style.transform = `translateY(-${progress * 100}vh)`;
+            this.currentDiv.style.opacity = (1 - progress * 1.2).toString();
+            this.nextDiv.style.transform = `translateY(${(1 - progress) * 100}vh)`;
+            this.nextDiv.style.opacity = Math.min(progress * 1.2, 1).toString();
+        }
+
+        finishSwipe() {
+            const threshold = window.innerHeight * CONFIG.SWIPE_THRESHOLD;
+            const absDelta = Math.abs(this.deltaY);
+            const shouldSwipe = absDelta > threshold || this.swipeVelocity < -0.2;
+            if (shouldSwipe) this.completeSwipe();
+            else this.cancelSwipe();
+        }
+
+        completeSwipe() {
+            if (this.isAnimating) return;
+            this.isAnimating = true;
+            this.pauseCurrentMedia();
+
+            this.currentDiv.style.transform = 'translateY(-100vh)';
+            this.currentDiv.style.opacity = '0';
+            this.currentDiv.style.transition = `transform ${CONFIG.SWIPE_ANIMATION_MS}ms cubic-bezier(0.23,1,0.32,1), opacity ${CONFIG.SWIPE_FADE_MS}ms ease`;
+
+            this.nextDiv.style.transform = 'translateY(0)';
+            this.nextDiv.style.opacity = '1';
+            this.nextDiv.style.transition = `transform ${CONFIG.SWIPE_ANIMATION_MS}ms cubic-bezier(0.23,1,0.32,1), opacity ${CONFIG.SWIPE_FADE_MS}ms ease`;
+
+            setTimeout(() => {
+                this.currentIndex = this.nextIndex;
+                const newContent = this.nextDiv.cloneNode(true);
+                this.currentDiv.innerHTML = '';
+                while (newContent.firstChild) this.currentDiv.appendChild(newContent.firstChild);
+                this.currentDiv.style.transform = 'translateY(0)';
+                this.currentDiv.style.opacity = '1';
+                this.currentDiv.style.transition = 'none';
+
+                // 自动播放（如果用户已交互且新媒体是视频）
+                this.attemptAutoPlay(this.currentDiv);
+
+                this.prepareNextMedia();
+                this.isAnimating = false;
+            }, CONFIG.SWIPE_ANIMATION_MS);
+        }
+
+        cancelSwipe() {
+            if (this.isAnimating) return;
+            this.isAnimating = true;
+            this.currentDiv.classList.add('bouncing');
+            this.nextDiv.classList.add('bouncing');
+
+            this.currentDiv.style.transform = 'translateY(0)';
+            this.currentDiv.style.opacity = '1';
+            this.currentDiv.style.transitionDuration = `${CONFIG.SWIPE_BOUNCE_MS}ms`;
+
+            this.nextDiv.style.transform = 'translateY(100vh)';
+            this.nextDiv.style.opacity = '0';
+            this.nextDiv.style.transitionDuration = `${CONFIG.SWIPE_BOUNCE_MS}ms`;
+
+            setTimeout(() => {
+                this.currentDiv.classList.remove('bouncing');
+                this.nextDiv.classList.remove('bouncing');
+                this.isAnimating = false;
+            }, CONFIG.SWIPE_BOUNCE_MS);
+        }
+
+        showError(msg) {
+            this.currentDiv.innerHTML = `<div class="error-message">${msg}</div>`;
+            this.nextDiv.innerHTML = '';
+            this.swipeHint.style.opacity = '0';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => new WebDAVMediaSwipe());
+</script>
+</body>
+</html>
