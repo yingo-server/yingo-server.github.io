@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>🦖 智能小恐龙 · Material 2</title>
+  <!-- Material Icons & Google Fonts -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ----- Material Design 2 全局重置 ----- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Roboto', 'Google Sans', sans-serif;
+      padding: 16px;
+      margin: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 主卡片 — 符合 Material 卡片规范 */
+    .game-card {
+      max-width: 680px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+      transition: box-shadow 0.3s ease;
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    /* 游戏画布区域 — 经典 600x150 比例，保持像素感 */
+    .game-canvas-wrapper {
+      position: relative;
+      background: #f7f7f7;
+      width: 100%;
+      height: auto;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .runner-container {
+      position: relative;
+      width: 100%;
+      height: 150px;
+      overflow: hidden;
+      background: #fafafa;
+    }
+
+    .runner-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: crisp-edges; /* 像素风格保留 */
+    }
+
+    /* 开始浮层 — Material 风格提示 */
+    .start-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 20;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .start-chip {
+      background: #1e1e1e;
+      color: white;
+      padding: 12px 28px;
+      border-radius: 40px;
+      font-weight: 500;
+      font-size: 1.2rem;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .start-chip .material-icons {
+      font-size: 24px;
+    }
+
+    /* 底部控制栏 — Material 风格 */
+    .control-bar {
+      padding: 16px 20px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+    }
+
+    /* 生命值区域 — 使用 Material 心形图标 (filled) */
+    .health-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f2f2f2;
+      padding: 8px 18px;
+      border-radius: 40px;
+    }
+
+    .hearts-container {
+      display: flex;
+      gap: 6px;
+    }
+
+    .heart-icon {
+      font-size: 28px;
+      color: #d32f2f;
+      transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+    }
+
+    .heart-icon.empty {
+      color: #9e9e9e;
+      opacity: 0.5;
+      filter: grayscale(0.5);
+    }
+
+    .regen-badge {
+      background: #e8e8e8;
+      border-radius: 30px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #424242;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .regen-badge .material-icons {
+      font-size: 16px;
+    }
+
+    /* 分数 & 状态区 */
+    .score-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .high-score-chip {
+      background: #e8def8;
+      color: #1e1e1e;
+      padding: 6px 16px;
+      border-radius: 30px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .restart-tip {
+      font-size: 0.9rem;
+      color: #616161;
+      font-weight: 400;
+      min-width: 140px;
+      text-align: right;
+    }
+
+    /* AI 状态指示 */
+    .ai-badge {
+      background: #e8f0fe;
+      border-radius: 30px;
+      padding: 6px 16px;
+      color: #1967d2;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .material-icons {
+      font-size: 20px;
+    }
+
+    /* 隐藏默认离线资源 */
+    #offline-resources {
+      display: none;
+    }
+
+    .icon-offline {
+      display: none;
+    }
+
+    /* 响应式微调 */
+    @media (max-width: 520px) {
+      body { padding: 8px; }
+      .control-bar { flex-wrap: wrap; gap: 16px; }
+      .health-section { order: 1; width: 100%; justify-content: space-between; }
+      .score-section { order: 2; width: 100%; justify-content: space-between; }
+      .restart-tip { text-align: left; }
+      .start-chip { font-size: 1rem; padding: 10px 20px; }
+    }
+
+    /* 游戏结束覆盖层不遮挡点击 (由画布内处理) */
+    .runner-container canvas {
+      cursor: pointer;
+    }
+
+    /* Material Ripple 效果省略，保持简洁 */
+  </style>
+</head>
+<body>
+
+<div class="game-card">
+  <!-- 画布区域 -->
+  <div class="game-canvas-wrapper">
+    <div id="runner-container" class="runner-container"></div>
+    
+    <!-- 开始提示浮层 (空格开始) -->
+    <div id="startMessageOverlay" class="start-overlay">
+      <div class="start-chip">
+        <span class="material-icons">space_bar</span>
+        <span>按下空格开始 · AI 智能跳跃</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Material 底部控制栏 -->
+  <div class="control-bar">
+    <div class="health-section">
+      <div class="hearts-container" id="healthContainer">
+        <!-- 动态生成三颗心 -->
+        <span class="material-icons heart-icon" id="heart1">favorite</span>
+        <span class="material-icons heart-icon" id="heart2">favorite</span>
+        <span class="material-icons heart-icon" id="heart3">favorite</span>
+      </div>
+      <div class="regen-badge" id="regenTimerDisplay">
+        <span class="material-icons">autorenew</span>
+        <span>15s</span>
+      </div>
+    </div>
+
+    <div class="score-section">
+      <div class="high-score-chip">
+        <span class="material-icons">emoji_events</span>
+        <span id="highScoreValue">0</span>
+      </div>
+      <div class="ai-badge">
+        <span class="material-icons">auto_awesome</span>
+        <span>AI 跳跃已开启</span>
+      </div>
+      <div class="restart-tip" id="restartMessage"></div>
+    </div>
+  </div>
+
+  <!-- 隐藏资源区：使用本地 assets 图片 -->
+  <div id="offline-resources">
+    <img id="offline-resources-1x" src="assets/default_100_percent/100-offline-sprite.png" alt="sprite 1x">
+    <img id="offline-resources-2x" src="assets/default_200_percent/200-offline-sprite.png" alt="sprite 2x">
+    <template id="audio-resources">
+      <!-- 音频可选，保持空实现；若需要声音可自行替换 base64 -->
+    </template>
+  </div>
+</div>
+
+<script>
+  (function(){
+    'use strict';
+
+    // ---------- 配置 ----------
+    const FPS = 60;
+    const DEFAULT_WIDTH = 600;
+    const IS_HIDPI = window.devicePixelRatio > 1;
+    const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    // 辅助函数
+    const getRandomNum = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const getTimeStamp = () => performance.now ? performance.now() : Date.now();
+
+    // ---------- 核心 Runner (集成血量、AI、自动重启) ----------
+    function Runner(containerId) {
+      if (Runner.instance) return Runner.instance;
+      Runner.instance = this;
+      
+      this.outerContainer = document.querySelector(containerId);
+      this.containerEl = document.getElementById('runner-container');
+      this.canvas = null;
+      this.ctx = null;
+      this.dimensions = { WIDTH: DEFAULT_WIDTH, HEIGHT: 150 };
+      
+      // ----- 血量系统 (Material) -----
+      this.maxHealth = 3;
+      this.health = this.maxHealth;
+      this.invincible = false;
+      this.invincibleDuration = 1.8;       // 受伤无敌秒数
+      this.invincibleTimer = 0;
+      this.healthRegenTimer = 0;
+      this.healthRegenInterval = 15;        // 每15秒回复1点
+      
+      // UI 元素
+      this.hearts = [
+        document.getElementById('heart1'),
+        document.getElementById('heart2'),
+        document.getElementById('heart3')
+      ];
+      this.highScoreSpan = document.getElementById('highScoreValue');
+      this.restartMsgDiv = document.getElementById('restartMessage');
+      this.regenDisplay = document.getElementById('regenTimerDisplay');
+      this.startOverlay = document.getElementById('startMessageOverlay');
+      
+      // ----- AI 增强 -----
+      this.aiEnabled = true;
+      
+      // ----- 自动重启 (死亡后3秒) -----
+      this.autoRestartTimer = null;
+      
+      // 游戏核心属性
+      this.tRex = null;
+      this.horizon = null;
+      this.distanceMeter = null;
+      this.distanceRan = 0;
+      this.highestScore = 0;
+      this.currentSpeed = 6;
+      this.activated = false;
+      this.playing = false;
+      this.crashed = false;
+      this.paused = false;
+      this.time = 0;
+      this.runningTime = 0;
+      this.msPerFrame = 1000 / FPS;
+      
+      this.config = {
+        ACCELERATION: 0.001,
+        BG_CLOUD_SPEED: 0.2,
+        BOTTOM_PAD: 10,
+        CLEAR_TIME: 3000,
+        GAP_COEFFICIENT: 0.6,
+        GRAVITY: 0.6,
+        INITIAL_JUMP_VELOCITY: 12,
+        MAX_SPEED: 13,
+        SPEED: 6,
+        MAX_OBSTACLE_DUPLICATION: 2,
+      };
+      
+      this.spriteDef = null;
+      this.loadImages();
+      this.updateHealthUI();
+    }
+
+    // 图片加载 (本地 assets)
+    Runner.prototype.loadImages = function() {
+      if (IS_HIDPI) {
+        Runner.imageSprite = document.getElementById('offline-resources-2x');
+        this.spriteDef = Runner.spriteDefinition.HDPI;
+      } else {
+        Runner.imageSprite = document.getElementById('offline-resources-1x');
+        this.spriteDef = Runner.spriteDefinition.LDPI;
+      }
+      if (Runner.imageSprite.complete) {
+        this.init();
+      } else {
+        Runner.imageSprite.addEventListener('load', this.init.bind(this));
+      }
+    };
+
+    // 精灵定义 (与原始保持一致)
+    Runner.spriteDefinition = {
+      LDPI: {
+        CACTUS_LARGE: { x: 332, y: 2 }, CACTUS_SMALL: { x: 228, y: 2 },
+        CLOUD: { x: 86, y: 2 }, HORIZON: { x: 2, y: 54 }, MOON: { x: 484, y: 2 },
+        PTERODACTYL: { x: 134, y: 2 }, RESTART: { x: 2, y: 2 },
+        TEXT_SPRITE: { x: 655, y: 2 }, TREX: { x: 848, y: 2 }, STAR: { x: 645, y: 2 }
+      },
+      HDPI: {
+        CACTUS_LARGE: { x: 652, y: 2 }, CACTUS_SMALL: { x: 446, y: 2 },
+        CLOUD: { x: 166, y: 2 }, HORIZON: { x: 2, y: 104 }, MOON: { x: 954, y: 2 },
+        PTERODACTYL: { x: 260, y: 2 }, RESTART: { x: 2, y: 2 },
+        TEXT_SPRITE: { x: 1294, y: 2 }, TREX: { x: 1678, y: 2 }, STAR: { x: 1276, y: 2 }
+      }
+    };
+
+    Runner.prototype.init = function() {
+      this.adjustDimensions();
+      // 创建画布
+      this.containerEl.innerHTML = '';
+      this.canvas = document.createElement('canvas');
+      this.canvas.className = 'runner-canvas';
+      this.canvas.width = this.dimensions.WIDTH;
+      this.canvas.height = this.dimensions.HEIGHT;
+      this.containerEl.appendChild(this.canvas);
+      this.ctx = this.canvas.getContext('2d');
+      
+      this.horizon = new Horizon(this.canvas, this.spriteDef, this.dimensions, this.config.GAP_COEFFICIENT);
+      this.distanceMeter = new DistanceMeter(this.canvas, this.spriteDef.TEXT_SPRITE, this.dimensions.WIDTH);
+      this.tRex = new Trex(this.canvas, this.spriteDef.TREX);
+      
+      this.startListening();
+      this.update();
+      window.addEventListener('resize', () => this.debounceResize());
+    };
+
+    Runner.prototype.debounceResize = function() {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = setTimeout(() => this.adjustDimensions(), 100);
+    };
+
+    Runner.prototype.adjustDimensions = function() {
+      const box = this.outerContainer;
+      const padding = parseFloat(window.getComputedStyle(box).paddingLeft) || 0;
+      this.dimensions.WIDTH = Math.min(DEFAULT_WIDTH, box.offsetWidth - padding * 2);
+      if (this.canvas) {
+        this.canvas.width = this.dimensions.WIDTH;
+        this.canvas.height = this.dimensions.HEIGHT;
+        if (this.distanceMeter) this.distanceMeter.calcXPos(this.dimensions.WIDTH);
+        if (!this.playing) this.tRex?.draw(0, 0);
+      }
+    };
+
+    Runner.prototype.startListening = function() {
+      document.addEventListener('keydown', this);
+      document.addEventListener('keyup', this);
+      if (IS_MOBILE) {
+        this.containerEl.addEventListener('touchstart', this);
+        this.containerEl.addEventListener('touchend', this);
+      }
+    };
+
+    Runner.prototype.handleEvent = function(e) {
+      if (e.type === 'keydown') this.onKeyDown(e);
+      else if (e.type === 'keyup') this.onKeyUp(e);
+      else if (e.type === 'touchstart') { e.preventDefault(); this.onKeyDown(e); }
+      else if (e.type === 'touchend') this.onKeyUp(e);
+    };
+
+    Runner.prototype.onKeyDown = function(e) {
+      const key = e.keyCode || (e.touches ? 32 : 0);
+      // 空格/上键
+      if (key === 32 || key === 38) {
+        e.preventDefault();
+        if (!this.activated || !this.playing) {
+          this.startOverlay.style.opacity = '0';
+          setTimeout(() => this.startOverlay.style.display = 'none', 300);
+          this.startGame();
+        }
+        if (this.playing && !this.crashed && this.tRex && !this.tRex.jumping && !this.tRex.ducking) {
+          this.tRex.startJump(this.currentSpeed);
+        }
+        if (this.crashed) {
+          // 手动提前重启
+          clearTimeout(this.autoRestartTimer);
+          this.restart();
+        }
+      }
+      if (key === 40 && this.playing && !this.crashed) {
+        e.preventDefault();
+        this.tRex?.setDuck(true);
+      }
+    };
+
+    Runner.prototype.onKeyUp = function(e) {
+      const key = e.keyCode || 40;
+      if (key === 40) this.tRex?.setDuck(false);
+    };
+
+    Runner.prototype.startGame = function() {
+      if (this.crashed) { this.restart(); return; }
+      this.playing = true;
+      this.activated = true;
+      this.runningTime = 0;
+      this.tRex.reset();
+      this.health = this.maxHealth;
+      this.invincible = false;
+      this.updateHealthUI();
+      this.crashed = false;
+      this.restartMsgDiv.innerText = '';
+    };
+
+    // 更新 Material 血条显示
+    Runner.prototype.updateHealthUI = function() {
+      for (let i = 0; i < 3; i++) {
+        if (i < this.health) {
+          this.hearts[i].textContent = 'favorite';
+          this.hearts[i].classList.remove('empty');
+        } else {
+          this.hearts[i].textContent = 'heart_broken';
+          this.hearts[i].classList.add('empty');
+        }
+      }
+      // 更新回复计时显示
+      if (this.health < this.maxHealth) {
+        const remain = Math.max(0, this.healthRegenInterval - this.healthRegenTimer).toFixed(0);
+        this.regenDisplay.innerHTML = `<span class="material-icons">autorenew</span><span>${remain}s</span>`;
+      } else {
+        this.regenDisplay.innerHTML = `<span class="material-icons">check_circle</span><span>满血</span>`;
+      }
+      this.highScoreSpan.textContent = this.highestScore;
+    };
+
+    Runner.prototype.update = function() {
+      this.updatePending = false;
+      const now = getTimeStamp();
+      let deltaTime = Math.min(30, now - (this.time || now));
+      this.time = now;
+      
+      if (this.playing && !this.crashed) {
+        this.clearCanvas();
+        
+        // ----- AI 智能跳跃 (速度自适应) -----
+        if (this.aiEnabled && this.horizon && this.tRex && !this.tRex.jumping && this.tRex.yPos >= this.tRex.groundYPos) {
+          const obs = this.horizon.obstacles[0];
+          if (obs) {
+            const distance = obs.xPos - this.tRex.xPos - this.tRex.config.WIDTH;
+            // 动态阈值：速度越快越早跳
+            const baseThreshold = 70 + this.currentSpeed * 7;
+            const jumpThreshold = Math.min(190, baseThreshold);
+            if (distance > 5 && distance < jumpThreshold) {
+              this.tRex.startJump(this.currentSpeed);
+            }
+          }
+        }
+        
+        if (this.tRex.jumping) this.tRex.updateJump(deltaTime);
+        
+        this.runningTime += deltaTime;
+        const hasObstacles = this.runningTime > this.config.CLEAR_TIME;
+        this.horizon.update(deltaTime, this.currentSpeed, hasObstacles, false);
+        
+        const obstacle = this.horizon.obstacles[0];
+        const collision = hasObstacles && obstacle && checkForCollision(obstacle, this.tRex);
+        
+        if (collision) {
+          if (!this.invincible && this.health > 0) {
+            this.health--;
+            this.updateHealthUI();
+            this.invincible = true;
+            this.invincibleTimer = this.invincibleDuration;
+            this.tRex.reset(); // 避免连续判定
+            if (this.health <= 0) {
+              this.gameOver();
+            }
+          } else if (this.health <= 0) {
+            this.gameOver();
+          }
+        } else {
+          this.distanceRan += this.currentSpeed * deltaTime / this.msPerFrame;
+          if (this.currentSpeed < this.config.MAX_SPEED) {
+            this.currentSpeed += this.config.ACCELERATION * deltaTime;
+          }
+          if (this.distanceRan > this.highestScore) {
+            this.highestScore = Math.floor(this.distanceRan);
+            this.highScoreSpan.textContent = this.highestScore;
+          }
+        }
+        
+        // 无敌计时 & 闪烁效果 (通过透明度)
+        if (this.invincible) {
+          this.invincibleTimer -= deltaTime / 1000;
+          if (this.invincibleTimer <= 0) this.invincible = false;
+        }
+        
+        // 血量回复计时
+        if (this.health < this.maxHealth) {
+          this.healthRegenTimer += deltaTime / 1000;
+          if (this.healthRegenTimer >= this.healthRegenInterval) {
+            this.health++;
+            this.healthRegenTimer = 0;
+            this.updateHealthUI();
+          }
+          this.updateHealthUI(); // 刷新计时显示
+        } else {
+          this.healthRegenTimer = 0;
+          this.updateHealthUI();
+        }
+        
+        this.distanceMeter.update(deltaTime, Math.ceil(this.distanceRan));
+      }
+      
+      // 恐龙绘制 (无敌闪烁)
+      if (this.tRex) {
+        if (this.invincible && (Math.floor(now / 150) % 2 === 0)) {
+          this.ctx.save();
+          this.ctx.globalAlpha = 0.6;
+          this.tRex.draw(this.tRex.currentAnimFrames[this.tRex.currentFrame] || 0, 0);
+          this.ctx.restore();
+        } else {
+          this.tRex.update(deltaTime);
+        }
+      }
+      
+      this.scheduleNextUpdate();
+    };
+
+    Runner.prototype.gameOver = function() {
+      this.crashed = true;
+      this.playing = false;
+      this.tRex.update(100, 'CRASHED');
+      this.restartMsgDiv.innerText = '💀 3秒后自动复活';
+      if (this.autoRestartTimer) clearTimeout(this.autoRestartTimer);
+      this.autoRestartTimer = setTimeout(() => {
+        this.restart();
+        this.autoRestartTimer = null;
+      }, 3000);
+    };
+
+    Runner.prototype.restart = function() {
+      clearTimeout(this.autoRestartTimer);
+      this.crashed = false;
+      this.playing = true;
+      this.distanceRan = 0;
+      this.currentSpeed = this.config.SPEED;
+      this.health = this.maxHealth;
+      this.invincible = false;
+      this.healthRegenTimer = 0;
+      this.runningTime = 0;
+      this.horizon.reset();
+      this.tRex.reset();
+      this.time = getTimeStamp();
+      this.updateHealthUI();
+      this.restartMsgDiv.innerText = '';
+      this.startOverlay.style.display = 'none';
+    };
+
+    Runner.prototype.clearCanvas = function() {
+      this.ctx.clearRect(0, 0, this.dimensions.WIDTH, this.dimensions.HEIGHT);
+    };
+
+    Runner.prototype.scheduleNextUpdate = function() {
+      if (!this.updatePending) {
+        this.updatePending = true;
+        requestAnimationFrame(this.update.bind(this));
+      }
+    };
+
+    // ---------- 游戏对象 (精简但保留核心) ----------
+    function Trex(canvas, spritePos) {
+      this.canvas = canvas; this.ctx = canvas.getContext('2d');
+      this.spritePos = spritePos;
+      this.config = { WIDTH: 44, HEIGHT: 47, WIDTH_DUCK: 59, HEIGHT_DUCK: 25, INIITAL_JUMP_VELOCITY: -12, GRAVITY: 0.6, START_X_POS: 50 };
+      this.xPos = 0; this.yPos = 0; this.groundYPos = 150 - this.config.HEIGHT - 10;
+      this.status = 'WAITING'; this.jumping = false; this.ducking = false;
+      this.currentFrame = 0; this.jumpVelocity = 0; this.minJumpHeight = this.groundYPos - 30;
+      this.animFrames = { RUNNING: [88,132], JUMPING: [0], DUCKING: [264,323], CRASHED: [220], WAITING: [44,0] };
+      this.currentAnimFrames = this.animFrames.WAITING;
+      this.reset();
+    }
+    Trex.prototype.reset = function() {
+      this.yPos = this.groundYPos; this.jumping = false; this.ducking = false;
+      this.status = 'RUNNING'; this.currentAnimFrames = this.animFrames.RUNNING;
+      this.jumpVelocity = 0; this.xPos = this.config.START_X_POS;
+    };
+    Trex.prototype.startJump = function(speed) {
+      if (!this.jumping) {
+        this.status = 'JUMPING'; this.currentAnimFrames = this.animFrames.JUMPING;
+        this.jumpVelocity = this.config.INIITAL_JUMP_VELOCITY - (speed/10);
+        this.jumping = true;
+      }
+    };
+    Trex.prototype.updateJump = function(deltaTime) {
+      const framesElapsed = deltaTime / (1000/60);
+      this.yPos += this.jumpVelocity * framesElapsed;
+      this.jumpVelocity += this.config.GRAVITY * framesElapsed;
+      if (this.yPos > this.groundYPos) { this.reset(); }
+      this.draw(this.currentAnimFrames[0], 0);
+    };
+    Trex.prototype.setDuck = function(isDucking) {
+      if (isDucking && this.status !== 'DUCKING') { this.status = 'DUCKING'; this.currentAnimFrames = this.animFrames.DUCKING; this.ducking = true; }
+      else if (!isDucking && this.status === 'DUCKING') { this.status = 'RUNNING'; this.currentAnimFrames = this.animFrames.RUNNING; this.ducking = false; }
+    };
+    Trex.prototype.update = function(deltaTime, opt_status) {
+      if (opt_status) this.status = opt_status;
+      this.draw(this.currentAnimFrames[this.currentFrame] || 0, 0);
+    };
+    Trex.prototype.draw = function(frameX, frameY) {
+      let w = this.ducking ? this.config.WIDTH_DUCK : this.config.WIDTH;
+      let sx = frameX + this.spritePos.x, sy = frameY + this.spritePos.y;
+      if (IS_HIDPI) { sx *= 2; sy *= 2; w *= 2; }
+      this.ctx.drawImage(Runner.imageSprite, sx, sy, w, this.config.HEIGHT, this.xPos, this.yPos, this.config.WIDTH, this.config.HEIGHT);
+    };
+
+    function Horizon(canvas, spriteDef, dim, gapCoef) {
+      this.canvas = canvas; this.ctx = canvas.getContext('2d');
+      this.spritePos = spriteDef; this.dimensions = dim;
+      this.obstacles = [];
+      this.horizonLine = new HorizonLine(canvas, spriteDef.HORIZON);
+    }
+    Horizon.prototype.update = function(dt, speed, updateObs) {
+      this.horizonLine.update(dt, speed);
+      if (updateObs) {
+        for (let o of this.obstacles) o.update(dt, speed);
+        this.obstacles = this.obstacles.filter(o => !o.remove);
+        if (this.obstacles.length === 0 || this.obstacles[this.obstacles.length-1].xPos < this.dimensions.WIDTH - 250) {
+          this.addNewObstacle(speed);
+        }
+      }
+    };
+    Horizon.prototype.addNewObstacle = function(speed) {
+      const types = Obstacle.types;
+      let idx = getRandomNum(0, types.length-1);
+      this.obstacles.push(new Obstacle(this.ctx, types[idx], this.spritePos[types[idx].type], this.dimensions, 0.6, speed));
+    };
+    Horizon.prototype.reset = function() { this.obstacles = []; };
+
+    function Obstacle(ctx, type, spritePos, dim, gapCoef, speed) {
+      this.ctx = ctx; this.typeConfig = type; this.spritePos = spritePos;
+      this.xPos = dim.WIDTH; this.yPos = Array.isArray(type.yPos) ? type.yPos[0] : type.yPos; 
+      this.width = type.width; this.remove = false;
+    }
+    Obstacle.prototype.update = function(dt, speed) {
+      this.xPos -= speed * FPS / 1000 * dt;
+      if (this.xPos + this.width < 0) this.remove = true;
+      this.draw();
+    };
+    Obstacle.prototype.draw = function() {
+      let sw = this.typeConfig.width, sh = this.typeConfig.height;
+      if (IS_HIDPI) { sw*=2; sh*=2; }
+      this.ctx.drawImage(Runner.imageSprite, this.spritePos.x, this.spritePos.y, sw, sh, this.xPos, this.yPos, this.typeConfig.width, this.typeConfig.height);
+    };
+    Obstacle.types = [
+      { type: 'CACTUS_SMALL', width: 17, height: 35, yPos: 105 },
+      { type: 'CACTUS_LARGE', width: 25, height: 50, yPos: 90 },
+      { type: 'PTERODACTYL', width: 46, height: 40, yPos: [100,75] }
+    ];
+
+    function HorizonLine(canvas, spritePos) {
+      this.canvas = canvas; this.spritePos = spritePos;
+      this.dim = { WIDTH: 600, HEIGHT: 12, YPOS: 127 };
+      this.xPos = [0, 600];
+    }
+    HorizonLine.prototype.update = function(dt, speed) {
+      let inc = speed * (FPS/1000) * dt;
+      this.xPos[0] -= inc; this.xPos[1] = this.xPos[0] + this.dim.WIDTH;
+      if (this.xPos[0] <= -this.dim.WIDTH) { this.xPos[0] = 0; this.xPos[1] = this.dim.WIDTH; }
+      this.draw();
+    };
+    HorizonLine.prototype.draw = function() {
+      const ctx = this.canvas.getContext('2d');
+      ctx.drawImage(Runner.imageSprite, this.spritePos.x, this.spritePos.y, this.dim.WIDTH, this.dim.HEIGHT, this.xPos[0], this.dim.YPOS, this.dim.WIDTH, this.dim.HEIGHT);
+      ctx.drawImage(Runner.imageSprite, this.spritePos.x, this.spritePos.y, this.dim.WIDTH, this.dim.HEIGHT, this.xPos[1], this.dim.YPOS, this.dim.WIDTH, this.dim.HEIGHT);
+    };
+
+    function DistanceMeter(canvas, spritePos, w) {
+      this.canvas = canvas; this.ctx = canvas.getContext('2d');
+      this.x = 0; this.calcXPos(w);
+    }
+    DistanceMeter.prototype.calcXPos = function(w) { this.x = w - 70; };
+    DistanceMeter.prototype.update = function(dt, dist) {
+      let str = ('0000'+Math.floor(dist*0.025)).slice(-5);
+      this.ctx.font = 'bold 13px "Roboto"'; this.ctx.fillStyle = '#3a2a1a';
+      this.ctx.fillText(str, this.x, 18);
+    };
+
+    function checkForCollision(obs, trex) {
+      if (!obs) return false;
+      return (trex.xPos < obs.xPos + obs.width && trex.xPos + trex.config.WIDTH > obs.xPos &&
+              trex.yPos < obs.yPos + obs.typeConfig.height && trex.yPos + trex.config.HEIGHT > obs.yPos);
+    }
+
+    // 启动
+    window.addEventListener('load', () => {
+      new Runner('#runner-container');
+    });
+  })();
+</script>
+</body>
+</html>
