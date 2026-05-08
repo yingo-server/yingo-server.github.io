@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ==================== SEO 核心优化 ==================== -->
+    <title>铁锈战争 官网 - Rusted Warfare 电脑版 | 即时战略游戏下载</title>
+    <meta name="description" content="铁锈战争(Rusted Warfare)是一款纯RTS即时战略游戏电脑版，无内购无DRM。支持海陆空三军立体作战，提供战役、生存、挑战等多种模式，最多10人联机对战。立即下载电脑版！">
+    <meta name="keywords" content="铁锈战争,铁锈战争电脑版,铁锈战争下载,Rusted Warfare,Rusted Warfare下载,即时战略游戏,RTS游戏,即时战略游戏电脑版,RTS游戏下载,铁锈战争官网">
+
+    <!-- ==================== 字体声明 ==================== -->
+    <style>
+        /* ---------- 主字体（正文使用）---------- */
+        @font-face {
+            font-family: 'MainFont';
+            src: url('./main.ttf') format('truetype');
+            font-display: swap;
+        }
+
+        /* ---------- 标题字体（标题、导航品牌等使用）---------- */
+        @font-face {
+            font-family: 'TitleFont';
+            src: url('./other.ttf') format('truetype');
+            font-display: swap;
+        }
+
+        /* ==================== 集中参数管理区 ==================== */
+        :root {
+            /* --- 背景色 --- */
+            --bg: #0f0f0f;
+            --bg-secondary: #181818;
+            --bg-card: #1c1c1c;
+
+            /* --- 文字颜色 --- */
+            --text: #c8c8c8;
+            --text-muted: #7a7a7a;
+            --text-heading: #e0dcd5;
+
+            /* --- 主题色（铁锈/钢铁） --- */
+            --rust: #b85c3a;
+            --rust-light: #d47852;
+            --rust-dark: #6b3020;
+            --steel: #5a5a5a;
+            --steel-light: #787878;
+            --gold: #b8a06e;
+            --accent: #c46a3f;
+
+            /* --- 边框 --- */
+            --border: #2a2a2a;
+            --border-active: #4a4a4a;
+
+            /* --- 圆角与过渡 --- */
+            --radius: 2px;
+            --transition: 0.2s ease;
+
+            /* --- 布局 --- */
+            --max-width: 780px;
+            --nav-height: 64px;
+        }
+        /* ==================== 参数管理区结束 ==================== */
+
+        /* ==================== 全局基础样式 ==================== */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'MainFont', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'Noto Sans SC', sans-serif;
+            line-height: 1.7;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            letter-spacing: 0.02em;
+            background-image:
+                repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 60px,
+                    rgba(255, 255, 255, 0.006) 60px,
+                    rgba(255, 255, 255, 0.006) 61px),
+                repeating-linear-gradient(90deg,
+                    transparent,
+                    transparent 60px,
+                    rgba(255, 255, 255, 0.006) 60px,
+                    rgba(255, 255, 255, 0.006) 61px);
+            background-attachment: fixed;
+        }
+
+        h1, h2, h3, .title-font, .nav-brand, .page-title, .hero-title, .section-heading {
+            font-family: 'TitleFont', 'PingFang SC', 'Microsoft YaHei', 'SimHei', 'Noto Sans SC', sans-serif;
+            font-weight: 700;
+            color: var(--text-heading);
+            letter-spacing: 0.04em;
+        }
+
+        /* ==================== 导航栏 ==================== */
+        .nav-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+            background: rgba(15, 15, 15, 0.85);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: var(--nav-height);
+            gap: 0;
+            padding: 0 24px;
+        }
+
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: var(--max-width);
+            gap: 20px;
+        }
+
+        .nav-brand {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            letter-spacing: 0.06em;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            transition: color var(--transition);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-brand:hover {
+            color: var(--rust-light);
+        }
+
+        .brand-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--rust);
+            transform: rotate(45deg);
+            position: relative;
+            flex-shrink: 0;
+            transition: border-color var(--transition);
+        }
+
+        .brand-icon::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            border: 1px solid var(--rust-light);
+            transition: border-color var(--transition);
+        }
+
+        .nav-brand:hover .brand-icon {
+            border-color: var(--rust-light);
+        }
+
+        .nav-brand:hover .brand-icon::after {
+            border-color: var(--rust);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 6px;
+            list-style: none;
+            flex-shrink: 0;
+        }
+
+        .nav-link {
+            display: inline-block;
+            padding: 8px 18px;
+            font-size: 0.9rem;
+            font-family: 'MainFont', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            color: var(--text-muted);
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all var(--transition);
+            text-decoration: none;
+            user-select: none;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+            border-color: var(--border-active);
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .nav-link.active {
+            color: var(--rust-light);
+            border-color: var(--rust-dark);
+            background: rgba(184, 92, 58, 0.08);
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 8px;
+            right: 8px;
+            height: 1px;
+            background: var(--rust);
+        }
+
+        /* ==================== 主内容区域 ==================== */
+        .main-content {
+            flex: 1;
+            width: 100%;
+            max-width: var(--max-width);
+            padding: 48px 24px 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .page {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            animation: pageFadeIn 0.35s ease forwards;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        @keyframes pageFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .divider {
+            width: 60px;
+            height: 2px;
+            background: var(--rust-dark);
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 6px;
+            height: 6px;
+            border: 1px solid var(--rust);
+            background: var(--bg);
+        }
+
+        .divider-wide {
+            width: 120px;
+            height: 1px;
+            background: var(--border);
+            margin: 28px auto;
+        }
+
+        /* ==================== 按钮系统 ==================== */
+        .btn {
+            display: inline-block;
+            padding: 12px 32px;
+            font-size: 0.95rem;
+            font-family: 'MainFont', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            border-radius: var(--radius);
+            transition: all var(--transition);
+            user-select: none;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--rust);
+            color: #f0e6dd;
+            border: 2px solid var(--rust);
+        }
+
+        .btn-primary:hover {
+            background: var(--rust-light);
+            border-color: var(--rust-light);
+            color: #fff;
+            box-shadow: 0 0 28px rgba(184, 92, 58, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 0 8px rgba(184, 92, 58, 0.3);
+            background: var(--rust-dark);
+            border-color: var(--rust-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text);
+            border: 2px solid var(--steel);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--steel-light);
+            color: #fff;
+            background: rgba(255, 255, 255, 0.03);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline:active {
+            transform: translateY(0);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .btn-sm {
+            padding: 8px 20px;
+            font-size: 0.82rem;
+            letter-spacing: 0.04em;
+        }
+
+        .btn-lg {
+            padding: 16px 44px;
+            font-size: 1.1rem;
+            letter-spacing: 0.06em;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        /* ==================== 主页样式 ==================== */
+        .hero-title {
+            font-size: 3.2rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: #e8e2d8;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+
+        .hero-tagline {
+            font-size: 0.9rem;
+            color: var(--rust-light);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 32px;
+        }
+
+        .corner-decor {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            position: relative;
+            margin: 0 auto 24px;
+            opacity: 0.5;
+        }
+
+        .corner-decor::before,
+        .corner-decor::after {
+            content: '';
+            position: absolute;
+            background: var(--rust-dark);
+        }
+
+        .corner-decor::before {
+            top: 0;
+            left: 0;
+            width: 18px;
+            height: 1px;
+        }
+
+        .corner-decor::after {
+            top: 0;
+            left: 0;
+            width: 1px;
+            height: 18px;
+        }
+
+        .corner-decor .corner-inner {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 18px;
+            height: 1px;
+            background: var(--rust-dark);
+        }
+
+        .corner-decor .corner-inner::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 1px;
+            height: 18px;
+            background: var(--rust-dark);
+        }
+
+        .feature-dots {
+            display: flex;
+            gap: 32px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .feature-dot-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--rust);
+            transform: rotate(45deg);
+            flex-shrink: 0;
+        }
+
+        .feature-dot-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            letter-spacing: 0.04em;
+        }
+
+        /* ==================== 下载页样式 ==================== */
+        .download-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 36px 32px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+        }
+
+        .download-card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 30px;
+            right: 30px;
+            height: 1px;
+            background: var(--rust-dark);
+            opacity: 0.6;
+        }
+
+        .version-badge {
+            display: inline-block;
+            padding: 5px 14px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            color: var(--gold);
+            border: 1px solid rgba(184, 160, 110, 0.35);
+            border-radius: var(--radius);
+            background: rgba(184, 160, 110, 0.06);
+            margin-bottom: 20px;
+        }
+
+        .download-info {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            letter-spacing: 0.03em;
+        }
+
+        .download-info span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .download-info .info-dot {
+            width: 5px;
+            height: 5px;
+            background: var(--steel);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .system-reqs {
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            text-align: left;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            letter-spacing: 0.03em;
+            line-height: 1.8;
+        }
+
+        .system-reqs strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* ==================== 简介页样式 ==================== */
+        .about-section {
+            text-align: left;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .about-section p {
+            margin-bottom: 16px;
+            color: var(--text);
+            line-height: 1.9;
+            text-indent: 2em;
+        }
+
+        .highlight-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--rust);
+            padding: 20px 24px;
+            margin: 24px 0;
+            border-radius: 0 var(--radius) var(--radius) 0;
+        }
+
+        .highlight-box p {
+            text-indent: 0;
+            margin-bottom: 0;
+            font-size: 0.9rem;
+            color: #d5cfc5;
+        }
+
+        .feature-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 520px) {
+            .feature-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.88rem;
+            color: var(--text);
+            letter-spacing: 0.03em;
+            line-height: 1.5;
+        }
+
+        .feature-list li::before {
+            content: '';
+            flex-shrink: 0;
+            width: 6px;
+            height: 6px;
+            margin-top: 7px;
+            background: var(--rust);
+            transform: rotate(45deg);
+        }
+
+        /* ==================== 页脚 ==================== */
+        .site-footer {
+            width: 100%;
+            text-align: center;
+            padding: 20px 24px;
+            border-top: 1px solid var(--border);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            letter-spacing: 0.04em;
+            background: var(--bg-secondary);
+        }
+
+        /* ==================== 响应式设计 ==================== */
+        @media (max-width: 640px) {
+            .hero-title {
+                font-size: 2.2rem;
+                letter-spacing: 0.05em;
+            }
+            .hero-subtitle {
+                font-size: 0.95rem;
+            }
+            .nav-inner {
+                gap: 10px;
+            }
+            .nav-link {
+                padding: 7px 12px;
+                font-size: 0.8rem;
+            }
+            .nav-brand {
+                font-size: 1rem;
+            }
+            .brand-icon {
+                width: 16px;
+                height: 16px;
+            }
+            .main-content {
+                padding: 32px 16px 48px;
+            }
+            .btn-lg {
+                padding: 14px 30px;
+                font-size: 1rem;
+            }
+            .btn-group {
+                gap: 10px;
+            }
+            .download-card {
+                padding: 24px 18px;
+            }
+            .about-section {
+                text-align: left;
+            }
+            .about-section p {
+                text-indent: 1.5em;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .hero-title {
+                font-size: 1.7rem;
+            }
+            .nav-link {
+                padding: 6px 8px;
+                font-size: 0.72rem;
+                letter-spacing: 0.02em;
+            }
+            .nav-brand {
+                font-size: 0.85rem;
+                letter-spacing: 0.03em;
+            }
+            .brand-icon {
+                width: 14px;
+                height: 14px;
+            }
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+            }
+            .btn-lg {
+                padding: 12px 24px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== 导航栏 ==================== -->
+    <nav class="nav-bar" role="navigation" aria-label="主导航">
+        <div class="nav-inner">
+            <a class="nav-brand" href="#" onclick="switchPage('home'); return false;" title="铁锈战争 - 首页">
+                <span class="brand-icon"></span>
+                铁锈战争
+            </a>
+            <ul class="nav-links">
+                <li><button class="nav-link active" data-page="home" onclick="switchPage('home')" aria-current="page">首页</button></li>
+                <li><button class="nav-link" data-page="download" onclick="switchPage('download')">下载</button></li>
+                <li><button class="nav-link" data-page="about" onclick="switchPage('about')">简介</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ==================== 主内容区 ==================== -->
+    <main class="main-content">
+
+        <!-- ========== 首页 ========== -->
+        <section class="page active" id="page-home" aria-label="首页">
+            <div class="corner-decor"><span class="corner-inner"></span></div>
+            <h1 class="hero-title">铁锈战争</h1>
+            <p class="hero-subtitle">Rusted Warfare</p>
+            <p class="hero-tagline">&#9651; 在废墟中崛起 &#9651;</p>
+            <div class="divider"></div>
+            <p style="max-width:440px;color:var(--text-muted);font-size:0.9rem;letter-spacing:0.03em;margin-bottom:28px;">
+                一款快节奏的即时战略游戏，指挥你的钢铁军团，在破碎的世界中争夺最后的荣耀。
+            </p>
+            <div class="btn-group">
+                <button class="btn btn-primary btn-lg" onclick="switchPage('download')">
+                    &#x25B6; 立即下载电脑版
+                </button>
+                <button class="btn btn-outline btn-lg" onclick="switchPage('about')">
+                    了解更多
+                </button>
+            </div>
+            <div class="feature-dots">
+                <div class="feature-dot-item">
+                    <span class="feature-dot"></span>
+                    <span class="feature-dot-label">即时战略</span>
+                </div>
+                <div class="feature-dot-item">
+                    <span class="feature-dot"></span>
+                    <span class="feature-dot-label">钢铁洪流</span>
+                </div>
+                <div class="feature-dot-item">
+                    <span class="feature-dot"></span>
+                    <span class="feature-dot-label">多人对战</span>
+                </div>
+                <div class="feature-dot-item">
+                    <span class="feature-dot"></span>
+                    <span class="feature-dot-label">模组支持</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== 下载页 ========== -->
+        <section class="page" id="page-download" aria-label="下载页面">
+            <h2 class="page-title" style="font-size:1.8rem;margin-bottom:4px;">下载电脑版</h2>
+            <p style="color:var(--text-muted);font-size:0.85rem;letter-spacing:0.04em;margin-bottom:20px;">获取铁锈战争电脑版，立刻开战</p>
+            <div class="divider"></div>
+
+            <div class="download-card">
+                <div class="version-badge">&#x2699; 电脑版 (天翼云盘)</div>
+                <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:24px;letter-spacing:0.03em;">
+                    文件大小约 180 MB · 提取码：zes6
+                </p>
+
+                <div class="btn-group" style="flex-direction:column;align-items:center;gap:12px;">
+                    <!-- 【核心修改】Windows下载按钮直接跳转至天翼云盘分享链接 -->
+                    <a href="https://cloud.189.cn/web/share?code=AzY7ZfEFZZVr" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="btn btn-primary btn-lg" 
+                       style="width:100%;max-width:320px;text-decoration:none;">
+                        &#x2B07; 立即下载 Windows 版
+                    </a>
+                    <!-- 以下按钮保留提示，指向同一电脑版资源，可根据实际情况调整链接 -->
+                    <button class="btn btn-outline" style="width:100%;max-width:320px;"
+                            onclick="window.open('https://cloud.189.cn/web/share?code=AzY7ZfEFZZVr','_blank')">
+                        macOS 版下载 (暂提供云盘)
+                    </button>
+                    <button class="btn btn-outline btn-sm" style="width:100%;max-width:320px;"
+                            onclick="alert('Linux 版请通过云盘链接获取\n访问码：zes6')">
+                        Linux 版下载 (访问码：zes6)
+                    </button>
+                </div>
+
+                <div class="download-info">
+                    <span><span class="info-dot"></span> Windows 7+</span>
+                    <span><span class="info-dot"></span> 提取码 zes6</span>
+                </div>
+
+                <div class="system-reqs">
+                    <strong>最低配置要求：</strong><br>
+                    操作系统：Windows 7 / macOS 10.13 / Ubuntu 18.04<br>
+                    处理器：双核 2.0 GHz<br>
+                    内存：2 GB RAM<br>
+                    显卡：支持 OpenGL 3.0<br>
+                    存储空间：300 MB 可用空间
+                </div>
+            </div>
+
+            <p style="margin-top:20px;font-size:0.75rem;color:var(--text-muted);letter-spacing:0.03em;">
+                也可在 Steam 平台搜索 "Rusted Warfare" 获取
+            </p>
+        </section>
+
+        <!-- ========== 简介页（SEO 优化） ========== -->
+        <section class="page" id="page-about" aria-label="游戏简介">
+            <h2 class="page-title" style="font-size:1.8rem;margin-bottom:4px;">游戏简介</h2>
+            <p style="color:var(--text-muted);font-size:0.85rem;letter-spacing:0.04em;margin-bottom:20px;">《铁锈战争》电脑版：纯粹的即时战略游戏</p>
+            <div class="divider"></div>
+
+            <div class="about-section">
+                <p>
+                    《铁锈战争》(Rusted Warfare) 是一款备受好评的即时战略游戏（RTS游戏），由Corroding Games开发并发行。
+                    作为一款纯正的RTS游戏，它没有任何微交易和内购，致力于为玩家提供最经典的即时战略游戏体验。
+                    游戏设计灵感源自《横扫千军》和《命令与征服》等经典即时战略游戏，完美继承了它们的核心玩法。
+                </p>
+
+                <p>
+                    本页面提供的是<strong>铁锈战争电脑版</strong>，支持Windows、macOS和Linux系统。
+                    在游戏中，你将扮演指挥官，建立基地、采集资源，并组建一支包含海、陆、空三军的强大部队。
+                    从步兵、坦克到空中堡垒，超过50种不同的单位供你调遣。你可以利用实验工厂生产巨型机甲，或发射核导弹扭转战局。
+                    无论是喜欢快节奏的闪电战，还是稳扎稳打的防御战，这款即时战略游戏都能满足你。
+                </p>
+
+                <div class="highlight-box">
+                    <p>
+                        <strong>"纯 RTS，无微交易，无 DRM"</strong><br>
+                        <span style="font-size:0.78rem;color:var(--text-muted);">—— 《铁锈战争》的核心承诺，回归即时战略游戏最纯粹的样子</span>
+                    </p>
+                </div>
+
+                <ul class="feature-list">
+                    <li>纯正即时战略游戏，无内购</li>
+                    <li>支持最多10人联机对战</li>
+                    <li>超过50种陆海空单位</li>
+                    <li>战役、生存、挑战等多种模式</li>
+                    <li>支持MOD扩展和自定义地图</li>
+                    <li>战略缩放与便捷的指挥界面</li>
+                </ul>
+
+                <div class="divider-wide"></div>
+
+                <p style="text-align:center;font-size:0.85rem;color:var(--text-muted);letter-spacing:0.03em;">
+                    铁锈战争 —— 在钢铁与火焰中，书写你的传奇。
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== 页脚 ==================== -->
+    <footer class="site-footer">
+        &copy; 2026 铁锈战争 · Rusted Warfare · 保留所有权利
+    </footer>
+
+    <!-- ==================== 页面切换逻辑 ==================== -->
+    <script>
+        (function() {
+            const pages = document.querySelectorAll('.page');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            window.switchPage = function(pageName) {
+                pages.forEach(page => {
+                    page.classList.remove('active');
+                });
+
+                const targetPage = document.getElementById('page-' + pageName);
+                if (targetPage) {
+                    targetPage.classList.remove('active');
+                    requestAnimationFrame(() => {
+                        targetPage.classList.add('active');
+                    });
+                }
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    link.removeAttribute('aria-current');
+                    if (link.getAttribute('data-page') === pageName) {
+                        link.classList.add('active');
+                        link.setAttribute('aria-current', 'page');
+                    }
+                });
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                const titles = {
+                    'home': '铁锈战争 官网 - Rusted Warfare 电脑版 | 即时战略游戏下载',
+                    'download': '下载电脑版 - 铁锈战争',
+                    'about': '简介 - 铁锈战争 电脑版 | 即时战略游戏'
+                };
+                document.title = titles[pageName] || '铁锈战争 官网 - Rusted Warfare 电脑版 | 即时战略游戏下载';
+            };
+
+            document.addEventListener('keydown', function(e) {
+                const currentPage = document.querySelector('.nav-link.active');
+                if (!currentPage) return;
+                const pageName = currentPage.getAttribute('data-page');
+                const pageOrder = ['home', 'download', 'about'];
+                const currentIndex = pageOrder.indexOf(pageName);
+
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const nextIndex = (currentIndex + 1) % pageOrder.length;
+                    switchPage(pageOrder[nextIndex]);
+                    document.querySelector(`.nav-link[data-page="${pageOrder[nextIndex]}"]`).focus();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prevIndex = (currentIndex - 1 + pageOrder.length) % pageOrder.length;
+                    switchPage(pageOrder[prevIndex]);
+                    document.querySelector(`.nav-link[data-page="${pageOrder[prevIndex]}"]`).focus();
+                }
+            });
+        })();
+    </script>
+
+</body>
+</html>
