@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 //  app.js — UI 交互 & 上下文管理
 //  直接使用全局 Chat 对象
 // ============================================================
@@ -6,9 +6,10 @@ const Chat = window.Chat;
 
 // ---------- 全局状态 ----------
 const STORAGE_KEY = 'chat_data';
+const THEME_KEY = 'app_theme';
 let currentChatId = null;
-let chatCache = {};          // { [id]: "标题：xxx\n[用户][时间]：原始消息\n[助手][时间]：回复..." }
-let indexList = [];          // [{ id, title, order }]
+let chatCache = {};
+let indexList = [];
 let isGenerating = false;
 
 // DOM 元素
@@ -25,8 +26,38 @@ const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const newChatBtn = document.getElementById('newChatBtn');
 const uploadBtn = document.getElementById('uploadBtn');
+const themeBtn = document.getElementById('themeBtn');
 const progressFill = document.getElementById('progressFill');
 const loaderLogs = document.getElementById('loaderLogs');
+
+// ---------- 夜间模式切换 ----------
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  // 更新图标：亮色模式显示月亮（dark_mode），暗色模式显示太阳（light_mode）
+  const icon = themeBtn.querySelector('.material-symbols-outlined');
+  if (icon) {
+    icon.textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+  }
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = current === 'light' ? 'dark' : 'light';
+  applyTheme(next);
+  playSound('click');
+}
+
+// 初始化主题：从 localStorage 读取，若无则跟随系统偏好
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved) {
+    applyTheme(saved);
+  } else {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(prefersDark ? 'dark' : 'light');
+  }
+}
 
 // ---------- Markdown 安全解析 ----------
 function markdownToHtml(text) {
@@ -200,11 +231,9 @@ function renderSidebar() {
 
 async function switchChat(id) {
     if (id === currentChatId) return;
-    // 保存当前对话（如果存在）
     if (currentChatId && chatCache[currentChatId]) {
         saveCurrentChat();
     }
-    // 加载目标对话
     if (!chatCache[id]) {
         try {
             const { content } = await Chat.getGiteeFile(`${id}.txt`);
@@ -239,7 +268,7 @@ async function createNewChat() {
     playSound('click');
 }
 
-// ---------- 发送消息（系统提示词作为用户消息前缀） ----------
+// ---------- 发送消息 ----------
 async function handleSend() {
     if (!currentChatId) {
         showToast('请先选择或新建一个对话');
@@ -249,7 +278,6 @@ async function handleSend() {
     const input = messageInput.value.trim();
     if (!input || isGenerating) return;
 
-    // 用户消息以原始内容保存（不包含系统提示词）
     const userLine = `[用户][${now()}]：${input}\n`;
     chatCache[currentChatId] += userLine;
     messageInput.value = '';
@@ -258,7 +286,6 @@ async function handleSend() {
     saveCurrentChat();
     playSound('send');
 
-    // 准备发送给 AI 的上下文：每条用户消息都动态加上系统提示词前缀
     const systemPrompt = Chat.getConfig ? Chat.getConfig().ai.systemPrompt : '';
     const lines = chatCache[currentChatId].split('\n').filter(l => l.startsWith('['));
     const messages = [];
@@ -268,7 +295,6 @@ async function handleSend() {
         const role = m[1] === '用户' ? 'user' : 'assistant';
         let content = m[2];
         if (role === 'user') {
-            // 拼接系统提示词前缀
             content = `系统提示词（必须）：${systemPrompt}\n用户消息（重要）：${content}`;
         }
         messages.push({ role, content });
@@ -277,7 +303,6 @@ async function handleSend() {
     isGenerating = true;
     sendBtn.disabled = true;
 
-    // 创建助手消息容器
     const row = document.createElement('div');
     row.className = 'message-row assistant';
     const bubble = document.createElement('div');
@@ -319,7 +344,6 @@ async function handleSend() {
         }
     });
 
-    // 助手回复以纯文本保存（不包含思考内容）
     const cleanResponse = stripMarkdown(fullResponse);
     chatCache[currentChatId] += `[助手][${now()}]：${cleanResponse}\n`;
     saveCurrentChat();
@@ -371,7 +395,6 @@ async function uploadWithProgress() {
         }
     }
 
-    // 重建索引
     const newIndexMap = {};
     latestIndex.forEach(i => newIndexMap[i.id] = i);
     ids.forEach(id => {
@@ -463,16 +486,13 @@ async function boot() {
 
     renderSidebar();
 
-    // 自动选中最新对话并渲染其消息
     if (indexList.length > 0) {
         const latestId = indexList[0].id;
         if (!chatCache[latestId]) {
-            // 如果云端存在但本地未缓存，则从云端下载
             try {
                 const { content } = await Chat.getGiteeFile(`${latestId}.txt`);
                 chatCache[latestId] = content;
             } catch (e) {
-                // 下载失败则创建空白对话
                 const title = indexList[0].title || '对话';
                 chatCache[latestId] = `标题：${title}\n`;
             }
@@ -527,12 +547,13 @@ uploadBtn.addEventListener('click', () => {
         uploadWithProgress();
     }
 });
+themeBtn.addEventListener('click', toggleTheme);
 
-// ---------- 动态色相 ----------
+// ---------- 动态色相（提速 + 随机初始值） ----------
 (function startHueAnimation() {
     const root = document.documentElement;
-    let hue = 267;
-    const speed = 0.6;
+    let hue = Math.floor(Math.random() * 360);  // 随机初始色相
+    const speed = 1.2;  // 加快渐变速度
     let last = performance.now();
     function step(now) {
         const delta = Math.min(0.1, (now - last) / 1000);
@@ -543,6 +564,9 @@ uploadBtn.addEventListener('click', () => {
     }
     requestAnimationFrame(step);
 })();
+
+// 初始化主题（需在 boot 前调用）
+initTheme();
 
 // 激活音频上下文
 document.addEventListener('click', initAudio, { once: true });
