@@ -1,9 +1,9 @@
-/**
- * body.js - ÏîÄ¿Íø¸ñÄ£¿é (Material Design 3)
- * ¹¦ÄÜ£ºäÖÈ¾ÏîÄ¿¿¨Æ¬£¬ÄÚÇ¶ÑùÊ½£¬Ö§³Ö¶¯Ì¬Ğ¶ÔØ
- * ¿ª¹Ø£ºBODY_ENABLED
+ï»¿/**
+ * body.js - é¡¹ç›®ç½‘æ ¼æ¨¡å— (Material Design 3)
+ * åŠŸèƒ½ï¼šæ¸²æŸ“é¡¹ç›®å¡ç‰‡ï¼Œå†…åµŒæ ·å¼ï¼Œæ”¯æŒåŠ¨æ€å¸è½½
+ * å¼€å…³ï¼šBODY_ENABLED
  * 
- * ¡¾ÒÑÔ¤Áô 30 ¸ö¿ÕÎ»£¬URL Îª¿ÕÊ±×Ô¶¯Òş²Ø¡¿
+ * ã€å·²é¢„ç•™ 30 ä¸ªç©ºä½ï¼ŒURL ä¸ºç©ºæ—¶è‡ªåŠ¨éšè—ã€‘
  */
 const BODY_ENABLED = true;
 
@@ -15,35 +15,35 @@ const BODY_ENABLED = true;
         return;
     }
 
-    // ---------- ÓĞĞ§ÏîÄ¿£¨18¸ö£©----------
+    // ---------- æœ‰æ•ˆé¡¹ç›®ï¼ˆ18ä¸ªï¼‰----------
     const VALID_PROJECTS = [
         { name: "home", url: "https://blog.344977.xyz", icon: "rocket" },
-        { name: "ÎÒµÄÈıÌå", url: "/3d", icon: "sports_esports" },
-        { name: "ÈıÌå2", url: "/2d", icon: "palette" },
-        { name: "ÓÀÔ¶µÄµ¥°Ú", url: "/bai/dev", icon: "cube" },
-        { name: "µ¥°Ú", url: "/bai", icon: "monitoring" },
-        { name: "GithubÖ÷Ò³", url: "http://bgithub.xyz/yingo-server", icon: "music_note" },
-        { name: "ÍøÕ¾ºóÌ¨", url: "https://yingo2.netlify.app", icon: "video_library" },
+        { name: "æˆ‘çš„ä¸‰ä½“", url: "/3d", icon: "sports_esports" },
+        { name: "ä¸‰ä½“2", url: "/2d", icon: "palette" },
+        { name: "æ°¸è¿œçš„å•æ‘†", url: "/bai/dev", icon: "cube" },
+        { name: "å•æ‘†", url: "/bai", icon: "monitoring" },
+        { name: "Githubä¸»é¡µ", url: "http://bgithub.xyz/yingo-server", icon: "music_note" },
+        { name: "ç½‘ç«™åå°", url: "https://yingo2.netlify.app", icon: "video_library" },
         { name: "openlist", url: "https://ctryvzcn.sealosbja.site", icon: "cloud" },
-        { name: "ÁÄÌìÊÒ", url: "/chat", icon: "forum" },
+        { name: "èŠå¤©å®¤", url: "/chat", icon: "forum" },
         { name: "music1", url: "/music", icon: "library_music" },
-        { name: "ÂåÂ××ÈÎüÒı×Ó", url: "/luo", icon: "air" },
-        { name: "×·²¶", url: "/zhui", icon: "code" },
-        { name: "×ÖĞÑ", url: "/word", icon: "lock" },
-        { name: "±ÚÖ½", url: "/wall", icon: "wallpaper" },
-        { name: "²©¿Í", url: "http://yingos.netlify.app/", icon: "lock" },
-        { name: "Á÷Ó© Firebee", url: "/firefly", icon: "lock" },
-        { name: "Ê®ÈÕ±¸°¸", url: "https://icp-yingo.netlify.app/", icon: "robot" }
+        { name: "æ´›ä¼¦å…¹å¸å¼•å­", url: "/luo", icon: "air" },
+        { name: "è¿½æ•", url: "/zhui", icon: "code" },
+        { name: "å­—é†’", url: "/word", icon: "lock" },
+        { name: "å£çº¸", url: "/wall", icon: "wallpaper" },
+        { name: "åšå®¢", url: "http://yingos.netlify.app/", icon: "lock" },
+        { name: "æµè¤ Firebee", url: "/firefly", icon: "lock" },
+        { name: "åæ—¥å¤‡æ¡ˆ", url: "https://icp-yingo.netlify.app/", icon: "robot" }
     ];
 
-    // ---------- Ô¤Áô30¸ö¿ÕÎ»£¨Äú¿ÉÖ±½ÓÔÚ´ËÌî¿Õ£©----------
+    // ---------- é¢„ç•™30ä¸ªç©ºä½ï¼ˆæ‚¨å¯ç›´æ¥åœ¨æ­¤å¡«ç©ºï¼‰----------
     const EMPTY_SLOTS = [
-        { name: "¾É°æÈë¿Ú", url: "/history", icon: "code" }, // 1
-        { name: "³¾¹â", url: "/dust", icon: "smartphone" }, // 2
-        { name: "Îå×ÓÆå", url: "/5pieces", icon: "forum" }, // 3
+        { name: "æ—§ç‰ˆå…¥å£", url: "/history", icon: "code" }, // 1
+        { name: "å°˜å…‰", url: "/dust", icon: "smartphone" }, // 2
+        { name: "äº”å­æ£‹", url: "/5pieces", icon: "forum" }, // 3
         { name: "RTS", url: "/rts", icon: "code" }, // 4
-        { name: "óğ", url: "/tk", icon: "code" }, // 5
-        { name: "ÓĞÀí", url: "/AI", icon: "robot" }, // 6
+        { name: "ç®´", url: "/tk", icon: "code" }, // 5
+        { name: "æœ‰ç†", url: "/AI", icon: "robot" }, // 6
         { name: "", url: "", icon: "" }, // 7
         { name: "", url: "", icon: "" }, // 8
         { name: "", url: "", icon: "" }, // 9
