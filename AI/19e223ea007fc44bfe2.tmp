@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gitee API POST/PUT 测试</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+        button { padding: 12px 24px; font-size: 16px; margin-bottom: 16px; cursor: pointer; }
+        #output { width: 100%; height: 500px; padding: 10px; font-family: monospace; font-size: 13px; background: #fff; border: 1px solid #ccc; resize: vertical; }
+        .note { color: #666; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+    <h2>Gitee API 测试工具</h2>
+    <div class="note">
+        使用配置：owner=3449776312, repo=AI, branch=master, folder=chat/<br>
+        Access Token 已内嵌。点击按钮后依次测试 POST 新建、GET 获取 SHA、PUT 更新、GET 验证。<br>
+        所有请求详情和响应都会输出到下方文本框。
+    </div>
+    <button onclick="runTests()">开始测试</button>
+    <br><br>
+    <textarea id="output" readonly placeholder="测试结果将显示在这里..."></textarea>
+
+    <script>
+        const CONFIG = {
+            token: "89b450ecbd9617ab1b1467076edf472d",
+            owner: "3449776312",
+            repo: "AI",
+            branch: "master",
+            folder: "chat/"
+        };
+        const BASE = `https://gitee.com/api/v5/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.folder}`;
+
+        let outputEl = document.getElementById('output');
+        function log(str) {
+            outputEl.value += str + '\n';
+            outputEl.scrollTop = outputEl.scrollHeight;
+        }
+        function clearLog() {
+            outputEl.value = '';
+        }
+
+        function buildUrl(path) {
+            return `${BASE}${path}?access_token=${CONFIG.token}`;
+        }
+
+        function encodeContent(text) {
+            // 标准 base64 编码（支持中文）
+            return btoa(unescape(encodeURIComponent(text)));
+        }
+
+        function formBody(params) {
+            const body = new URLSearchParams();
+            for (let key in params) {
+                body.append(key, params[key]);
+            }
+            return body;
+        }
+
+        async function apiGet(path) {
+            const url = buildUrl(path);
+            log(`\n▶ GET ${url}`);
+            const res = await fetch(url, { method: 'GET' });
+            const json = await res.json();
+            log(`◀ 状态: ${res.status} ${res.statusText}`);
+            log(`响应: ${JSON.stringify(json, null, 2)}`);
+            return { res, json };
+        }
+
+        async function apiPost(path, content, message) {
+            const url = buildUrl(path);
+            const body = formBody({
+                content: encodeContent(content),
+                message: message,
+                branch: CONFIG.branch
+            });
+            log(`\n▶ POST ${url}`);
+            log(`请求体: ${body.toString()}`);
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body
+            });
+            const json = await res.json();
+            log(`◀ 状态: ${res.status} ${res.statusText}`);
+            log(`响应: ${JSON.stringify(json, null, 2)}`);
+            return { res, json };
+        }
+
+        async function apiPut(path, content, sha, message) {
+            const url = buildUrl(path);
+            const body = formBody({
+                content: encodeContent(content),
+                sha: sha,
+                message: message,
+                branch: CONFIG.branch
+            });
+            log(`\n▶ PUT ${url}`);
+            log(`请求体: ${body.toString()}`);
+            const res = await fetch(url, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body
+            });
+            const json = await res.json();
+            log(`◀ 状态: ${res.status} ${res.statusText}`);
+            log(`响应: ${JSON.stringify(json, null, 2)}`);
+            return { res, json };
+        }
+
+        async function runTests() {
+            clearLog();
+            log('===== Gitee API 测试开始 =====');
+            const testFile = 'test_' + Date.now() + '.txt';
+            const content1 = 'Hello Gitee! 创建时间: ' + new Date().toISOString();
+            const content2 = 'Updated at ' + new Date().toISOString();
+
+            try {
+                // 1. POST 新建文件
+                log(`\n--- 1. 新建文件 ${testFile} ---`);
+                const { json: postJson } = await apiPost(testFile, content1, '测试 POST 创建文件');
+                let sha = postJson?.content?.sha;
+                if (!sha) {
+                    log('❌ POST 未返回 sha，无法继续后续测试。');
+                    // 尝试再次 GET 获取（也可能 404）
+                    log('尝试 GET 获取刚创建的文件...');
+                    try {
+                        const { json: getJson } = await apiGet(testFile);
+                        sha = getJson?.sha || getJson?.content?.sha;
+                    } catch (e) {
+                        log('GET 也失败: ' + e.message);
+                    }
+                }
+
+                // 2. GET 验证内容
+                if (sha) {
+                    log(`\n--- 2. 获取文件 ${testFile} 验证内容 ---`);
+                    await apiGet(testFile);
+                }
+
+                // 3. PUT 更新文件
+                if (sha) {
+                    log(`\n--- 3. 更新文件 ${testFile} (PUT) ---`);
+                    await apiPut(testFile, content2, sha, '测试 PUT 更新文件');
+                }
+
+                // 4. 再次 GET 验证更新
+                log(`\n--- 4. 最终获取文件验证更新 ---`);
+                await apiGet(testFile);
+
+                log('\n===== 测试完成 =====');
+                log('如果所有请求状态为 201 (POST) / 200 (PUT/GET)，则 API 工作正常。');
+                log('若出现 404，请检查：');
+                log('  1. 仓库 owner/repo 是否正确（注意数字 ID 或用户名）');
+                log('  2. folder 路径是否存在（初次 POST 应自动创建，但也可能权限不足）');
+                log('  3. token 是否包含 projects 权限且未过期');
+            } catch (err) {
+                log('\n❌ 测试异常: ' + err.message);
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
