@@ -1,6 +1,5 @@
 ﻿// ============================================================
-//  app.js — 无缓冲区、切换安全的流式聊天逻辑
-//  保留所有特性：夜间模式、音效、上传、索引管理
+//  app.js — 多行消息存储修复 + 5秒无回复超时结束
 // ============================================================
 const Chat = window.Chat;
 
@@ -51,8 +50,13 @@ function now() {
 function escapeHtml(text) {
   return String(text).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
 }
-function stripMarkdown(text) {
-  return text.replace(/<thinking>[\s\S]*?<\/thinking>/g, ''); // 存储时去掉思考内容
+
+// 存储时转义换行 → \\n，读取时还原
+function encodeNewlines(str) { return str.replace(/\n/g, '\\n'); }
+function decodeNewlines(str) { return str.replace(/\\n/g, '\n'); }
+
+function stripThinking(text) {
+  return text.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
 }
 
 // ================== 音效 ==================
@@ -96,7 +100,7 @@ function loadFromStorage(){ try{return JSON.parse(localStorage.getItem(STORAGE_K
 function saveToStorage(data){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 function saveChat(id){ if(!id||!chatCache[id])return; const all=loadFromStorage(); all[id]=chatCache[id]; saveToStorage(all); }
 
-// ================== 对话渲染（消息气泡） ==================
+// ================== 对话渲染（解析时还原换行） ==================
 function renderMessages(chatId) {
   const text = chatCache[chatId] || '';
   const lines = text.split('\n');
@@ -113,7 +117,9 @@ function renderMessages(chatId) {
     const isUser = role === '用户';
     const row = document.createElement('div'); row.className = `message-row ${isUser ? 'user' : 'assistant'}`;
     const bubble = document.createElement('div'); bubble.className = `message-bubble ${isUser ? 'user' : 'assistant'}`;
-    bubble.innerHTML = (typeof marked !== 'undefined' && marked.parse) ? marked.parse(content) : escapeHtml(content);
+    // 还原换行
+    const decodedContent = decodeNewlines(content);
+    bubble.innerHTML = (typeof marked !== 'undefined' && marked.parse) ? marked.parse(decodedContent) : escapeHtml(decodedContent);
     row.appendChild(bubble);
     messagesArea.appendChild(row);
   }
@@ -133,7 +139,7 @@ function renderSidebar() {
 
 async function switchChat(id) {
   if (id === currentChatId) return;
-  saveChat(currentChatId); // 保存离开的对话
+  saveChat(currentChatId);
   if (!chatCache[id]) {
     try { const { content } = await Chat.getGiteeFile(`${id}.txt`); chatCache[id] = content; }
     catch { showToast('无法加载该对话'); playSound('error'); return; }
@@ -156,65 +162,152 @@ async function createNewChat() {
   saveChat(newId); renderSidebar(); renderMessages(newId); chatTitleDisplay.textContent=title; playSound('click');
 }
 
-// ================== 核心：无缓冲区流式发送 ==================
-async function handleSend() {
-  if (!currentChatId) { showToast('请先选择或新建一个对话'); playSound('error'); return; }
-  const input = messageInput.value.trim();
-  if (!input || isGenerating) return;
-
-  const cid = currentChatId; // 锁定
-  const userLine = `[用户][${now()}]：${input}\n`;
-  chatCache[cid] += userLine;
-  messageInput.value = ''; messageInput.style.height = 'auto';
-  if (currentChatId === cid) renderMessages(cid); // 刷新界面
-  saveChat(cid);
-  playSound('send');
-
-  // 构建消息（首条附加系统提示词）
+// ================== 构建消息上下文（首条附加系统提示词） ==================
+function buildMessages(chatId) {
   const systemPrompt = Chat.getConfig?.().ai.systemPrompt || '';
-  const lines = chatCache[cid].split('\n').filter(l=>l.startsWith('['));
-  const hasAssistant = lines.some(l=>l.startsWith('[助手]'));
-  const messages = lines.map(line=>{
+  const lines = chatCache[chatId].split('\n').filter(l => l.startsWith('['));
+  const hasAssistant = lines.some(l => l.startsWith('[助手]'));
+  return lines.map(line => {
     const m = line.match(/^\[(.+?)\]\[.+?\]：(.+)$/);
     if (!m) return null;
     const role = m[1] === '用户' ? 'user' : 'assistant';
-    let content = m[2];
+    let content = decodeNewlines(m[2]); // 还原换行
     if (role === 'user' && !hasAssistant) {
       content = `系统提示词（必须）：${systemPrompt}\n用户消息（重要）：${content}`;
     }
     return { role, content };
   }).filter(Boolean);
+}
+
+// ================== 核心：流式发送（多行转义 + 5秒超时） ==================
+async function handleSend() {
+  if (!currentChatId) { showToast('请先选择或新建一个对话'); playSound('error'); return; }
+  const input = messageInput.value.trim();
+  if (!input || isGenerating) return;
+
+  const cid = currentChatId;
+  // 用户消息存储：转义换行
+  const encodedInput = encodeNewlines(input);
+  const userLine = `[用户][${now()}]：${encodedInput}\n`;
+  chatCache[cid] += userLine;
+  messageInput.value = ''; messageInput.style.height = 'auto';
+  if (currentChatId === cid) renderMessages(cid);
+  saveChat(cid);
+  playSound('send');
+
+  const messages = buildMessages(cid);
 
   isGenerating = true; sendBtn.disabled = true;
 
-  // 创建助手容器
-  let assistantRow, assistantBubble;
+  // 创建助手容器（思考块 + 正文气泡）
+  let assistantRow, thinkBlock, bodyBubble;
   if (currentChatId === cid) {
     assistantRow = document.createElement('div'); assistantRow.className = 'message-row assistant';
-    assistantBubble = document.createElement('div'); assistantBubble.className = 'message-bubble assistant';
-    assistantRow.appendChild(assistantBubble);
+
+    thinkBlock = document.createElement('div');
+    thinkBlock.className = 'think-block';
+    thinkBlock.innerHTML = `
+      <div class="think-summary">
+        <span class="material-symbols-outlined">chevron_right</span>
+        思考过程
+      </div>
+      <div class="think-content"></div>
+    `;
+    thinkBlock.querySelector('.think-summary').addEventListener('click', () => {
+      thinkBlock.classList.toggle('open');
+    });
+    thinkBlock.style.display = 'none';
+    assistantRow.appendChild(thinkBlock);
+
+    bodyBubble = document.createElement('div');
+    bodyBubble.className = 'message-bubble assistant';
+    assistantRow.appendChild(bodyBubble);
+
     messagesArea.querySelector('.empty-state')?.remove();
     messagesArea.appendChild(assistantRow);
   }
 
-  let rawResponse = ''; // 包含可能的 <thinking> 标签
-  await Chat.streamChat(messages, (chunk) => {
-    rawResponse += chunk;
-    // 如果当前界面正是该对话，实时渲染（自动剔除 thinking）
-    if (currentChatId === cid && assistantBubble) {
-      const clean = rawResponse.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
-      assistantBubble.innerHTML = (typeof marked !== 'undefined' && marked.parse) ? marked.parse(clean) : escapeHtml(clean);
+  let rawChunk = '';
+  let thinkContent = '';
+  let bodyContent = '';
+  let inThink = false;
+  let streamCompleted = false; // 流是否正常结束
+  let reader = null; // 用于取消
+
+  const timeoutMs = 5000;
+  let timeoutId = null;
+
+  const resetTimeout = () => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      // 超时：主动取消流
+      if (reader) reader.cancel();
+      streamCompleted = true;
+    }, timeoutMs);
+  };
+
+  // 包装 onChunk，增加超时逻辑
+  const originalStreamChat = Chat.streamChat;
+  await originalStreamChat(messages, (chunk) => {
+    resetTimeout(); // 每次收到 chunk 重置计时
+
+    rawChunk += chunk;
+
+    while (rawChunk.length) {
+      if (!inThink) {
+        const idx = rawChunk.indexOf('<thinking>');
+        if (idx === -1) {
+          bodyContent += rawChunk;
+          rawChunk = '';
+        } else {
+          bodyContent += rawChunk.slice(0, idx);
+          rawChunk = rawChunk.slice(idx + 10);
+          inThink = true;
+        }
+      } else {
+        const idx = rawChunk.indexOf('</thinking>');
+        if (idx === -1) {
+          thinkContent += rawChunk;
+          rawChunk = '';
+        } else {
+          thinkContent += rawChunk.slice(0, idx);
+          rawChunk = rawChunk.slice(idx + 11);
+          inThink = false;
+          if (thinkBlock) {
+            thinkBlock.style.display = 'block';
+            thinkBlock.querySelector('.think-content').textContent = thinkContent;
+            thinkBlock.classList.add('open');
+          }
+        }
+      }
+    }
+
+    if (currentChatId === cid && bodyBubble) {
+      const cleanBody = bodyContent.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
+      bodyBubble.innerHTML = (typeof marked !== 'undefined' && marked.parse) ? marked.parse(cleanBody) : escapeHtml(cleanBody);
       messagesArea.scrollTop = messagesArea.scrollHeight;
     }
+  }).catch(err => {
+    console.error('流读取错误', err);
+    streamCompleted = true;
+  }).finally(() => {
+    if (timeoutId) clearTimeout(timeoutId);
+    streamCompleted = true;
+    finishReply();
   });
 
-  // 流式结束，保存（剔除思考内容）
-  const cleanResponse = rawResponse.replace(/<thinking>[\s\S]*?<\/thinking>/g, '').trim();
-  chatCache[cid] += `[助手][${now()}]：${stripMarkdown(cleanResponse)}\n`;
-  saveChat(cid);
-  if (currentChatId === cid) renderMessages(cid); // 确保最终完整渲染
-  isGenerating = false; sendBtn.disabled = false;
-  playSound('receive');
+  // 如果流在超时前正常结束，也会进入 finishReply
+  function finishReply() {
+    if (inThink) thinkContent = '';
+    const finalBody = bodyContent.trim();
+    // 存储时转义换行
+    const encodedBody = encodeNewlines(stripThinking(finalBody));
+    chatCache[cid] += `[助手][${now()}]：${encodedBody}\n`;
+    saveChat(cid);
+    if (currentChatId === cid) renderMessages(cid);
+    isGenerating = false; sendBtn.disabled = false;
+    playSound('receive');
+  }
 }
 
 // ================== 上传 ==================
@@ -249,7 +342,7 @@ async function boot() {
   addLog('正在加载配置...'); setProgress(10);
   try { await Chat.loadConfig(); } catch(e){ addLog('配置加载失败'); console.error(e); return; }
   ['css/ui.css','css/data.css','js/chat.js'].forEach(async (f,i)=>{ await new Promise(r=>setTimeout(r,300)); addLog(`已加载 ${f}`); setProgress(20+(i+1)*15); });
-  await new Promise(r=>setTimeout(r,1000)); // 模拟所有资源加载完成
+  await new Promise(r=>setTimeout(r,1000));
   addLog('正在同步云端...');
   try { indexList = await Chat.fetchIndex(); addLog(`找到 ${indexList.length} 个云端对话`); } catch { indexList=[]; addLog('无法连接云端'); }
   const local = loadFromStorage();
