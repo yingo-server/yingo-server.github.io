@@ -73,7 +73,7 @@
 }
 
 /* ============================================================
-   RESET & LAYOUT (保持不变)
+   RESET & LAYOUT
    ============================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; width: 100%; overflow: hidden; font-family: var(--font-family); background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
@@ -156,7 +156,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; font-family: var(--fon
 .log-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
 
 /* ============================================================
-   SNACKBAR & MODAL (保持不变)
+   SNACKBAR & UPLOAD MODAL
    ============================================================ */
 .snackbar {
   position: fixed;
@@ -206,7 +206,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; font-family: var(--fon
 }
 
 /* ============================================================
-   RESPONSIVE (保持不变)
+   RESPONSIVE
    ============================================================ */
 @media (max-width: 767px) {
   .sidebar { position: fixed; left: 0; top: 0; height: 100%; transform: translateX(-100%); box-shadow: var(--md-sys-elevation-3); }
