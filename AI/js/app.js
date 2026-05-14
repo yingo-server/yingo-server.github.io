@@ -1,5 +1,5 @@
 ﻿// ============================================================
-//  app.js — 多行消息存储修复 + 5秒无回复超时结束
+//  app.js — 多行消息存储修复 + 5秒无回复超时结束 + 每3条消息重复系统提示词
 // ============================================================
 const Chat = window.Chat;
 
@@ -50,14 +50,9 @@ function now() {
 function escapeHtml(text) {
   return String(text).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
 }
-
-// 存储时转义换行 → \\n，读取时还原
 function encodeNewlines(str) { return str.replace(/\n/g, '\\n'); }
 function decodeNewlines(str) { return str.replace(/\\n/g, '\n'); }
-
-function stripThinking(text) {
-  return text.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
-}
+function stripThinking(text) { return text.replace(/<thinking>[\s\S]*?<\/thinking>/g, ''); }
 
 // ================== 音效 ==================
 let audioCtx = null;
@@ -100,7 +95,7 @@ function loadFromStorage(){ try{return JSON.parse(localStorage.getItem(STORAGE_K
 function saveToStorage(data){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 function saveChat(id){ if(!id||!chatCache[id])return; const all=loadFromStorage(); all[id]=chatCache[id]; saveToStorage(all); }
 
-// ================== 对话渲染（解析时还原换行） ==================
+// ================== 对话渲染 ==================
 function renderMessages(chatId) {
   const text = chatCache[chatId] || '';
   const lines = text.split('\n');
@@ -117,7 +112,6 @@ function renderMessages(chatId) {
     const isUser = role === '用户';
     const row = document.createElement('div'); row.className = `message-row ${isUser ? 'user' : 'assistant'}`;
     const bubble = document.createElement('div'); bubble.className = `message-bubble ${isUser ? 'user' : 'assistant'}`;
-    // 还原换行
     const decodedContent = decodeNewlines(content);
     bubble.innerHTML = (typeof marked !== 'undefined' && marked.parse) ? marked.parse(decodedContent) : escapeHtml(decodedContent);
     row.appendChild(bubble);
@@ -162,31 +156,33 @@ async function createNewChat() {
   saveChat(newId); renderSidebar(); renderMessages(newId); chatTitleDisplay.textContent=title; playSound('click');
 }
 
-// ================== 构建消息上下文（首条附加系统提示词） ==================
+// ================== 构建消息上下文（每3条用户消息重复系统提示词） ==================
 function buildMessages(chatId) {
   const systemPrompt = Chat.getConfig?.().ai.systemPrompt || '';
   const lines = chatCache[chatId].split('\n').filter(l => l.startsWith('['));
-  const hasAssistant = lines.some(l => l.startsWith('[助手]'));
+  let userIndex = 0;
   return lines.map(line => {
     const m = line.match(/^\[(.+?)\]\[.+?\]：(.+)$/);
     if (!m) return null;
     const role = m[1] === '用户' ? 'user' : 'assistant';
-    let content = decodeNewlines(m[2]); // 还原换行
-    if (role === 'user' && !hasAssistant) {
-      content = `系统提示词（必须）：${systemPrompt}\n用户消息（重要）：${content}`;
+    let content = decodeNewlines(m[2]);
+    if (role === 'user') {
+      userIndex++;
+      if ((userIndex - 1) % 3 === 0) {
+        content = `系统提示词（必须）：${systemPrompt}\n用户消息（重要）：${content}`;
+      }
     }
     return { role, content };
   }).filter(Boolean);
 }
 
-// ================== 核心：流式发送（多行转义 + 5秒超时） ==================
+// ================== 核心：流式发送 ==================
 async function handleSend() {
   if (!currentChatId) { showToast('请先选择或新建一个对话'); playSound('error'); return; }
   const input = messageInput.value.trim();
   if (!input || isGenerating) return;
 
   const cid = currentChatId;
-  // 用户消息存储：转义换行
   const encodedInput = encodeNewlines(input);
   const userLine = `[用户][${now()}]：${encodedInput}\n`;
   chatCache[cid] += userLine;
@@ -199,108 +195,56 @@ async function handleSend() {
 
   isGenerating = true; sendBtn.disabled = true;
 
-  // 创建助手容器（思考块 + 正文气泡）
   let assistantRow, thinkBlock, bodyBubble;
   if (currentChatId === cid) {
     assistantRow = document.createElement('div'); assistantRow.className = 'message-row assistant';
-
-    thinkBlock = document.createElement('div');
-    thinkBlock.className = 'think-block';
-    thinkBlock.innerHTML = `
-      <div class="think-summary">
-        <span class="material-symbols-outlined">chevron_right</span>
-        思考过程
-      </div>
-      <div class="think-content"></div>
-    `;
-    thinkBlock.querySelector('.think-summary').addEventListener('click', () => {
-      thinkBlock.classList.toggle('open');
-    });
+    thinkBlock = document.createElement('div'); thinkBlock.className = 'think-block';
+    thinkBlock.innerHTML = `<div class="think-summary"><span class="material-symbols-outlined">chevron_right</span>思考过程</div><div class="think-content"></div>`;
+    thinkBlock.querySelector('.think-summary').addEventListener('click', () => thinkBlock.classList.toggle('open'));
     thinkBlock.style.display = 'none';
     assistantRow.appendChild(thinkBlock);
-
-    bodyBubble = document.createElement('div');
-    bodyBubble.className = 'message-bubble assistant';
+    bodyBubble = document.createElement('div'); bodyBubble.className = 'message-bubble assistant';
     assistantRow.appendChild(bodyBubble);
-
     messagesArea.querySelector('.empty-state')?.remove();
     messagesArea.appendChild(assistantRow);
   }
 
-  let rawChunk = '';
-  let thinkContent = '';
-  let bodyContent = '';
-  let inThink = false;
-  let streamCompleted = false; // 流是否正常结束
-  let reader = null; // 用于取消
-
+  let rawChunk = '', thinkContent = '', bodyContent = '', inThink = false, streamCompleted = false;
+  let reader = null, timeoutId = null;
   const timeoutMs = 5000;
-  let timeoutId = null;
-
   const resetTimeout = () => {
     if (timeoutId) clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      // 超时：主动取消流
-      if (reader) reader.cancel();
-      streamCompleted = true;
-    }, timeoutMs);
+    timeoutId = setTimeout(() => { if (reader) reader.cancel(); streamCompleted = true; }, timeoutMs);
   };
 
-  // 包装 onChunk，增加超时逻辑
   const originalStreamChat = Chat.streamChat;
   await originalStreamChat(messages, (chunk) => {
-    resetTimeout(); // 每次收到 chunk 重置计时
-
+    resetTimeout();
     rawChunk += chunk;
-
     while (rawChunk.length) {
       if (!inThink) {
         const idx = rawChunk.indexOf('<thinking>');
-        if (idx === -1) {
-          bodyContent += rawChunk;
-          rawChunk = '';
-        } else {
-          bodyContent += rawChunk.slice(0, idx);
-          rawChunk = rawChunk.slice(idx + 10);
-          inThink = true;
-        }
+        if (idx === -1) { bodyContent += rawChunk; rawChunk = ''; }
+        else { bodyContent += rawChunk.slice(0, idx); rawChunk = rawChunk.slice(idx + 10); inThink = true; }
       } else {
         const idx = rawChunk.indexOf('</thinking>');
-        if (idx === -1) {
-          thinkContent += rawChunk;
-          rawChunk = '';
-        } else {
-          thinkContent += rawChunk.slice(0, idx);
-          rawChunk = rawChunk.slice(idx + 11);
-          inThink = false;
-          if (thinkBlock) {
-            thinkBlock.style.display = 'block';
-            thinkBlock.querySelector('.think-content').textContent = thinkContent;
-            thinkBlock.classList.add('open');
-          }
+        if (idx === -1) { thinkContent += rawChunk; rawChunk = ''; }
+        else {
+          thinkContent += rawChunk.slice(0, idx); rawChunk = rawChunk.slice(idx + 11); inThink = false;
+          if (thinkBlock) { thinkBlock.style.display = 'block'; thinkBlock.querySelector('.think-content').textContent = thinkContent; thinkBlock.classList.add('open'); }
         }
       }
     }
-
     if (currentChatId === cid && bodyBubble) {
       const cleanBody = bodyContent.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
       bodyBubble.innerHTML = (typeof marked !== 'undefined' && marked.parse) ? marked.parse(cleanBody) : escapeHtml(cleanBody);
       messagesArea.scrollTop = messagesArea.scrollHeight;
     }
-  }).catch(err => {
-    console.error('流读取错误', err);
-    streamCompleted = true;
-  }).finally(() => {
-    if (timeoutId) clearTimeout(timeoutId);
-    streamCompleted = true;
-    finishReply();
-  });
+  }).catch(err => { console.error('流读取错误', err); streamCompleted = true; }).finally(() => { if (timeoutId) clearTimeout(timeoutId); streamCompleted = true; finishReply(); });
 
-  // 如果流在超时前正常结束，也会进入 finishReply
   function finishReply() {
     if (inThink) thinkContent = '';
     const finalBody = bodyContent.trim();
-    // 存储时转义换行
     const encodedBody = encodeNewlines(stripThinking(finalBody));
     chatCache[cid] += `[助手][${now()}]：${encodedBody}\n`;
     saveChat(cid);
