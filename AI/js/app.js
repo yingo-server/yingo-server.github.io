@@ -1,5 +1,5 @@
 ﻿// ============================================================
-//  app.js — 多行消息存储修复 + 5秒无回复超时结束 + 每3条消息重复系统提示词
+//  app.js — 每条消息附带系统提示词（精炼格式）
 // ============================================================
 const Chat = window.Chat;
 
@@ -156,21 +156,18 @@ async function createNewChat() {
   saveChat(newId); renderSidebar(); renderMessages(newId); chatTitleDisplay.textContent=title; playSound('click');
 }
 
-// ================== 构建消息上下文（每3条用户消息重复系统提示词） ==================
+// ================== 构建消息上下文（每条用户消息附带系统提示词） ==================
 function buildMessages(chatId) {
   const systemPrompt = Chat.getConfig?.().ai.systemPrompt || '';
   const lines = chatCache[chatId].split('\n').filter(l => l.startsWith('['));
-  let userIndex = 0;
   return lines.map(line => {
     const m = line.match(/^\[(.+?)\]\[.+?\]：(.+)$/);
     if (!m) return null;
     const role = m[1] === '用户' ? 'user' : 'assistant';
     let content = decodeNewlines(m[2]);
     if (role === 'user') {
-      userIndex++;
-      if ((userIndex - 1) % 3 === 0) {
-        content = `系统提示词（必须）：${systemPrompt}\n用户消息（重要）：${content}`;
-      }
+      // 每条用户消息都附带系统提示词，格式精炼
+      content = `上下文:\n系统提示词(重要): ${systemPrompt}\n正文消息(重要): ${content}`;
     }
     return { role, content };
   }).filter(Boolean);
