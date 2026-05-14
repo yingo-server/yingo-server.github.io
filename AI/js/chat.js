@@ -1,6 +1,5 @@
 // ============================================================
 //  chat.js — 稳健的 API 交互 & 文件存储
-//  移除所有复杂缓冲区，SSE 解析使用标准行分割
 // ============================================================
 window.Chat = (function() {
   let config = null;
@@ -16,7 +15,7 @@ window.Chat = (function() {
     return config;
   }
 
-  // ---------- AI 流式请求（经典且稳健） ----------
+  // ---------- AI 流式请求 ----------
   async function streamChat(messages, onChunk) {
     const { ai } = getConfig();
     const response = await fetch(ai.endpoint, {
@@ -35,7 +34,7 @@ window.Chat = (function() {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
-    let remainder = ''; // 未完成的行
+    let remainder = '';
 
     while (true) {
       const { done, value } = await reader.read();
@@ -43,23 +42,18 @@ window.Chat = (function() {
 
       const chunk = decoder.decode(value, { stream: true });
       const lines = (remainder + chunk).split('\n');
-      // 最后一行可能不完整，保留到下次
       remainder = lines.pop() || '';
 
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed || !trimmed.startsWith('data: ')) continue;
-
         const dataStr = trimmed.slice(6);
         if (dataStr === '[DONE]') return;
-
         try {
           const json = JSON.parse(dataStr);
           const content = json.choices?.[0]?.delta?.content;
           if (content) onChunk(content);
-        } catch (e) {
-          // 忽略非 JSON 行（如空行、注释等）
-        }
+        } catch (e) { /* 忽略非 JSON 行 */ }
       }
     }
   }
