@@ -580,6 +580,19 @@ async function boot() {
   renderSidebar();
   userNameDisplay.textContent = currentUser === 'guest' ? '访客' : escapeHtml(currentUser);
 
+  // ===== 等待图标字体加载完成 =====
+  if (showLoader) {
+    addLog('加载图标字体…');
+    setProgress(90);
+    // 等待字体就绪（若已缓存会立即通过）
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+  }
+  // 字体加载完毕，允许图标显示
+  document.body.classList.add('fonts-loaded');
+  // ===============================
+
   if (showLoader) {
     setProgress(100); addLog('就绪');
     setTimeout(() => {
