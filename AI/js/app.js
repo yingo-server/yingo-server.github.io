@@ -182,6 +182,59 @@ const Login = {
   }
 };
 
+// ================== 自定义对话框（替代原生 confirm / prompt） ==================
+function showAppDialog({ title, message = '', placeholder = '', defaultValue = '', showInput = false }) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('appDialogOverlay');
+        const titleEl = document.getElementById('appDialogTitle');
+        const messageEl = document.getElementById('appDialogMessage');
+        const inputEl = document.getElementById('appDialogInput');
+        const okBtn = document.getElementById('appDialogOkBtn');
+        const cancelBtn = document.getElementById('appDialogCancelBtn');
+
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        messageEl.style.display = message ? 'block' : 'none';
+
+        inputEl.style.display = showInput ? 'block' : 'none';
+        inputEl.placeholder = placeholder;
+        inputEl.value = defaultValue;
+
+        overlay.style.display = 'flex';
+        if (showInput) inputEl.focus();
+
+        function cleanup() {
+            overlay.style.display = 'none';
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+        }
+
+        function onOk() {
+            cleanup();
+            resolve(showInput ? inputEl.value.trim() : true);
+        }
+
+        function onCancel() {
+            cleanup();
+            resolve(showInput ? null : false);
+        }
+
+        okBtn.addEventListener('click', onOk);
+        cancelBtn.addEventListener('click', onCancel);
+        inputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') onOk();
+        });
+    });
+}
+
+function customConfirm(message) {
+    return showAppDialog({ title: '确认', message });
+}
+
+function customPrompt(title, placeholder = '', defaultValue = '') {
+    return showAppDialog({ title, placeholder, defaultValue, showInput: true });
+}
+
 // ================== 捐赠弹窗 ==================
 function getDonationLastShown(user) {
   return localStorage.getItem(`donation_last_shown_${user}`);
@@ -217,9 +270,9 @@ function showDonationModal() {
   box.className = 'login-box';
   box.innerHTML = `
     <h2 style="margin-bottom:16px;">感谢使用 AI Chat</h2>
-    <p style="margin-bottom:16px; font-size:14px; color:var(--md-sys-color-on-surface-variant);">如果您觉得这个应用有帮助，可以考虑支持我们或者我们的同龄人</p>
-    <button id="donateToMeBtn" style="margin-bottom:8px;">向我们捐赠</button>
-    <button id="donateToCharityBtn" style="margin-bottom:8px;">向世界捐赠</button>
+    <p style="margin-bottom:16px; font-size:14px; color:var(--md-sys-color-on-surface-variant);">如果您觉得这个应用有帮助，可以考虑支持我们。</p>
+    <button id="donateToMeBtn" style="margin-bottom:8px;">❤️ 向我捐赠</button>
+    <button id="donateToCharityBtn" style="margin-bottom:8px;">🌍 向公益平台捐赠</button>
     <button id="skipDonationBtn" class="guest-btn">跳过</button>
   `;
 
@@ -227,12 +280,12 @@ function showDonationModal() {
   document.body.appendChild(overlay);
 
   document.getElementById('donateToMeBtn').addEventListener('click', () => {
-    window.open('https://k.344977.xyz/love.html', '_blank'); // 替换为你的爱发电链接
+    window.open('https://afdian.net/your-page', '_blank'); // 替换为你的爱发电链接
     closeDonationModal();
   });
 
   document.getElementById('donateToCharityBtn').addEventListener('click', () => {
-    window.open('https://love.alipay.com/donate/itemDetail.htm?name=2018022817561453523', '_blank'); // 支付宝公益
+    window.open('https://love.alipay.com/donate/index.htm', '_blank'); // 支付宝公益
     closeDonationModal();
   });
 
@@ -303,7 +356,8 @@ async function switchChat(id) {
 
 async function createNewChat() {
   if (currentUser === 'guest') { showToast('访客模式无法新建对话，请登录'); return; }
-  const title = prompt('请输入对话标题：'); if (!title) return;
+  const title = await customPrompt('新建对话', '请输入对话标题');
+  if (!title) return;
   const cloudIndex = await Chat.fetchIndex(currentUser);
   const maxId = Math.max(
     indexList.reduce((max,item)=>Math.max(max,parseInt(item.id)||0),0),
@@ -553,8 +607,12 @@ async function boot() {
 }
 
 // ================== 事件绑定 ==================
-loginNavBtn.addEventListener('click', () => {
-  if (currentUser !== 'guest') { if (confirm('确定要登出吗？')) Login.logout(); return; }
+loginNavBtn.addEventListener('click', async () => {
+  if (currentUser !== 'guest') {
+    const ok = await customConfirm('确定要登出吗？');
+    if (ok) Login.logout();
+    return;
+  }
   loginOverlay.style.display = 'flex';
 });
 closeLoginBtn.addEventListener('click', () => { loginOverlay.style.display = 'none'; });
@@ -566,7 +624,6 @@ loginSubmitBtn.addEventListener('click', async () => {
   const success = await Login.login(username, password);
   if (success) {
     sessionStorage.removeItem(LOADER_SHOWN_KEY);
-    // 设置强制捐赠弹出标记
     localStorage.setItem('force_donation', '1');
     location.reload();
   } else {
@@ -586,7 +643,11 @@ newChatBtn.addEventListener('click', createNewChat);
 sendBtn.addEventListener('click', handleSend);
 messageInput.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); handleSend(); } });
 messageInput.addEventListener('input', ()=>{ messageInput.style.height='auto'; messageInput.style.height=Math.min(messageInput.scrollHeight,160)+'px'; });
-uploadBtn.addEventListener('click', ()=>{ if(currentUser==='guest'){ showToast('访客无法上传'); return; } uploadWithProgress(); });
+uploadBtn.addEventListener('click', async ()=>{
+  if(currentUser==='guest'){ showToast('访客无法上传'); return; }
+  const ok = await customConfirm('确定上传所有本地对话并清空缓存吗？');
+  if (ok) uploadWithProgress();
+});
 themeBtn.addEventListener('click', ()=>{ applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'); playSound('click'); });
 
 function applyTheme(theme) {
