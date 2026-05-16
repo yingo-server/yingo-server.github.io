@@ -1,4 +1,4 @@
-﻿const Chat = window.Chat;
+const Chat = window.Chat;
 
 let currentUser = 'guest';
 let currentChatId = null;
@@ -103,7 +103,6 @@ function updateUploadProgress(pct,msg=''){
 
 async function uploadWithProgress() {
   if (!currentUser || currentUser === 'guest') { showToast('访客无法上传'); return; }
-  // 上传当前对话即可（或所有缓存，这里简化为仅当前对话）
   if (!currentChatId || !chatCache[currentChatId]) { showToast('无当前对话'); return; }
   const id = currentChatId;
   const content = chatCache[id];
@@ -217,7 +216,6 @@ function renderSidebar() {
 
 async function switchChat(id) {
   if (!id || id === currentChatId) return;
-  // 保存当前对话（仅当非访客）
   if (currentUser !== 'guest') {
     try { await saveCurrentChatSilent(); } catch (e) {}
   }
@@ -236,7 +234,6 @@ async function switchChat(id) {
 async function createNewChat() {
   if (currentUser === 'guest') { showToast('访客模式无法新建对话，请登录'); return; }
   const title = prompt('请输入对话标题：'); if (!title) return;
-  // 从云端重新获取最大 ID 以避免冲突
   const cloudIndex = await Chat.fetchIndex(currentUser);
   const maxId = Math.max(
     indexList.reduce((max,item)=>Math.max(max,parseInt(item.id)||0),0),
@@ -280,14 +277,13 @@ async function handleSend() {
   const input = messageInput.value.trim();
   if (!input || isGenerating) return;
 
-  const cid = currentChatId; // 锁定对话 ID
+  const cid = currentChatId;
   const userLine = `[用户][${now()}]：${encodeNewlines(input)}\n`;
   chatCache[cid] += userLine;
   messageInput.value = ''; messageInput.style.height = 'auto';
   if (currentChatId === cid) renderMessages(cid);
   playSound('send');
 
-  // 立即保存用户消息到云端
   if (currentUser !== 'guest') {
     try {
       const existing = indexList.find(i => i.id === cid);
@@ -358,7 +354,6 @@ async function handleSend() {
     isGenerating = false; sendBtn.disabled = false;
     playSound('receive');
 
-    // 保存助手回复到云端（锁定 cid）
     if (currentUser !== 'guest') {
       try {
         const existing = indexList.find(i => i.id === cid);
@@ -378,7 +373,6 @@ async function handleSend() {
   }
 }
 
-// 静默保存（切换对话时使用）
 async function saveCurrentChatSilent() {
   if (!currentChatId || !chatCache[currentChatId] || currentUser === 'guest') return;
   const id = currentChatId;
@@ -464,10 +458,21 @@ async function boot() {
 
   if (showLoader) {
     setProgress(100); addLog('就绪');
-    setTimeout(() => { loaderScreen.style.display = 'none'; appContainer.style.display = 'flex'; }, 300);
+    setTimeout(() => {
+      loaderScreen.style.display = 'none';
+      appContainer.style.display = 'flex';
+      // 访客自动弹出登录窗
+      if (currentUser === 'guest') {
+        loginOverlay.style.display = 'flex';
+      }
+    }, 300);
   } else {
     loaderScreen.style.display = 'none';
     appContainer.style.display = 'flex';
+    // 访客自动弹出登录窗
+    if (currentUser === 'guest') {
+      loginOverlay.style.display = 'flex';
+    }
   }
 }
 
