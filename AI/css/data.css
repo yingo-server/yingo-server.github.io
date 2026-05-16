@@ -1,0 +1,23 @@
+﻿/* 消息气泡 */
+.message-row { display: flex; margin-bottom: var(--spacing-md); max-width: 100%; }
+.message-row.user { justify-content: flex-end; }
+.message-row.assistant { justify-content: flex-start; }
+
+.message-bubble { max-width: 80%; padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--shape-card); font-size: 14px; line-height: 1.6; word-break: break-word; }
+.message-bubble.user { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); border-bottom-right-radius: 4px; }
+.message-bubble.assistant { background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border-bottom-left-radius: 4px; }
+
+.message-bubble h1, .message-bubble h2, .message-bubble h3 { margin: 0.5em 0 0.3em; }
+.message-bubble p { margin: 0.3em 0; }
+.message-bubble pre { background: rgba(0,0,0,0.08); padding: var(--spacing-sm); border-radius: 8px; overflow-x: auto; margin: 0.5em 0; }
+.message-bubble code { font-family: monospace; font-size: 0.9em; }
+.message-bubble ul, .message-bubble ol { padding-left: 1.5em; margin: 0.3em 0; }
+
+/* 思考块 */
+.think-block { background: hsla(var(--md-sys-hue), 10%, 50%, 0.08); border-left: 3px solid var(--md-sys-color-outline); border-radius: 8px; margin-bottom: var(--spacing-sm); font-size: 13px; color: var(--md-sys-color-on-surface-variant); overflow: hidden; }
+.think-summary { display: flex; align-items: center; gap: var(--spacing-xs); padding: var(--spacing-sm) var(--spacing-md); cursor: pointer; user-select: none; font-weight: 500; transition: background var(--duration-short); }
+.think-summary:hover { background: hsla(var(--md-sys-hue), 10%, 50%, 0.05); }
+.think-summary .material-symbols-outlined { font-size: 18px; transition: transform var(--duration-short); }
+.think-content { padding: 0 var(--spacing-md) var(--spacing-sm); line-height: 1.5; display: none; white-space: pre-wrap; }
+.think-block.open .think-content { display: block; }
+.think-block.open .think-summary .material-symbols-outlined { transform: rotate(90deg); }

@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>AI Chat · Material You</title>
+
+  <!-- 字体与图标 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+
+  <!-- Markdown 解析（备用 CDN） -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    if (typeof marked === 'undefined') {
+      document.write('<script src="https://unpkg.com/marked/marked.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- 样式 -->
+  <link rel="stylesheet" href="css/ui.css">
+  <link rel="stylesheet" href="css/data.css">
+</head>
+<body>
+
+  <!-- 加载画面 -->
+  <div id="loaderScreen" class="loader-screen">
+    <div class="loader-content">
+      <h2 class="loader-title">AI Chat</h2>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+      <div class="loader-logs" id="loaderLogs">
+        <div class="log-line">…</div>
+        <div class="log-line">…</div>
+        <div class="log-line">…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登录弹窗 -->
+  <div id="loginOverlay" class="login-overlay" style="display: none;">
+    <div class="login-box">
+      <button class="close-btn" id="closeLoginBtn">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <h2>登录 AI Chat</h2>
+      <input type="text" id="loginUser" placeholder="用户名" maxlength="30" autocomplete="off">
+      <input type="password" id="loginPass" placeholder="密码">
+      <button id="loginBtn">登录</button>
+      <button id="guestBtn" class="guest-btn">继续以访客身份使用</button>
+      <div class="login-error" id="loginError"></div>
+    </div>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="appContainer" class="app-layout" style="display: none;">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span class="logo-text">AI Chat</span>
+        <button class="icon-btn" id="sidebarCollapseBtn"><span class="material-symbols-outlined">menu_open</span></button>
+      </div>
+      <div class="sidebar-new-chat">
+        <button id="newChatBtn"><span class="material-symbols-outlined">add</span>新建对话</button>
+      </div>
+      <nav class="sidebar-list" id="sidebarList">
+        <div class="sidebar-empty">暂无对话</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info" id="userInfo">
+          <div class="avatar"><span class="material-symbols-outlined">person</span></div>
+          <span class="user-name" id="userNameDisplay">访客</span>
+        </div>
+        <button class="icon-btn" id="loginNavBtn" title="登录 / 登出">
+          <span class="material-symbols-outlined">login</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn"><span class="material-symbols-outlined">menu</span></button>
+        <span class="chat-title-display" id="chatTitleDisplay">AI Chat</span>
+        <div class="actions">
+          <button class="icon-btn" id="themeBtn"><span class="material-symbols-outlined">dark_mode</span></button>
+          <button class="icon-btn" id="uploadBtn"><span class="material-symbols-outlined">cloud_upload</span></button>
+        </div>
+      </header>
+
+      <section class="messages-area" id="messagesArea">
+        <div class="empty-state">
+          <span class="material-symbols-outlined">forum</span>
+          <h2>开始对话</h2>
+          <p>在下方输入消息，与 AI 开始交流</p>
+        </div>
+      </section>
+
+      <div class="input-area">
+        <div class="input-wrapper">
+          <textarea id="messageInput" rows="1" placeholder="输入消息... (Enter 发送，Shift+Enter 换行)"></textarea>
+          <button class="send-btn" id="sendBtn"><span class="material-symbols-outlined">arrow_upward</span></button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/chat.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

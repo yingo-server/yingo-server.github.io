@@ -1,0 +1,501 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 · AI Chat</title>
+    <!-- 字体与图标 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+    <style>
+        /* 复用主站 Material You 变量 */
+        :root {
+            --md-sys-hue: 267;
+            --md-sys-color-primary: hsl(var(--md-sys-hue), 30%, 40%);
+            --md-sys-color-on-primary: hsl(var(--md-sys-hue), 20%, 98%);
+            --md-sys-color-primary-container: hsl(var(--md-sys-hue), 35%, 90%);
+            --md-sys-color-on-primary-container: hsl(var(--md-sys-hue), 40%, 12%);
+            --md-sys-color-surface: hsl(var(--md-sys-hue), 20%, 98%);
+            --md-sys-color-on-surface: hsl(var(--md-sys-hue), 20%, 8%);
+            --md-sys-color-surface-variant: hsl(var(--md-sys-hue), 15%, 93%);
+            --md-sys-color-on-surface-variant: hsl(var(--md-sys-hue), 15%, 30%);
+            --md-sys-color-outline: hsl(var(--md-sys-hue), 10%, 70%);
+            --md-sys-color-outline-variant: hsl(var(--md-sys-hue), 10%, 85%);
+            --md-sys-elevation-1: 0px 1px 2px hsla(var(--md-sys-hue), 10%, 10%, 0.3), 0px 1px 3px 1px hsla(var(--md-sys-hue), 10%, 10%, 0.15);
+            --md-sys-elevation-2: 0px 2px 4px hsla(var(--md-sys-hue), 10%, 10%, 0.25), 0px 2px 8px 1px hsla(var(--md-sys-hue), 10%, 10%, 0.15);
+            --md-sys-elevation-3: 0px 4px 8px 3px hsla(var(--md-sys-hue), 10%, 10%, 0.15), 0px 1px 8px hsla(var(--md-sys-hue), 10%, 10%, 0.2);
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --font-family: 'Roboto', 'Noto Sans SC', sans-serif;
+            --shape-card: 12px;
+            --shape-button: 20px;
+            --shape-full: 9999px;
+            --easing-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+            --duration-short: 200ms;
+            --duration-medium: 300ms;
+        }
+
+        [data-theme="dark"] {
+            --md-sys-color-primary: hsl(var(--md-sys-hue), 30%, 70%);
+            --md-sys-color-on-primary: hsl(var(--md-sys-hue), 20%, 8%);
+            --md-sys-color-primary-container: hsl(var(--md-sys-hue), 35%, 25%);
+            --md-sys-color-on-primary-container: hsl(var(--md-sys-hue), 40%, 90%);
+            --md-sys-color-surface: hsl(var(--md-sys-hue), 15%, 10%);
+            --md-sys-color-on-surface: hsl(var(--md-sys-hue), 20%, 92%);
+            --md-sys-color-surface-variant: hsl(var(--md-sys-hue), 15%, 18%);
+            --md-sys-color-on-surface-variant: hsl(var(--md-sys-hue), 15%, 80%);
+            --md-sys-color-outline: hsl(var(--md-sys-hue), 10%, 40%);
+            --md-sys-color-outline-variant: hsl(var(--md-sys-hue), 10%, 30%);
+            --md-sys-elevation-1: 0px 1px 2px hsla(0, 0%, 0%, 0.4), 0px 1px 3px 1px hsla(0, 0%, 0%, 0.2);
+            --md-sys-elevation-2: 0px 2px 4px hsla(0, 0%, 0%, 0.5), 0px 2px 8px 1px hsla(0, 0%, 0%, 0.2);
+            --md-sys-elevation-3: 0px 4px 8px 3px hsla(0, 0%, 0%, 0.4), 0px 1px 8px hsla(0, 0%, 0%, 0.25);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-family);
+            background: var(--md-sys-color-surface);
+            color: var(--md-sys-color-on-surface);
+            padding: 24px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+        h1 { font-size: 24px; font-weight: 500; margin-bottom: 24px; color: var(--md-sys-color-primary); }
+        .lock-screen {
+            position: fixed; inset: 0; background: var(--md-sys-color-surface);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 999;
+        }
+        .lock-screen.hidden { display: none; }
+        .lock-screen input {
+            margin: 8px; padding: 12px; width: 240px;
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: 8px; background: var(--md-sys-color-surface-variant);
+            font-size: 16px; color: var(--md-sys-color-on-surface);
+        }
+        .lock-screen button {
+            padding: 12px 24px; background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary); border: none;
+            border-radius: 20px; font-size: 16px; cursor: pointer;
+        }
+        .main-panel.hidden { display: none; }
+        .section {
+            background: var(--md-sys-color-surface-variant);
+            border-radius: var(--shape-card);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--md-sys-elevation-1);
+        }
+        .section h2 {
+            font-size: 18px; font-weight: 500; margin-bottom: 16px;
+            display: flex; align-items: center; gap: var(--spacing-sm);
+        }
+        .search-box {
+            width: 100%; padding: 10px 16px; margin-bottom: 16px;
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: var(--shape-button); background: var(--md-sys-color-surface);
+            font-size: 14px; color: var(--md-sys-color-on-surface);
+        }
+        .user-list, .chat-list {
+            max-height: 400px; overflow-y: auto;
+        }
+        .user-item, .chat-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; border-bottom: 1px solid var(--md-sys-color-outline-variant);
+        }
+        .user-item:last-child, .chat-item:last-child { border-bottom: none; }
+        .user-info { display: flex; flex-direction: column; }
+        .user-name { font-weight: 500; }
+        .user-actions, .chat-actions { display: flex; gap: var(--spacing-xs); }
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 20px;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            transition: background var(--duration-short);
+            color: var(--md-sys-color-on-primary);
+            background: var(--md-sys-color-primary);
+        }
+        .btn.danger { background: #b3261e; }
+        .btn.outline {
+            background: transparent; color: var(--md-sys-color-primary);
+            border: 1px solid var(--md-sys-color-outline);
+        }
+        .add-user-form {
+            display: flex; gap: var(--spacing-sm); margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .add-user-form input {
+            flex: 1; min-width: 150px; padding: 10px 12px;
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: 8px; background: var(--md-sys-color-surface);
+            font-size: 14px; color: var(--md-sys-color-on-surface);
+        }
+        .add-user-form button { white-space: nowrap; }
+        .chat-select {
+            padding: 10px 12px; border: 1px solid var(--md-sys-color-outline);
+            border-radius: 8px; background: var(--md-sys-color-surface);
+            font-size: 14px; color: var(--md-sys-color-on-surface);
+            margin-bottom: 16px;
+        }
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.hidden { display: none; }
+        .modal {
+            background: var(--md-sys-color-surface); border-radius: var(--shape-card);
+            padding: var(--spacing-lg); max-width: 600px; width: 90%;
+            max-height: 70vh; overflow-y: auto; box-shadow: var(--md-sys-elevation-3);
+        }
+        .modal h3 { font-size: 18px; margin-bottom: 16px; }
+        .modal .close-btn {
+            position: absolute; top: 16px; right: 16px;
+            background: transparent; border: none; cursor: pointer;
+            color: var(--md-sys-color-on-surface-variant);
+        }
+    </style>
+</head>
+<body>
+    <!-- 管理员登录 -->
+    <div id="lockScreen" class="lock-screen">
+        <h2 style="margin-bottom:20px;">管理员验证</h2>
+        <input type="text" id="adminUser" placeholder="用户名" value="YINGO">
+        <input type="password" id="adminPass" placeholder="密码" value="00000000">
+        <button id="unlockBtn">解锁</button>
+        <div id="lockError" style="color:#b3261e; margin-top:12px; display:none;"></div>
+    </div>
+
+    <!-- 主管理面板（初始隐藏） -->
+    <div id="mainPanel" class="main-panel container hidden">
+        <h1>对话系统管理后台</h1>
+
+        <!-- 用户管理 -->
+        <div class="section">
+            <h2><span class="material-symbols-outlined">group</span> 用户管理</h2>
+            <input type="text" class="search-box" id="userSearch" placeholder="搜索用户名...">
+            <div class="add-user-form">
+                <input type="text" id="newUsername" placeholder="新用户名（字母/数字/中文/下划线）">
+                <input type="password" id="newPassword" placeholder="密码">
+                <button class="btn" id="addUserBtn">添加用户</button>
+            </div>
+            <div class="user-list" id="userList"></div>
+        </div>
+
+        <!-- 对话管理 -->
+        <div class="section">
+            <h2><span class="material-symbols-outlined">chat</span> 对话管理</h2>
+            <select class="chat-select" id="userSelect">
+                <option value="">-- 选择用户 --</option>
+            </select>
+            <div class="chat-list" id="chatList"></div>
+        </div>
+    </div>
+
+    <!-- 预览对话模态 -->
+    <div id="previewModal" class="modal-overlay hidden">
+        <div class="modal" style="position:relative;">
+            <button class="close-btn" id="closePreviewBtn"><span class="material-symbols-outlined">close</span></button>
+            <h3 id="previewTitle">对话预览</h3>
+            <pre id="previewContent" style="white-space: pre-wrap; word-break: break-word; font-family: monospace; font-size:13px;"></pre>
+        </div>
+    </div>
+
+    <!-- 修改密码模态 -->
+    <div id="passwordModal" class="modal-overlay hidden">
+        <div class="modal" style="position:relative;">
+            <button class="close-btn" id="closePasswordBtn"><span class="material-symbols-outlined">close</span></button>
+            <h3>修改用户密码</h3>
+            <input type="hidden" id="editUsername">
+            <input type="password" id="editPassword" placeholder="新密码" style="width:100%; padding:12px; margin-top:8px; border:1px solid var(--md-sys-color-outline); border-radius:8px;">
+            <button class="btn" id="savePasswordBtn" style="margin-top:16px; width:100%;">保存</button>
+        </div>
+    </div>
+
+    <script src="js/chat.js"></script>
+    <script>
+        // 管理员验证
+        const lockScreen = document.getElementById('lockScreen');
+        const mainPanel = document.getElementById('mainPanel');
+        const unlockBtn = document.getElementById('unlockBtn');
+        const lockError = document.getElementById('lockError');
+
+        unlockBtn.addEventListener('click', () => {
+            const user = document.getElementById('adminUser').value;
+            const pass = document.getElementById('adminPass').value;
+            if (user === 'YINGO' && pass === '00000000') {
+                lockScreen.classList.add('hidden');
+                mainPanel.classList.remove('hidden');
+                initAdmin();
+            } else {
+                lockError.style.display = 'block';
+                lockError.textContent = '用户名或密码错误';
+            }
+        });
+
+        // 全局数据
+        let passwdData = {};
+        let usersList = [];
+        let currentSelectedUser = '';
+
+        // 工具函数
+        function escapeHtml(text) {
+            return String(text).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+        }
+
+        async function initAdmin() {
+            try {
+                await Chat.loadConfig();
+                await refreshData();
+            } catch (e) {
+                alert('初始化失败：' + e.message);
+            }
+        }
+
+        async function refreshData() {
+            try {
+                // 加载 passwd.json
+                const passwdResult = await Chat.getFile('', 'passwd.json');
+                passwdData = JSON.parse(passwdResult.content);
+            } catch (e) {
+                passwdData = {};
+            }
+            try {
+                usersList = await Chat.getUsersIndex();
+            } catch (e) {
+                usersList = [];
+            }
+            renderUserList();
+            populateUserSelect();
+        }
+
+        // 用户列表渲染（支持搜索）
+        function renderUserList(filterText = '') {
+            const container = document.getElementById('userList');
+            const filter = (filterText || '').toLowerCase();
+            const filteredUsers = usersList.filter(u => u.toLowerCase().includes(filter));
+            container.innerHTML = '';
+            if (filteredUsers.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--md-sys-color-on-surface-variant);">暂无用户</div>';
+                return;
+            }
+            filteredUsers.forEach(username => {
+                const div = document.createElement('div');
+                div.className = 'user-item';
+                div.innerHTML = `
+                    <div class="user-info">
+                        <span class="user-name">${escapeHtml(username)}</span>
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn outline edit-pass-btn" data-user="${escapeHtml(username)}">改密</button>
+                        <button class="btn danger delete-user-btn" data-user="${escapeHtml(username)}">删除</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            // 绑定事件
+            document.querySelectorAll('.edit-pass-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const username = e.target.dataset.user;
+                    document.getElementById('editUsername').value = username;
+                    document.getElementById('editPassword').value = '';
+                    document.getElementById('passwordModal').classList.remove('hidden');
+                });
+            });
+            document.querySelectorAll('.delete-user-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const username = e.target.dataset.user;
+                    if (confirm(`确定要删除用户 "${username}" 吗？此操作仅从索引中移除，对话文件保留。`)) {
+                        deleteUser(username);
+                    }
+                });
+            });
+        }
+
+        // 搜索事件
+        document.getElementById('userSearch').addEventListener('input', (e) => {
+            renderUserList(e.target.value);
+        });
+
+        // 添加用户
+        document.getElementById('addUserBtn').addEventListener('click', async () => {
+            const username = document.getElementById('newUsername').value.trim();
+            const password = document.getElementById('newPassword').value;
+            if (!username || !password) return alert('请输入用户名和密码');
+            if (!/^[\w\u4e00-\u9fa5]+$/.test(username)) {
+                return alert('用户名只能包含字母、数字、下划线和中文');
+            }
+            if (passwdData.hasOwnProperty(username)) {
+                return alert('用户已存在');
+            }
+            try {
+                // 更新 passwd.json
+                passwdData[username] = password;
+                const content = JSON.stringify(passwdData);
+                try {
+                    const { sha } = await Chat.getFile('', 'passwd.json');
+                    await Chat.updateFile('', 'passwd.json', content, sha, '添加用户 ' + username);
+                } catch {
+                    await Chat.createFile('', 'passwd.json', content, '创建密码文件');
+                }
+
+                // 更新 users_index.json
+                if (!usersList.includes(username)) {
+                    usersList.push(username);
+                    await Chat.saveUsersIndex(usersList);
+                }
+
+                // 确保用户文件夹存在
+                await Chat.ensureUserFolder(username);
+
+                // 清空输入框
+                document.getElementById('newUsername').value = '';
+                document.getElementById('newPassword').value = '';
+                alert(`用户 ${username} 添加成功`);
+                await refreshData();
+            } catch (e) {
+                alert('添加失败：' + e.message);
+            }
+        });
+
+        // 删除用户
+        async function deleteUser(username) {
+            try {
+                // 从 passwd.json 删除
+                delete passwdData[username];
+                const content = JSON.stringify(passwdData);
+                const { sha } = await Chat.getFile('', 'passwd.json');
+                await Chat.updateFile('', 'passwd.json', content, sha, '删除用户 ' + username);
+
+                // 从 users_index.json 删除
+                usersList = usersList.filter(u => u !== username);
+                await Chat.saveUsersIndex(usersList);
+
+                // 不删除文件夹
+                await refreshData();
+            } catch (e) {
+                alert('删除失败：' + e.message);
+            }
+        }
+
+        // 修改密码
+        document.getElementById('savePasswordBtn').addEventListener('click', async () => {
+            const username = document.getElementById('editUsername').value;
+            const newPassword = document.getElementById('editPassword').value;
+            if (!newPassword) return alert('请输入新密码');
+            try {
+                passwdData[username] = newPassword;
+                const content = JSON.stringify(passwdData);
+                const { sha } = await Chat.getFile('', 'passwd.json');
+                await Chat.updateFile('', 'passwd.json', content, sha, '修改密码 ' + username);
+                alert('密码修改成功');
+                document.getElementById('passwordModal').classList.add('hidden');
+                await refreshData();
+            } catch (e) {
+                alert('修改失败：' + e.message);
+            }
+        });
+
+        // 关闭模态按钮
+        document.getElementById('closePasswordBtn').addEventListener('click', () => {
+            document.getElementById('passwordModal').classList.add('hidden');
+        });
+        document.getElementById('closePreviewBtn').addEventListener('click', () => {
+            document.getElementById('previewModal').classList.add('hidden');
+        });
+
+        // 填充用户下拉框
+        function populateUserSelect() {
+            const select = document.getElementById('userSelect');
+            select.innerHTML = '<option value="">-- 选择用户 --</option>';
+            usersList.forEach(user => {
+                const opt = document.createElement('option');
+                opt.value = user;
+                opt.textContent = user;
+                select.appendChild(opt);
+            });
+        }
+
+        // 选择用户后加载对话列表
+        document.getElementById('userSelect').addEventListener('change', async (e) => {
+            const username = e.target.value;
+            currentSelectedUser = username;
+            const chatContainer = document.getElementById('chatList');
+            chatContainer.innerHTML = '';
+            if (!username) return;
+            try {
+                const index = await Chat.fetchIndex(username);
+                if (index.length === 0) {
+                    chatContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--md-sys-color-on-surface-variant);">该用户暂无对话</div>';
+                    return;
+                }
+                index.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'chat-item';
+                    div.innerHTML = `
+                        <div class="user-info">
+                            <span>${escapeHtml(item.id)}: ${escapeHtml(item.title)}</span>
+                        </div>
+                        <div class="chat-actions">
+                            <button class="btn outline preview-btn" data-id="${escapeHtml(item.id)}">预览</button>
+                            <button class="btn danger delete-chat-btn" data-id="${escapeHtml(item.id)}">移除</button>
+                        </div>
+                    `;
+                    chatContainer.appendChild(div);
+                });
+
+                // 绑定预览按钮
+                document.querySelectorAll('.preview-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const id = e.target.dataset.id;
+                        try {
+                            const { content } = await Chat.getFile(currentSelectedUser, `${id}.txt`);
+                            document.getElementById('previewTitle').textContent = `对话 ${id}`;
+                            document.getElementById('previewContent').textContent = content;
+                            document.getElementById('previewModal').classList.remove('hidden');
+                        } catch (err) {
+                            alert('无法加载对话：' + err.message);
+                        }
+                    });
+                });
+
+                // 绑定删除按钮
+                document.querySelectorAll('.delete-chat-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const id = e.target.dataset.id;
+                        if (!confirm('确定要从索引中移除该对话吗？文件不会被删除。')) return;
+                        try {
+                            const index = await Chat.fetchIndex(currentSelectedUser);
+                            const newIndex = index.filter(i => i.id !== id);
+                            // 重新排序
+                            newIndex.forEach((it, idx) => { it.order = idx + 1; });
+                            await Chat.uploadIndex(currentSelectedUser, newIndex);
+                            alert('已移除');
+                            // 刷新对话列表
+                            document.getElementById('userSelect').dispatchEvent(new Event('change'));
+                        } catch (err) {
+                            alert('移除失败：' + err.message);
+                        }
+                    });
+                });
+            } catch (e) {
+                chatContainer.innerHTML = '<div style="text-align:center;padding:20px;color:#b3261e;">加载失败：' + e.message + '</div>';
+            }
+        });
+
+        // 关闭模态点击遮罩
+        document.getElementById('previewModal').addEventListener('click', function(e) {
+            if (e.target === this) this.classList.add('hidden');
+        });
+        document.getElementById('passwordModal').addEventListener('click', function(e) {
+            if (e.target === this) this.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
