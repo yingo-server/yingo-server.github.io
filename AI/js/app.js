@@ -218,8 +218,8 @@ function showDonationModal() {
   box.innerHTML = `
     <h2 style="margin-bottom:16px;">感谢使用 AI Chat</h2>
     <p style="margin-bottom:16px; font-size:14px; color:var(--md-sys-color-on-surface-variant);">如果您觉得这个应用有帮助，可以考虑支持我们或者我们的同龄人</p>
-    <button id="donateToMeBtn" style="margin-bottom:8px;">❤️ 向我捐赠</button>
-    <button id="donateToCharityBtn" style="margin-bottom:8px;">🌍 向公益平台捐赠</button>
+    <button id="donateToMeBtn" style="margin-bottom:8px;">向我们捐赠</button>
+    <button id="donateToCharityBtn" style="margin-bottom:8px;">向世界捐赠</button>
     <button id="skipDonationBtn" class="guest-btn">跳过</button>
   `;
 
