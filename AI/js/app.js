@@ -271,8 +271,8 @@ function showDonationModal() {
   box.innerHTML = `
     <h2 style="margin-bottom:16px;">感谢使用 AI Chat</h2>
     <p style="margin-bottom:16px; font-size:14px; color:var(--md-sys-color-on-surface-variant);">如果您觉得这个应用有帮助，可以考虑支持我们。</p>
-    <button id="donateToMeBtn" style="margin-bottom:8px;">❤️ 向我捐赠</button>
-    <button id="donateToCharityBtn" style="margin-bottom:8px;">🌍 向公益平台捐赠</button>
+    <button id="donateToMeBtn" style="margin-bottom:8px;">向我们捐赠</button>
+    <button id="donateToCharityBtn" style="margin-bottom:8px;">🌍 向世界捐赠</button>
     <button id="skipDonationBtn" class="guest-btn">跳过</button>
   `;
 
@@ -280,12 +280,12 @@ function showDonationModal() {
   document.body.appendChild(overlay);
 
   document.getElementById('donateToMeBtn').addEventListener('click', () => {
-    window.open('https://afdian.net/your-page', '_blank'); // 替换为你的爱发电链接
+    window.open('https://k.344977.xyz/love.html', '_blank'); // 替换为你的爱发电链接
     closeDonationModal();
   });
 
   document.getElementById('donateToCharityBtn').addEventListener('click', () => {
-    window.open('https://love.alipay.com/donate/index.htm', '_blank'); // 支付宝公益
+    window.open('https://love.alipay.com/donate/donateSingle.htm?name=2018022817561453523', '_blank'); // 支付宝公益
     closeDonationModal();
   });
 
