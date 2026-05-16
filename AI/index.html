@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="UTF-8">
@@ -55,6 +55,19 @@
     </div>
   </div>
 
+  <!-- 通用自定义对话框（替代原生 confirm / prompt） -->
+  <div id="appDialogOverlay" class="login-overlay" style="display: none;">
+    <div class="login-box">
+      <h2 id="appDialogTitle"></h2>
+      <p id="appDialogMessage" style="margin-bottom:12px; color:var(--md-sys-color-on-surface-variant);"></p>
+      <input type="text" id="appDialogInput" style="display:none;" maxlength="30" autocomplete="off">
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button id="appDialogCancelBtn" class="guest-btn" style="flex:1;">取消</button>
+        <button id="appDialogOkBtn" style="flex:1;">确定</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 主界面 -->
   <div id="appContainer" class="app-layout" style="display: none;">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -101,7 +114,7 @@
 
       <div class="input-area">
         <div class="input-wrapper">
-          <textarea id="messageInput" rows="1" placeholder="输入消息..."></textarea>
+          <textarea id="messageInput" rows="1" placeholder="输入消息... (Enter 发送，Shift+Enter 换行)"></textarea>
           <button class="send-btn" id="sendBtn"><span class="material-symbols-outlined">arrow_upward</span></button>
         </div>
       </div>
