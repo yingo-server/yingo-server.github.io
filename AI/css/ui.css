@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    M3 DYNAMIC THEME — Light (default)
    ============================================================ */
 :root {
@@ -158,4 +158,12 @@ html, body { height: 100%; width: 100%; overflow: hidden; font-family: var(--fon
   .sidebar-overlay.show { display: block; opacity: 1; }
   .menu-btn { display: flex; align-items: center; justify-content: center; }
   .input-area { padding: var(--spacing-xs) var(--spacing-sm) var(--spacing-sm); }
+}
+
+/* 图标字体加载期间隐藏，防止显示英文 fallback */
+.material-symbols-outlined {
+  visibility: hidden;
+}
+.fonts-loaded .material-symbols-outlined {
+  visibility: visible;
 }
