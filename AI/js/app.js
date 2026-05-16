@@ -8,6 +8,9 @@ let isGenerating = false;
 
 const THEME_KEY = 'app_theme';
 
+// 捐赠弹窗相关
+const DONATION_INTERVAL = 30 * 24 * 60 * 60 * 1000; // 30天
+
 // DOM 元素
 const loaderScreen = document.getElementById('loaderScreen');
 const appContainer = document.getElementById('appContainer');
@@ -54,7 +57,7 @@ function parseMarkdown(text) {
   return `<pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">${escapeHtml(text)}</pre>`;
 }
 
-// ================== 音效（修复 AudioContext 恢复） ==================
+// ================== 音效 ==================
 let audioCtx = null;
 function initAudio() {
   if (audioCtx) return;
@@ -85,7 +88,7 @@ function showToast(msg, dur=2500) {
   setTimeout(()=>{ el.classList.remove('show'); el.addEventListener('transitionend',()=>el.remove()); setTimeout(()=>el.remove(),300); }, dur);
 }
 
-// ================== 上传弹窗（完整流程） ==================
+// ================== 上传弹窗 ==================
 function showUploadModal() {
   let m = document.getElementById('uploadModal');
   if (!m) {
@@ -178,6 +181,73 @@ const Login = {
     location.reload();
   }
 };
+
+// ================== 捐赠弹窗 ==================
+function getDonationLastShown(user) {
+  return localStorage.getItem(`donation_last_shown_${user}`);
+}
+
+function setDonationLastShown(user) {
+  localStorage.setItem(`donation_last_shown_${user}`, Date.now().toString());
+}
+
+function shouldShowDonation(user) {
+  if (user === 'guest') return false;
+  // 强制弹出（刚登录）
+  if (localStorage.getItem('force_donation') === '1') {
+    localStorage.removeItem('force_donation');
+    return true;
+  }
+  // 每月一次
+  const lastShown = getDonationLastShown(user);
+  if (!lastShown) return true;
+  const elapsed = Date.now() - parseInt(lastShown);
+  return elapsed > DONATION_INTERVAL;
+}
+
+function showDonationModal() {
+  if (document.getElementById('donationOverlay')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'donationOverlay';
+  overlay.className = 'login-overlay';
+  overlay.style.zIndex = '2000';
+
+  const box = document.createElement('div');
+  box.className = 'login-box';
+  box.innerHTML = `
+    <h2 style="margin-bottom:16px;">感谢使用 AI Chat</h2>
+    <p style="margin-bottom:16px; font-size:14px; color:var(--md-sys-color-on-surface-variant);">如果您觉得这个应用有帮助，可以考虑支持我们或者我们的同龄人</p>
+    <button id="donateToMeBtn" style="margin-bottom:8px;">❤️ 向我捐赠</button>
+    <button id="donateToCharityBtn" style="margin-bottom:8px;">🌍 向公益平台捐赠</button>
+    <button id="skipDonationBtn" class="guest-btn">跳过</button>
+  `;
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  document.getElementById('donateToMeBtn').addEventListener('click', () => {
+    window.open('https://k.344977.xyz/love.html', '_blank'); // 替换为你的爱发电链接
+    closeDonationModal();
+  });
+
+  document.getElementById('donateToCharityBtn').addEventListener('click', () => {
+    window.open('https://love.alipay.com/donate/itemDetail.htm?name=2018022817561453523', '_blank'); // 支付宝公益
+    closeDonationModal();
+  });
+
+  document.getElementById('skipDonationBtn').addEventListener('click', () => {
+    closeDonationModal();
+  });
+}
+
+function closeDonationModal() {
+  const overlay = document.getElementById('donationOverlay');
+  if (overlay) {
+    overlay.remove();
+    setDonationLastShown(currentUser);
+  }
+}
 
 // ================== 渲染 ==================
 function renderMessages(chatId) {
@@ -465,13 +535,19 @@ async function boot() {
       if (currentUser === 'guest') {
         loginOverlay.style.display = 'flex';
       }
+      // 检查捐赠弹窗
+      if (currentUser !== 'guest' && shouldShowDonation(currentUser)) {
+        setTimeout(showDonationModal, 600);
+      }
     }, 300);
   } else {
     loaderScreen.style.display = 'none';
     appContainer.style.display = 'flex';
-    // 访客自动弹出登录窗
     if (currentUser === 'guest') {
       loginOverlay.style.display = 'flex';
+    }
+    if (currentUser !== 'guest' && shouldShowDonation(currentUser)) {
+      setTimeout(showDonationModal, 600);
     }
   }
 }
@@ -490,6 +566,8 @@ loginSubmitBtn.addEventListener('click', async () => {
   const success = await Login.login(username, password);
   if (success) {
     sessionStorage.removeItem(LOADER_SHOWN_KEY);
+    // 设置强制捐赠弹出标记
+    localStorage.setItem('force_donation', '1');
     location.reload();
   } else {
     loginErrorEl.style.display = 'block';
