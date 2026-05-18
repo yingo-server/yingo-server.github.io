@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>谢谢心意 · 铭谢</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const hour = new Date().getHours();
+            const theme = (hour >= 6 && hour < 18) ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+    <style>
+        :root {
+            --bg: #f2ede6;
+            --stone-bg: #fdfaf6;
+            --stone-shadow: 0 4px 32px rgba(0, 0, 0, 0.08), 0 1px 6px rgba(0, 0, 0, 0.04);
+            --stone-border: 1px solid rgba(0, 0, 0, 0.05);
+            --text-primary: #2c2c2c;
+            --text-secondary: #5c5c5c;
+            --text-muted: #8a8a8a;
+            --divider: #dcd5cc;
+            --btn-bg: #2c2c2c;
+            --btn-text: #fdfaf6;
+            --btn-hover-bg: #1a1a1a;
+            --btn-border: #2c2c2c;
+            --img-border: #dcd5cc;
+            --img-shadow: 0 1px 12px rgba(0, 0, 0, 0.06);
+            --modal-overlay: rgba(0,0,0,0.2);
+            --modal-bg: #ffffff;
+            --transition: 0.7s ease;
+        }
+        [data-theme="dark"] {
+            --bg: #121212;
+            --stone-bg: #1c1c1c;
+            --stone-shadow: 0 6px 40px rgba(0, 0, 0, 0.6), 0 1px 8px rgba(0, 0, 0, 0.3);
+            --stone-border: 1px solid rgba(255, 255, 255, 0.06);
+            --text-primary: #e5e3df;
+            --text-secondary: #9f9d99;
+            --text-muted: #6b6a66;
+            --divider: #2e2e2e;
+            --btn-bg: #e5e3df;
+            --btn-text: #121212;
+            --btn-hover-bg: #ffffff;
+            --btn-border: #e5e3df;
+            --img-border: #2e2e2e;
+            --img-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+            --modal-overlay: rgba(0,0,0,0.6);
+            --modal-bg: #1c1c1c;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            font-family: 'Noto Sans SC', 'Inter', sans-serif;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 20px;
+            transition: background var(--transition);
+        }
+        .grave-card {
+            background: var(--stone-bg);
+            box-shadow: var(--stone-shadow);
+            border: var(--stone-border);
+            border-radius: 0;
+            padding: 48px 36px;
+            max-width: 480px; width: 100%;
+            text-align: center;
+            transition: background var(--transition), box-shadow var(--transition);
+            display: flex; flex-direction: column; gap: 28px;
+        }
+        .chinese-main {
+            font-family: 'Noto Sans SC', sans-serif; font-weight: 350;
+            font-size: 2.6rem; letter-spacing: 0.08em;
+            color: var(--text-primary); transition: color var(--transition);
+        }
+        .english-sub {
+            font-family: 'Inter', sans-serif; font-weight: 300;
+            font-size: 1.15rem; letter-spacing: 0.04em;
+            color: var(--text-secondary); word-break: break-word;
+            line-height: 1.5; transition: color var(--transition);
+        }
+        .divider-line {
+            width: 40px; height: 1px; background: var(--divider);
+            margin: 8px auto; transition: background var(--transition);
+        }
+        .button-group { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+        .grave-btn {
+            border: 2px solid var(--btn-border); background: var(--btn-bg);
+            color: var(--btn-text); font-family: inherit; font-weight: 450;
+            font-size: 1rem; letter-spacing: 0.06em; padding: 12px 28px;
+            cursor: pointer; transition: all 0.25s; border-radius: 0;
+            min-width: 100px; display: inline-flex; align-items: center; justify-content: center;
+        }
+        .grave-btn:hover { background: var(--btn-hover-bg); border-color: var(--btn-hover-bg); transform: scale(1.02); }
+        .grave-btn.outline { background: transparent; color: var(--btn-bg); border-color: var(--btn-bg); }
+        .grave-btn.outline:hover { background: var(--btn-bg); color: var(--btn-text); }
+        .main-view.hidden { display: none; }
+        .acknowledgment-view { display: none; flex-direction: column; gap: 24px; width: 100%; }
+        .acknowledgment-view.active { display: flex; }
+        .list-container {
+            text-align: left; max-height: 320px; overflow-y: auto;
+            padding-right: 4px; display: flex; flex-direction: column; gap: 12px;
+        }
+        .list-item {
+            display: flex; justify-content: space-between; align-items: baseline;
+            font-size: 0.95rem; border-bottom: 1px solid var(--divider);
+            padding-bottom: 8px; color: var(--text-primary);
+        }
+        .list-name { font-weight: 450; }
+        .list-time { font-weight: 300; color: var(--text-muted); font-family: 'Inter', sans-serif; }
+        .empty-message { color: var(--text-muted); font-style: italic; text-align: center; padding: 16px; }
+        .back-row { display: flex; justify-content: space-between; align-items: center; }
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-overlay); backdrop-filter: blur(6px);
+            align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--modal-bg); border: var(--stone-border);
+            box-shadow: var(--stone-shadow); padding: 36px 28px;
+            max-width: 400px; width: 90%; border-radius: 0;
+            display: flex; flex-direction: column; gap: 24px; text-align: center;
+        }
+        .modal-input {
+            border: 1px solid var(--divider); background: var(--stone-bg);
+            color: var(--text-primary); padding: 14px 16px;
+            font-family: inherit; font-size: 1rem; border-radius: 0; outline: none;
+        }
+        .modal-input:focus { border-color: var(--btn-bg); }
+        .qr-image {
+            width: 180px; height: 180px; object-fit: contain; margin: 0 auto;
+            border: 1px solid var(--img-border); box-shadow: var(--img-shadow);
+        }
+        .small-note { color: var(--text-muted); font-size: 0.8rem; }
+        @media (max-width: 480px) {
+            .grave-card { padding: 36px 24px; }
+            .chinese-main { font-size: 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="grave-card" id="mainCard">
+    <div class="main-view" id="mainView">
+        <div class="text-block">
+            <div class="chinese-main">谢谢心意</div>
+            <div class="english-sub">Thank you for your kindness.<br>Your generosity becomes a stone in this quiet garden.</div>
+        </div>
+        <div class="divider-line"></div>
+        <div class="button-group">
+            <button class="grave-btn" id="btnMingXie">铭谢</button>
+            <button class="grave-btn outline" id="btnMingXieList">鸣谢</button>
+        </div>
+        <div class="small-note" style="margin-top: 4px;">刻下名字，或静默凝视</div>
+    </div>
+
+    <div class="acknowledgment-view" id="ackView">
+        <div class="back-row">
+            <button class="grave-btn outline" id="btnBack" style="padding: 8px 18px; min-width: auto;">← 返回</button>
+            <button class="grave-btn" id="btnMingXieInList" style="padding: 8px 18px; min-width: auto;">铭谢</button>
+        </div>
+        <div style="font-weight: 400; font-size: 1.2rem; color: var(--text-primary);">鸣谢名单</div>
+        <div class="list-container" id="nameListContainer">
+            <div class="empty-message">石面尚空，静待第一个名字。</div>
+        </div>
+        <div class="small-note">按时间倒序 · 铭刻于此</div>
+    </div>
+</div>
+
+<div class="modal" id="modalNameInput">
+    <div class="modal-content">
+        <div style="font-weight: 400; font-size: 1.3rem; color: var(--text-primary);">留下你的姓名</div>
+        <input type="text" class="modal-input" id="inputName" placeholder="姓氏或名号" maxlength="30" autocomplete="off">
+        <div class="modal-actions">
+            <button class="grave-btn outline" id="btnCancelName">取消</button>
+            <button class="grave-btn" id="btnConfirmName">铭刻</button>
+        </div>
+        <div class="small-note" id="nameError" style="color: #c96b6b; display: none;"></div>
+    </div>
+</div>
+
+<div class="modal" id="modalThanks">
+    <div class="modal-content">
+        <div style="font-weight: 400; font-size: 1.3rem; color: var(--text-primary);" id="thanksMessage">心意已铭刻</div>
+        <img src="https://181683446874112.abvod.cn/1.png" alt="捐赠二维码" class="qr-image" crossorigin="anonymous">
+        <div class="small-note">请扫码传递温暖</div>
+        <button class="grave-btn" id="btnCloseThanks" style="margin-top: 4px;">关闭</button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const CONFIG = {
+            token: "89b450ecbd9617ab1b1467076edf472d",
+            owner: "QI403403",
+            repo: "DO",
+            branch: "master",
+            filePath: "names/sth.json"
+        };
+        const API = "https://gitee.com/api/v5";
+
+        // 详细日志
+        function log(...args) { console.log('[铭谢]', ...args); }
+        function logError(...args) { console.error('[铭谢错误]', ...args); }
+
+        function toggleModal(id, show) {
+            document.getElementById(id).classList.toggle('active', show);
+        }
+
+        // base64 编解码（正确处理中文）
+        function decodeContent(base64) {
+            try {
+                return decodeURIComponent(escape(atob(base64)));
+            } catch (e) {
+                return atob(base64);
+            }
+        }
+        function encodeContent(str) {
+            return btoa(unescape(encodeURIComponent(str)));
+        }
+
+        // 获取文件信息
+        async function getFileInfo() {
+            const url = `${API}/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.filePath}?ref=${CONFIG.branch}`;
+            log('获取文件信息', url);
+            const resp = await fetch(url, {
+                headers: { 'Authorization': `token ${CONFIG.token}` }
+            });
+            if (resp.status === 200) {
+                const data = await resp.json();
+                log('文件存在, sha:', data.sha, 'size:', data.size);
+                return { exists: true, sha: data.sha, content: data.content };
+            } else if (resp.status === 404) {
+                log('文件不存在');
+                return { exists: false, sha: null, content: null };
+            } else {
+                const err = await resp.json().catch(() => ({}));
+                logError('获取文件信息失败', resp.status, err);
+                throw new Error(`无法读取仓库文件 (${resp.status})`);
+            }
+        }
+
+        // 读取名单
+        async function fetchNameList() {
+            const info = await getFileInfo();
+            if (!info.exists) return [];
+            const decoded = decodeContent(info.content);
+            log('原始内容:', decoded);
+            const list = JSON.parse(decoded);
+            return Array.isArray(list) ? list : [];
+        }
+
+        // 追加姓名（已修复：body 不含 access_token）
+        async function appendNameToFile(name) {
+            log('准备追加姓名:', name);
+            const fileInfo = await getFileInfo();
+            if (!fileInfo.exists) {
+                throw new Error('仓库文件尚未初始化，请先创建 names/sth.json');
+            }
+
+            let list = [];
+            try {
+                const decoded = decodeContent(fileInfo.content);
+                list = JSON.parse(decoded);
+                if (!Array.isArray(list)) list = [];
+            } catch (e) {
+                logError('名单解析失败，将重置为空数组', e);
+                list = [];
+            }
+
+            list.push({ name: name.trim(), timestamp: new Date().toISOString() });
+            const newJson = JSON.stringify(list, null, 2);
+            const newContent = encodeContent(newJson);
+            log('新内容长度:', newContent.length);
+
+            const url = `${API}/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.filePath}`;
+            // ⚠️ 注意：body 中不再包含 access_token，仅通过 Header 鉴权
+            const body = JSON.stringify({
+                content: newContent,
+                sha: fileInfo.sha,
+                message: `铭谢: ${name}`,
+                branch: CONFIG.branch
+            });
+
+            log('更新文件请求', { url, sha: fileInfo.sha });
+            const resp = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${CONFIG.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: body
+            });
+
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                logError('更新失败', resp.status, err);
+                throw new Error('更新文件失败：' + (err.message || resp.status));
+            }
+            const result = await resp.json();
+            log('更新成功, 新sha:', result.content?.sha);
+        }
+
+        // 渲染名单视图
+        async function renderNameList() {
+            const container = document.getElementById('nameListContainer');
+            try {
+                const list = await fetchNameList();
+                if (list.length === 0) {
+                    container.innerHTML = '<div class="empty-message">石面尚空，静待第一个名字。</div>';
+                    return;
+                }
+                const sorted = [...list].sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+                let html = '';
+                sorted.forEach(entry => {
+                    const time = entry.timestamp ? new Date(entry.timestamp).toLocaleString('zh-CN', { hour12: false }) : '';
+                    html += `<div class="list-item"><span class="list-name">${escapeHtml(entry.name)}</span><span class="list-time">${time}</span></div>`;
+                });
+                container.innerHTML = html;
+                log('名单渲染完成, 共', sorted.length, '条');
+            } catch (e) {
+                container.innerHTML = '<div class="empty-message">无法读取名单，请确认仓库与文件已创建。</div>';
+                logError('渲染名单失败', e);
+            }
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+        }
+
+        // UI 交互
+        const mainView = document.getElementById('mainView');
+        const ackView = document.getElementById('ackView');
+
+        document.getElementById('btnMingXieList').addEventListener('click', () => {
+            mainView.classList.add('hidden');
+            ackView.classList.add('active');
+            renderNameList();
+        });
+        document.getElementById('btnBack').addEventListener('click', () => {
+            ackView.classList.remove('active');
+            mainView.classList.remove('hidden');
+        });
+
+        function openNameModal() {
+            document.getElementById('inputName').value = '';
+            document.getElementById('nameError').style.display = 'none';
+            toggleModal('modalNameInput', true);
+        }
+        document.getElementById('btnMingXie').addEventListener('click', openNameModal);
+        document.getElementById('btnMingXieInList').addEventListener('click', openNameModal);
+
+        document.getElementById('btnCancelName').addEventListener('click', () => toggleModal('modalNameInput', false));
+
+        document.getElementById('btnConfirmName').addEventListener('click', async () => {
+            const name = document.getElementById('inputName').value.trim();
+            const errDiv = document.getElementById('nameError');
+            if (!name) {
+                errDiv.textContent = '名字不可为空';
+                errDiv.style.display = 'block';
+                return;
+            }
+            if (name.length > 30) {
+                errDiv.textContent = '姓名请勿超过30个字符';
+                errDiv.style.display = 'block';
+                return;
+            }
+
+            const btn = document.getElementById('btnConfirmName');
+            btn.disabled = true;
+            btn.textContent = '铭刻中...';
+            errDiv.style.display = 'none';
+
+            try {
+                await appendNameToFile(name);
+                toggleModal('modalNameInput', false);
+                document.getElementById('thanksMessage').textContent = `「${name}」心意已铭刻`;
+                toggleModal('modalThanks', true);
+                if (ackView.classList.contains('active')) {
+                    renderNameList();
+                }
+            } catch (e) {
+                errDiv.textContent = '铭刻失败：' + e.message;
+                errDiv.style.display = 'block';
+                logError('铭刻操作失败', e);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '铭刻';
+            }
+        });
+
+        document.getElementById('btnCloseThanks').addEventListener('click', () => toggleModal('modalThanks', false));
+
+        // 点击模态框背景关闭
+        window.addEventListener('click', e => {
+            if (e.target.classList.contains('modal') && e.target.classList.contains('active')) {
+                e.target.classList.remove('active');
+            }
+        });
+
+        // 深色模式定时检测（每30分钟）
+        setInterval(() => {
+            const h = new Date().getHours();
+            const expected = (h >= 6 && h < 18) ? 'light' : 'dark';
+            if (document.documentElement.getAttribute('data-theme') !== expected) {
+                document.documentElement.setAttribute('data-theme', expected);
+            }
+        }, 1800000);
+
+        log('页面初始化完成');
+    })();
+</script>
+</body>
+</html>
