@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>第六章 定积分的应用 | 权威教学系统</title>
+  <!-- 专业无衬线字体 Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0,1" rel="stylesheet" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    /* ---------- Material Design 3 令牌 (蓝色多层次) ---------- */
+    :root {
+      --md-sys-color-primary: #1E5E9B;
+      --md-sys-color-on-primary: #FFFFFF;
+      --md-sys-color-primary-container: #CDE5FF;
+      --md-sys-color-on-primary-container: #001D35;
+      --md-sys-color-secondary: #535F70;
+      --md-sys-color-on-secondary: #FFFFFF;
+      --md-sys-color-secondary-container: #D6E3F5;
+      --md-sys-color-tertiary: #006A6A;
+      --md-sys-color-surface: #FBFCFE;
+      --md-sys-color-surface-variant: #EFF2F8;
+      --md-sys-color-background: #F5F7FC;
+      --md-sys-color-on-background: #191C23;
+      --md-sys-color-on-surface: #1A1E26;
+      --md-sys-color-outline: #737783;
+      --md-sys-color-outline-variant: #C2C7D0;
+      --md-sys-elevation-1: 0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+      --md-sys-elevation-2: 0 4px 8px rgba(0,0,0,0.08);
+      --md-sys-elevation-3: 0 10px 20px rgba(0,0,0,0.12);
+    }
+    body.dark {
+      --md-sys-color-primary: #8BB9FE;
+      --md-sys-color-on-primary: #00315C;
+      --md-sys-color-primary-container: #00467A;
+      --md-sys-color-on-primary-container: #CDE5FF;
+      --md-sys-color-secondary: #BAC7DB;
+      --md-sys-color-on-secondary: #263141;
+      --md-sys-color-secondary-container: #3A4759;
+      --md-sys-color-tertiary: #6ED1D1;
+      --md-sys-color-surface: #111318;
+      --md-sys-color-surface-variant: #23262F;
+      --md-sys-color-background: #0C0E13;
+      --md-sys-color-on-background: #E2E4EC;
+      --md-sys-color-on-surface: #E9ECF2;
+      --md-sys-color-outline: #8E929F;
+      --md-sys-color-outline-variant: #3B3F48;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, 'Segoe UI', system-ui, Helvetica, sans-serif;
+      background-color: var(--md-sys-color-background);
+      color: var(--md-sys-color-on-background);
+      transition: background 0.2s, color 0.2s;
+      line-height: 1.5;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 应用布局 */
+    .app-container {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+      position: relative;
+    }
+
+    /* 侧边栏 */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      height: 100%;
+      background: var(--md-sys-color-surface);
+      border-right: 1px solid var(--md-sys-color-outline-variant);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 28px 20px 32px 20px;
+      transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      z-index: 20;
+      box-shadow: var(--md-sys-elevation-2);
+      transform: translateX(0);
+    }
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    .sidebar-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--md-sys-color-primary);
+      letter-spacing: -0.3px;
+      margin-bottom: 6px;
+    }
+    .sidebar-header p {
+      font-size: 0.8rem;
+      color: var(--md-sys-color-outline);
+      border-left: 3px solid var(--md-sys-color-primary);
+      padding-left: 12px;
+      margin-top: 8px;
+    }
+
+    .nav-links {
+      margin: 36px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .nav-btn {
+      background: transparent;
+      border: none;
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 1rem;
+      font-weight: 500;
+      border-radius: 28px;
+      color: var(--md-sys-color-on-surface);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .nav-btn .material-symbols-outlined {
+      font-size: 1.4rem;
+      color: var(--md-sys-color-outline);
+    }
+    .nav-btn.active {
+      background: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+    }
+    .nav-btn.active .material-symbols-outlined {
+      color: var(--md-sys-color-primary);
+    }
+    .nav-btn:hover:not(.active) {
+      background: rgba(30, 94, 155, 0.08);
+    }
+
+    .sidebar-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: auto;
+    }
+    .action-btn {
+      background: var(--md-sys-color-surface-variant);
+      border: none;
+      padding: 14px 12px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      color: var(--md-sys-color-on-surface);
+      transition: all 0.2s;
+    }
+    .action-btn .material-symbols-outlined {
+      font-size: 1.3rem;
+    }
+    .action-btn.primary-action {
+      background: var(--md-sys-color-primary);
+      color: white;
+      box-shadow: var(--md-sys-elevation-1);
+    }
+    .action-btn.primary-action:hover {
+      background: #0f4a7a;
+      transform: translateY(-1px);
+    }
+    .action-btn.secondary-action:hover {
+      background: var(--md-sys-color-outline-variant);
+    }
+
+    /* 主内容区 */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      overflow-y: auto;
+      padding: 28px 32px;
+      scroll-behavior: smooth;
+      transition: margin-left 0.25s;
+    }
+    .main-content.expanded {
+      margin-left: 0;
+    }
+
+    .menu-button {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 25;
+      background: var(--md-sys-color-surface);
+      border: none;
+      border-radius: 32px;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--md-sys-elevation-2);
+      color: var(--md-sys-color-primary);
+    }
+    .menu-button .material-symbols-outlined {
+      font-size: 28px;
+    }
+
+    /* 卡片样式 */
+    .card {
+      background: var(--md-sys-color-surface);
+      border-radius: 28px;
+      padding: 20px 28px;
+      margin-bottom: 24px;
+      box-shadow: var(--md-sys-elevation-1);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--md-sys-color-primary);
+      letter-spacing: -0.2px;
+    }
+    .toggle-icon {
+      color: var(--md-sys-color-outline);
+      transition: transform 0.2s;
+      font-size: 1.2rem;
+    }
+    .section.active .toggle-icon {
+      transform: rotate(180deg);
+    }
+    .section-content {
+      display: none;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--md-sys-color-outline-variant);
+    }
+    .section.active .section-content {
+      display: block;
+      animation: fadeSlide 0.25s ease;
+    }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(-6px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+    ul, .text-block {
+      padding-left: 1.4rem;
+      margin: 0.8rem 0;
+    }
+    li {
+      margin-bottom: 0.5rem;
+    }
+    .highlight {
+      background: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+      padding: 0.15rem 0.4rem;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+    }
+    .sub-section {
+      margin-left: 1rem;
+      margin-top: 0.8rem;
+    }
+
+    /* 全屏模态框 */
+    .fullscreen-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--md-sys-color-background);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0.2s, opacity 0.2s;
+    }
+    .fullscreen-modal.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .modal-header-bar {
+      display: flex;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--md-sys-color-surface);
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    }
+    .back-button {
+      background: none;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      color: var(--md-sys-color-primary);
+      padding: 8px 16px;
+      border-radius: 40px;
+    }
+    .back-button:hover {
+      background: rgba(30, 94, 155, 0.08);
+    }
+    .modal-title {
+      flex: 1;
+      font-weight: 600;
+      font-size: 1.2rem;
+      text-align: center;
+      color: var(--md-sys-color-on-surface);
+    }
+    .modal-body-full {
+      flex: 1;
+      overflow: auto;
+      padding: 20px;
+    }
+
+    /* 思维导图容器 */
+    .mindmap-wrapper {
+      width: 100%;
+      height: 100%;
+      min-height: 500px;
+      background: var(--md-sys-color-background);
+      border-radius: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 演示样式 */
+    .demos-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .demo-card {
+      background: var(--md-sys-color-surface-variant);
+      border-radius: 28px;
+      padding: 20px;
+    }
+    .demo-canvas {
+      width: 100%;
+      background: var(--md-sys-color-surface);
+      border-radius: 20px;
+      display: block;
+      border: 1px solid var(--md-sys-color-outline-variant);
+      aspect-ratio: 600 / 300;
+    }
+    .slider-group {
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+    .slider-group label {
+      font-weight: 500;
+      min-width: 60px;
+    }
+    input[type="range"] {
+      flex: 1;
+      min-width: 150px;
+    }
+    .demo-control-btn {
+      background: var(--md-sys-color-primary);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 32px;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .theme-fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--md-sys-color-primary);
+      color: white;
+      border: none;
+      width: 52px;
+      height: 52px;
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--md-sys-elevation-3);
+      z-index: 99;
+      font-size: 24px;
+    }
+
+    @media (max-width: 760px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.visible-mobile {
+        transform: translateX(0);
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 20px 16px;
+      }
+      .menu-button {
+        display: flex;
+      }
+      .card {
+        padding: 16px;
+      }
+    }
+    @media (min-width: 761px) {
+      .menu-button {
+        display: none;
+      }
+      .sidebar {
+        transform: translateX(0) !important;
+      }
+    }
+    .content-pane { display: none; }
+    .content-pane.active-pane { display: block; }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <button class="menu-button" id="menuToggleBtn"><span class="material-symbols-outlined">menu</span></button>
+
+  <aside class="sidebar" id="sidebar">
+    <div>
+      <div class="sidebar-header">
+        <h2>第六章</h2>
+        <p>定积分的应用<br>元素法 · 几何 · 物理</p>
+      </div>
+      <div class="nav-links">
+        <button class="nav-btn active" data-section="1"><span class="material-symbols-outlined">insights</span><span>第一节 元素法</span></button>
+        <button class="nav-btn" data-section="2"><span class="material-symbols-outlined">shape_line</span><span>第二节 几何应用</span></button>
+        <button class="nav-btn" data-section="3"><span class="material-symbols-outlined">science</span><span>第三节 物理应用</span></button>
+      </div>
+    </div>
+    <div class="sidebar-actions">
+      <button class="action-btn secondary-action" id="openMindmapFullBtn"><span class="material-symbols-outlined">account_tree</span><span>思维导图</span></button>
+      <button class="action-btn primary-action" id="openDemosFullBtn"><span class="material-symbols-outlined">animation</span><span>交互演示</span></button>
+    </div>
+  </aside>
+
+  <main class="main-content" id="mainContent">
+    <!-- 第一节 元素法 完整详细内容 -->
+    <div id="content-1" class="content-pane active-pane">
+      <div class="card section active"><div class="card-header" onclick="toggleSection(this)"><div class="section-title">1. 引入背景</div><span class="toggle-icon">▼</span></div><div class="section-content"><ul><li>目的：应用定积分解决几何、物理问题。</li><li>核心方法：元素法（微元法）。</li><li>回顾案例：曲边梯形面积的计算过程。</li></ul></div></div>
+      <div class="card section"><div class="card-header" onclick="toggleSection(this)"><div class="section-title">2. 曲边梯形面积计算的四个步骤（回顾）</div><span class="toggle-icon">▼</span></div><div class="section-content"><ul><li>分割：将区间[a,b]分割为n个小区间，总面积A分割为部分面积ΔA_i。</li><li>近似：用f(ξ_i)Δx_i近似代替ΔA_i。</li><li>求和：得到总面积近似值 A ≈ Σf(ξ_i)Δx_i。</li><li>取极限：令λ→0，得到精确值 A = ∫ₐᵇ f(x)dx。</li></ul></div></div>
+      <div class="card section"><div class="card-header" onclick="toggleSection(this)"><div class="section-title">3. 元素法的核心思想与条件</div><span class="toggle-icon">▼</span></div><div class="section-content"><p><strong>所求量U的特性：</strong>相关性、可加性、局部近似性。面积元素 dA = f(x)dx 是ΔA的主要线性部分。</p></div></div>
+      <div class="card section"><div class="card-header" onclick="toggleSection(this)"><div class="section-title">4. 元素法的操作步骤（通用方法）</div><span class="toggle-icon">▼</span></div><div class="section-content"><ul><li>选变量定区间：选取积分变量x，确定变化区间[a,b]。</li><li>找元素dU：在[x,x+dx]上，ΔU ≈ f(x)dx，则dU = f(x)dx。</li><li>列积分求总量：U = ∫ₐᵇ f(x)dx。</li></ul></div></div>
+    </div>
+
+    <!-- 第二节 几何应用 完整详细 (包含直角坐标/极坐标/体积/弧长及例题) -->
+    <div id="content-2" class="content-pane">
+      <div class="card section"><div class="card-header" onclick="toggleSection(this)"><div class="section-title">1.1 直角坐标情形</div><span class="toggle-icon">▼</span></div><div class="section-content"><ul><li>基本模型：曲边梯形 y=f(x) (f(x)≥0), x=a, x=b 的面积 A = ∫ₐᵇ f(x)dx。</li><li>面积元素：dA = f(x)dx。</li><li>复杂图形处理：X-型区域 dA = [上曲线 - 下曲线] dx；Y-型区域 dA = [右曲线 - 左曲线] dy。</li><li><strong>例1：</strong>y²=x 与 y=x² 围成的面积。</li><li><strong>例2：</strong>y²=2x 与 y=x−4 围成的面积（选择y作变量更简便）。</li><li><strong>例3：</strong>椭圆 x²/a² + y²/b² = 1 的面积（利用对称性，参数方程换元得 πab）。</li></ul></div></div>
+      <div class="card section"><div class="card-header" onclick="toggleSection(this)"><div class="section-title">1.2 极坐标情形</div><span class="toggle-icon">▼</span></div><div class="section-content"><ul><li>基本模型：曲边扇形 ρ=ρ(θ), θ=α, θ=β 的面积。</li><li>面积元素：dA = (1/2)[ρ(θ)]² dθ。</li><li>面积公式：A = ∫_α^β (1/2)[ρ(θ)]² dθ。</li><li><strong>例4：</strong>阿基米德螺线 ρ=aθ 从0到2π与极轴围成的面积。</li><li><strong>例5：</strong>心形线 ρ=a(1+cosθ) 所围成的面积（利用对称性）。</li></ul></div></div>
+      <div class="card section"><div class="card-header" onclick="toggleSection(this)"><div class="section-title">2.1 旋转体的体积</div><span class="toggle-icon">▼</span></div><div class="section-content"><ul><li>绕X轴旋转：体积元素 dV = π[f(x)]² dx，体积 V = ∫ₐᵇ π[f(x)]² dx。</li><li><strong>例6：</strong>直角三角形绕X轴旋转成圆锥的体积。</li><li><strong>例7：</strong>椭圆绕X轴旋转成旋转椭球体的体积。</li><li>绕Y轴旋转：体积公式 V = ∫_c^d π[φ(y)]² dy。</li><li><strong>例8：</strong>摆线一拱分别绕X轴和Y轴旋转的体积（绕Y轴时用“大减小”法）。</li></ul></div></div>
+      <div class="card section"><div class="card-header" onclick="toggleSection(this)"><div class="section-title">2.2 平行截面面积已知的立体的体积</div><span class="toggle-icon">▼</span></div><div class="section-content"><ul><li>通用方法：若垂直于X轴的截面面积为A(x)，则体积元素 dV = A(x) dx，体积 V = ∫ₐᵇ A(x) dx。</li><li><strong>例9：</strong>平面斜截圆柱体所得立体的体积（截面为直角三角形）。</li><li><strong>例10：</strong>正劈锥体的体积（截面为等腰三角形）。</li></ul></div></div>
+      <div class="card section"><div class="card-header" onclick="toggleSection(this)"><div class="section-title">3. 平面曲线的弧长</div><span class="toggle-icon">▼</span></div><div class="section-content"><ul><li>弧长的概念：光滑曲线弧是可求长的，其弧长是内接折线长度的极限。</li><li><strong>参数方程</strong> x=φ(t), y=ψ(t)：弧长元素 ds = √[φ'²(t)+ψ'²(t)] dt，弧长 s = ∫_α^β √[φ'²+ψ'²] dt。<br><strong>例12：</strong>摆线一拱的长度 = 8a。</li><li><strong>直角坐标</strong> y=f(x)：弧长元素 ds = √[1 + (dy/dx)²] dx，s = ∫ₐᵇ √[1+f'²(x)] dx。<br><strong>例11：</strong>y=(2/3)x^(3/2) 一段弧的长度。</li><li><strong>极坐标</strong> ρ=ρ(θ)：弧长元素 ds = √[ρ²(θ) + (dρ/dθ)²] dθ，s = ∫_α^β √[ρ²+ρ'²] dθ。<br><strong>例13：</strong>阿基米德螺线一段的弧长。</li></ul></div></div>
+    </div>
+
+    <!-- 第三节 物理应用 完整详细 -->
+    <div id="content-3" class="content-pane">
+      <div class="card section"><div class="card-header" onclick="toggleSection(this)"><div class="section-title">1. 变力做功</div><span class="toggle-icon">▼</span></div><div class="section-content"><ul><li>力 F(x) 随位置变化，功元素 dW = F(x) dx，总功 W = ∫ₐᵇ F(x) dx。</li><li>典型场景：弹簧拉伸、抽水做功。</li></ul></div></div>
+      <div class="card section"><div class="card-header" onclick="toggleSection(this)"><div class="section-title">2. 液体静压力</div><span class="toggle-icon">▼</span></div><div class="section-content"><ul><li>压强随深度线性增加：p = ρg x。</li><li>压力元素：dP = ρg x · b(x) dx（b(x)为宽度）。</li><li>总压力：P = ∫ₐᵇ ρg x b(x) dx。</li><li>典型场景：闸门、水坝受力。</li></ul></div></div>
+      <div class="card section"><div class="card-header" onclick="toggleSection(this)"><div class="section-title">3. 万有引力</div><span class="toggle-icon">▼</span></div><div class="section-content"><ul><li>引力为矢量，需分量积分。</li><li>引力元素：由质量微元 dm = ρ dy 产生。</li><li>利用对称性简化（如 F_y = 0）。</li><li>典型场景：细杆对质点的引力。</li></ul></div></div>
+    </div>
+  </main>
+</div>
+
+<button class="theme-fab" id="themeFab">🌓</button>
+
+<!-- 全屏: 思维导图 -->
+<div id="mindmapFullscreen" class="fullscreen-modal">
+  <div class="modal-header-bar">
+    <button class="back-button" id="closeMindmapFull"><span class="material-symbols-outlined">arrow_back</span> 返回</button>
+    <div class="modal-title">知识拓扑 · 定积分应用</div>
+    <div style="width: 80px;"></div>
+  </div>
+  <div class="modal-body-full"><div id="mindmapContainer" class="mindmap-wrapper"></div></div>
+</div>
+
+<!-- 全屏: 交互演示 (摆线+阿基米德螺线) -->
+<div id="demosFullscreen" class="fullscreen-modal">
+  <div class="modal-header-bar">
+    <button class="back-button" id="closeDemosFull"><span class="material-symbols-outlined">arrow_back</span> 返回</button>
+    <div class="modal-title">动态几何演示</div>
+    <div style="width: 80px;"></div>
+  </div>
+  <div class="modal-body-full">
+    <div class="demos-grid">
+      <div class="demo-card"><h4 style="color:var(--md-sys-color-primary);">摆线 (Cycloid)</h4>
+        <canvas id="cycloidCanvas" class="demo-canvas" width="600" height="300"></canvas>
+        <div class="slider-group"><label>半径 a</label><input type="range" id="cycloidA" min="15" max="70" value="40" step="1"><span id="cycloidAVal">40</span><button id="cycloidPlayBtn" class="demo-control-btn">暂停</button></div>
+        <div style="font-size:0.75rem; margin-top:8px;">参数方程: x = a(t - sin t), y = a(1 - cos t) &nbsp; 面积 = 3πa² &nbsp; 一拱弧长 = 8a</div>
+      </div>
+      <div class="demo-card"><h4 style="color:var(--md-sys-color-tertiary);">阿基米德螺线 (Archimedean Spiral)</h4>
+        <canvas id="spiralCanvas" class="demo-canvas" width="600" height="300"></canvas>
+        <div class="slider-group"><label>偏移 a</label><input type="range" id="spiralA" min="0" max="30" value="0"><span id="spiralAVal">0</span></div>
+        <div class="slider-group"><label>螺距 b</label><input type="range" id="spiralB" min="8" max="45" value="22"><span id="spiralBVal">22</span><button id="spiralPlayBtn" class="demo-control-btn">暂停</button></div>
+        <div style="font-size:0.75rem;">极坐标 ρ = a + bθ &nbsp; 螺距 = 2πb &nbsp; 动画动态点</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---------- 全局辅助 ----------
+  function toggleSection(header) {
+    const section = header.closest('.section');
+    section.classList.toggle('active');
+  }
+
+  // 侧边栏与章节切换
+  const navBtns = document.querySelectorAll('.nav-btn');
+  const panes = { 1: document.getElementById('content-1'), 2: document.getElementById('content-2'), 3: document.getElementById('content-3') };
+  function setActiveSection(sectionId) {
+    Object.values(panes).forEach(pane => pane.classList.remove('active-pane'));
+    panes[sectionId].classList.add('active-pane');
+    navBtns.forEach(btn => {
+      if (btn.getAttribute('data-section') == sectionId) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+  }
+  navBtns.forEach(btn => {
+    btn.addEventListener('click', () => setActiveSection(parseInt(btn.getAttribute('data-section'))));
+  });
+  // 默认第一节激活
+  setActiveSection(1);
+  document.querySelectorAll('.section').forEach(card => card.classList.add('active'));
+
+  // 侧边栏移动端控制
+  const menuBtn = document.getElementById('menuToggleBtn');
+  const sidebar = document.getElementById('sidebar');
+  if (menuBtn) {
+    menuBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('visible-mobile');
+    });
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 760 && !sidebar.contains(e.target) && !menuBtn.contains(e.target) && sidebar.classList.contains('visible-mobile')) {
+        sidebar.classList.remove('visible-mobile');
+      }
+    });
+  }
+
+  // 全屏模态框控制
+  const mindmapModal = document.getElementById('mindmapFullscreen');
+  const demosModal = document.getElementById('demosFullscreen');
+  document.getElementById('openMindmapFullBtn').onclick = () => { mindmapModal.classList.add('active'); if (!window.mindmapBuilt) setTimeout(buildMindmap, 80); else rebuildMindmap(); };
+  document.getElementById('openDemosFullBtn').onclick = () => { demosModal.classList.add('active'); setTimeout(() => window.dispatchEvent(new Event('resize')), 50); };
+  document.getElementById('closeMindmapFull').onclick = () => mindmapModal.classList.remove('active');
+  document.getElementById('closeDemosFull').onclick = () => demosModal.classList.remove('active');
+  // 点击遮罩关闭（可选）
+  [mindmapModal, demosModal].forEach(modal => {
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+  });
+
+  // 思维导图构建 (支持缩放拖拽)
+  function rebuildMindmap() {
+    const container = document.getElementById('mindmapContainer');
+    if (container) container.innerHTML = '';
+    buildMindmap();
+  }
+  function buildMindmap() {
+    const container = document.getElementById('mindmapContainer');
+    if (!container) return;
+    const width = container.clientWidth;
+    const height = 550;
+    const treeData = {
+      name: "第六章 定积分的应用",
+      children: [
+        { name: "元素法 (微元法)", children: [{ name: "黎曼和理论基础" }, { name: "三步: 选变量→找dU→积分" }] },
+        { name: "几何应用", children: [
+          { name: "面积", children: [{ name: "直角坐标 (X/Y型)" }, { name: "极坐标 (扇形微元)" }] },
+          { name: "体积", children: [{ name: "旋转体 (圆盘/壳)" }, { name: "截面已知 (卡瓦列里)" }] },
+          { name: "弧长", children: [{ name: "参数/直角/极坐标" }, { name: "ds = √(dx²+dy²)" }] }
+        ] },
+        { name: "物理应用", children: [{ name: "变力做功" }, { name: "液体压力" }, { name: "万有引力" }] }
+      ]
+    };
+    function flatten(node, parent=null, depth=0, list=[]) {
+      const id = `n-${list.length}`;
+      list.push({id, name: node.name, parentId: parent, depth});
+      if (node.children) node.children.forEach(ch => flatten(ch, id, depth+1, list));
+      return list;
+    }
+    let nodes = flatten(treeData);
+    let links = nodes.filter(d => d.parentId).map(d => ({source: d.parentId, target: d.id}));
+    const depthMap = {};
+    nodes.forEach(n => { depthMap[n.depth] = (depthMap[n.depth] || 0) + 1; });
+    const startX = 140;
+    const vSpace = 58;
+    const hSpace = 200;
+    nodes.forEach(n => {
+      const sameDepth = nodes.filter(x => x.depth === n.depth);
+      const idx = sameDepth.indexOf(n);
+      const total = sameDepth.length;
+      n.x = startX + n.depth * hSpace;
+      n.y = (height/2) - (total-1)*vSpace/2 + idx * vSpace;
+    });
+    const svg = d3.select('#mindmapContainer').append('svg')
+      .attr('width', width).attr('height', height)
+      .style('background', 'transparent').style('cursor', 'grab');
+    const zoomGroup = svg.append('g');
+    const zoom = d3.zoom().scaleExtent([0.3, 3]).on('zoom', (event) => { zoomGroup.attr('transform', event.transform); });
+    svg.call(zoom).on('dblclick.zoom', null);
+    svg.append('defs').append('marker')
+      .attr('id', 'arrowMm')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 8).attr('refY', 0).attr('orient', 'auto')
+      .append('path').attr('d', 'M0,-5L10,0L0,5').attr('fill', 'var(--md-sys-color-outline)');
+    let linkLines = zoomGroup.selectAll('.link').data(links).enter().append('line')
+      .attr('stroke', 'var(--md-sys-color-outline)').attr('stroke-width', 1.8)
+      .attr('marker-end', 'url(#arrowMm)')
+      .attr('x1', d => nodes.find(n=>n.id===d.source).x)
+      .attr('y1', d => nodes.find(n=>n.id===d.source).y)
+      .attr('x2', d => nodes.find(n=>n.id===d.target).x)
+      .attr('y2', d => nodes.find(n=>n.id===d.target).y);
+    let groups = zoomGroup.selectAll('.node-group').data(nodes).enter().append('g')
+      .attr('class', 'node-group')
+      .attr('transform', d=>`translate(${d.x},${d.y})`)
+      .call(d3.drag().on('drag', function(ev, d) {
+        d.x = ev.x; d.y = ev.y;
+        d3.select(this).attr('transform', `translate(${d.x},${d.y})`);
+        linkLines.attr('x1', l => nodes.find(n=>n.id===l.source).x)
+          .attr('y1', l => nodes.find(n=>n.id===l.source).y)
+          .attr('x2', l => nodes.find(n=>n.id===l.target).x)
+          .attr('y2', l => nodes.find(n=>n.id===l.target).y);
+      }));
+    groups.each(function(d) {
+      const txt = d3.select(this).append('text').text(d.name).attr('text-anchor','middle')
+        .attr('dominant-baseline','middle').style('font-size','12px').style('fill','currentColor').style('font-weight','500');
+      const bbox = txt.node().getBBox();
+      const pad = 12;
+      const rectW = bbox.width + pad*2, rectH = bbox.height + pad*2;
+      d3.select(this).insert('rect', 'text')
+        .attr('width', rectW).attr('height', rectH)
+        .attr('x', -rectW/2).attr('y', -rectH/2)
+        .attr('rx', 16).attr('fill', 'var(--md-sys-color-surface)')
+        .attr('stroke', 'var(--md-sys-color-primary)').attr('stroke-width', 1.2);
+    });
+    window.mindmapBuilt = true;
+  }
+
+  // 摆线动画模块
+  (function initCycloid() {
+    const canvas = document.getElementById('cycloidCanvas');
+    if (!canvas) return;
+    let ctx = canvas.getContext('2d');
+    let a = 40, t = 0, isPlaying = true, anim;
+    const aSlider = document.getElementById('cycloidA'), aVal = document.getElementById('cycloidAVal');
+    const playBtn = document.getElementById('cycloidPlayBtn');
+    function resizeCanvas() { const rect = canvas.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; draw(); }
+    function cycloidPt(t, a) { return { x: a*(t - Math.sin(t)), y: a*(1 - Math.cos(t)) }; }
+    function draw() {
+      if (!ctx || canvas.width === 0) return;
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0,0,w,h);
+      const offX = 40, offY = h - 35;
+      ctx.beginPath(); ctx.moveTo(0, offY); ctx.lineTo(w, offY); ctx.strokeStyle = '#aaa'; ctx.stroke();
+      ctx.beginPath();
+      for (let i=0;i<=200;i++) { let ti=(i/200)*2*Math.PI, p=cycloidPt(ti,a); let x=offX+p.x, y=offY-p.y; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }
+      ctx.lineTo(offX+2*Math.PI*a, offY); ctx.fillStyle = 'rgba(30,94,155,0.12)'; ctx.fill();
+      ctx.beginPath();
+      for (let ti=0; ti<=4*Math.PI; ti+=0.05){ let p=cycloidPt(ti,a); let x=offX+p.x, y=offY-p.y; if(ti===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }
+      ctx.strokeStyle = '#1E5E9B'; ctx.lineWidth=2; ctx.stroke();
+      let p0 = cycloidPt(t,a), cx = offX + a*t, cy = offY - a;
+      ctx.beginPath(); ctx.arc(cx,cy,a,0,2*Math.PI); ctx.strokeStyle='#e63946'; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(offX+p0.x, offY-p0.y); ctx.stroke();
+      ctx.beginPath(); ctx.arc(offX+p0.x, offY-p0.y,5,0,2*Math.PI); ctx.fillStyle='#e63946'; ctx.fill();
+    }
+    function animate() { if (!isPlaying) return; t+=0.045; if (t>4*Math.PI) t=0; draw(); anim = requestAnimationFrame(animate); }
+    aSlider?.addEventListener('input',()=>{ a=parseFloat(aSlider.value); aVal.innerText=a; if(!isPlaying) draw(); });
+    playBtn?.addEventListener('click',()=>{ isPlaying=!isPlaying; playBtn.innerText=isPlaying?'暂停':'播放'; if(isPlaying) animate(); });
+    window.addEventListener('resize', ()=>{ resizeCanvas(); if(!isPlaying) draw(); });
+    resizeCanvas(); animate();
+  })();
+  // 阿基米德螺线模块
+  (function initSpiral() {
+    const canvas = document.getElementById('spiralCanvas');
+    if (!canvas) return;
+    let ctx = canvas.getContext('2d');
+    let a=0, b=22, theta=0, isPlaying=true, anim;
+    const aS = document.getElementById('spiralA'), bS = document.getElementById('spiralB');
+    const aV = document.getElementById('spiralAVal'), bV = document.getElementById('spiralBVal');
+    const playBtn = document.getElementById('spiralPlayBtn');
+    function resizeCanvas() { const rect = canvas.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; draw(); }
+    function cartFromPolar(r, ang) { return {x: r*Math.cos(ang), y: r*Math.sin(ang)}; }
+    function draw() {
+      if (!ctx || canvas.width===0) return;
+      const w=canvas.width, h=canvas.height;
+      ctx.clearRect(0,0,w,h);
+      const cx = w/2, cy = h/2;
+      ctx.beginPath();
+      for (let i=0;i<=800;i++) { let ang = (i/800)*6*Math.PI, rho = a + b*ang; let p = cartFromPolar(rho, ang); let x = cx+p.x, y = cy-p.y; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }
+      ctx.strokeStyle = '#9b59b6'; ctx.lineWidth=2; ctx.stroke();
+      let rhoNow = a + b*theta, pNow = cartFromPolar(rhoNow, theta);
+      let px = cx + pNow.x, py = cy - pNow.y;
+      ctx.beginPath(); ctx.arc(px,py,6,0,2*Math.PI); ctx.fillStyle='#e67e22'; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(px,py); ctx.strokeStyle='#e67e22'; ctx.stroke();
+    }
+    function animateS() { if (!isPlaying) return; theta+=0.05; if (theta>6*Math.PI) theta=0; draw(); anim = requestAnimationFrame(animateS); }
+    aS?.addEventListener('input',()=>{ a=parseFloat(aS.value); aV.innerText=a; if(!isPlaying) draw(); });
+    bS?.addEventListener('input',()=>{ b=parseFloat(bS.value); bV.innerText=b; if(!isPlaying) draw(); });
+    playBtn?.addEventListener('click',()=>{ isPlaying=!isPlaying; playBtn.innerText=isPlaying?'暂停':'播放'; if(isPlaying) animateS(); });
+    window.addEventListener('resize', ()=>{ resizeCanvas(); if(!isPlaying) draw(); });
+    resizeCanvas(); animateS();
+  })();
+
+  // 主题切换
+  const themeFab = document.getElementById('themeFab');
+  if (localStorage.getItem('md3theme') === 'dark') document.body.classList.add('dark');
+  themeFab.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    localStorage.setItem('md3theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+  });
+</script>
+</body>
+</html>
