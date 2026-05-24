@@ -1,0 +1,10 @@
+// map/map.json
+{
+    "levels": [
+        {
+            "id": "level1",
+            "name": "Block Desert",
+            "file": "level1.json"
+        }
+    ]
+}
