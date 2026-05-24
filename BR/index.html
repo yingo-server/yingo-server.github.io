@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Block Run</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="rotate-hint" class="overlay">
+        <div class="rotate-icon">&#x21C4;</div>
+        <p>请旋转设备至横屏</p>
+    </div>
+    <div id="logo-overlay" class="overlay hidden">
+        <div class="logo-text">block run</div>
+        <div class="logo-sub">BLOCK DESERT</div>
+    </div>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="mobile-controls" class="hidden">
+            <div id="joystick-zone">
+                <div id="joystick-base"><div id="joystick-thumb"></div></div>
+            </div>
+            <div id="action-buttons">
+                <button class="action-btn" id="btn-jump"><span class="btn-icon">&#x25B2;</span></button>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
