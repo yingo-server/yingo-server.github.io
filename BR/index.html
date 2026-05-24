@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Block Run</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 横屏提示 -->
+    <div id="rotate-hint" class="overlay">
+        <div class="rotate-icon">&#x21C4;</div>
+        <p>请旋转设备至横屏</p>
+    </div>
+
+    <!-- Logo -->
+    <div id="logo-overlay" class="overlay hidden">
+        <div class="logo-text">block run</div>
+        <div class="logo-sub">BLOCK DESERT</div>
+    </div>
+
+    <!-- 游戏容器 -->
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+
+        <!-- 控制器 -->
+        <div id="mobile-controls" class="hidden">
+            <!-- 摇杆 -->
+            <div id="joystick-zone">
+                <div id="joystick-base">
+                    <div id="joystick-thumb"></div>
+                </div>
+            </div>
+
+            <!-- 动作按钮 -->
+            <div id="action-buttons">
+                <button class="action-btn" id="btn-run" data-action="run">
+                    <span class="btn-icon">&#x25B6;&#x25B6;</span>
+                </button>
+                <button class="action-btn" id="btn-jump" data-action="jump">
+                    <span class="btn-icon">&#x25B2;</span>
+                </button>
+                <button class="action-btn" id="btn-slide" data-action="slide">
+                    <span class="btn-icon">&#x25BC;</span>
+                </button>
+                <button class="action-btn" id="btn-skill" data-action="skill">
+                    <span class="btn-icon">&#x25C6;</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
