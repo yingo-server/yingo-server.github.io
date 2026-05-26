@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Block Run</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 横屏提示已移除，始终显示 logo -->
+    <div id="logo-overlay" class="overlay">
+        <div class="logo-text">block run</div>
+        <div class="logo-sub">BLOCK DESERT</div>
+    </div>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="divider"></div>
+        <div id="countdown"></div>
+    </div>
+    <div id="transition-overlay"></div>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
