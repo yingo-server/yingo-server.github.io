@@ -1,0 +1,16 @@
+{
+  "name": "移动浮岛",
+  "startPosition": { "x": 0, "y": 2, "z": 0 },
+  "platforms": [
+    { "x": 0, "y": 0, "z": 0, "width": 5, "depth": 5, "height": 0.5, "isGoal": false },
+    { "x": [5, 15], "y": 2, "z": 8, "width": 3, "depth": 3, "height": 0.5, "speed": 0.4, "isGoal": false, "tooltip": "平台左右移动，等它靠近再跳" },
+    { "x": 15, "y": 2, "z": 8, "width": 3, "depth": 3, "height": 0.5, "isGoal": false },
+    { "x": [20, 30], "y": 2, "z": 18, "width": 3, "depth": 3, "height": 0.5, "speed": 0.5, "isGoal": false },
+    { "x": 30, "y": 2, "z": 18, "width": 4, "depth": 4, "height": 0.5, "isGoal": true, "tooltip": "终点" }
+  ],
+  "walls": [],
+  "decorations": [
+    { "type": "arrow", "x": 2, "y": 1, "z": 4, "orientation": "forward", "scale": 0.6 },
+    { "type": "arrow", "x": 12, "y": 1, "z": 12, "orientation": "forward", "scale": 0.6 }
+  ]
+}
