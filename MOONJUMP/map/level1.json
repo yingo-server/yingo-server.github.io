@@ -1,0 +1,38 @@
+{
+  "name": "沙漠跑酷 · 完全教学",
+  "startPosition": { "x": 0, "y": 2, "z": 0 },
+  "platforms": [
+    { "x": 0, "y": 0, "z": 0, "width": 5, "depth": 5, "height": 0.5, "tooltip": "WASD 移动，鼠标/触摸旋转视角" },
+    { "x": 5, "y": 0, "z": 0, "width": 4, "depth": 4, "height": 0.5, "tooltip": "普通跳跃（空格/触摸右侧并快速抬起）" },
+    { "x": 10, "y": 0, "z": 0, "width": 4, "depth": 4, "height": 0.5, "tooltip": "按住 W 面向墙壁可自动攀爬" },
+    { "x": 10, "y": 3, "z": 0, "width": 3, "depth": 3, "height": 0.5, "tooltip": "攀爬后落地" },
+    { "x": 6, "y": 3, "z": 4, "width": 3, "depth": 3, "height": 0.5 },
+    { "x": 2, "y": 6, "z": 4, "width": 3, "depth": 3, "height": 0.5, "tooltip": "之字形攀爬" },
+    { "x": 2, "y": 9, "z": 0, "width": 3, "depth": 3, "height": 0.5 },
+    { "x": -2, "y": 9, "z": -4, "width": 4, "depth": 4, "height": 0.5 },
+    { "x": -2, "y": 9, "z": -8, "width": 3, "depth": 3, "height": 0.5, "tooltip": "移动平台（左右）" },
+    { "x": [-6, 2], "y": 9, "z": -8, "width": 3, "depth": 3, "height": 0.5, "speed": 0.5 },
+    { "x": 2, "y": 9, "z": -8, "width": 3, "depth": 3, "height": 0.5 },
+    { "x": 2, "y": 9, "z": -12, "width": 2.5, "depth": 2.5, "height": 0.5, "tooltip": "窄桥，小心行走" },
+    { "x": 6, "y": 9, "z": -12, "width": 3, "depth": 3, "height": 0.5 },
+    { "x": 6, "y": 12, "z": -12, "width": 3, "depth": 3, "height": 0.5, "tooltip": "垂直移动平台" },
+    { "x": 6, "y": [12, 16], "z": -8, "width": 3, "depth": 3, "height": 0.5, "speed": 0.5 },
+    { "x": 6, "y": 16, "z": -8, "width": 3, "depth": 3, "height": 0.5 },
+    { "x": 10, "y": 16, "z": -8, "width": 3, "depth": 3, "height": 0.5 },
+    { "x": 10, "y": 16, "z": -3, "width": 3, "depth": 3, "height": 0.5 },
+    { "x": 14, "y": 16, "z": -3, "width": 3, "depth": 3, "height": 0.5 },
+    { "x": 14, "y": 16, "z": 2, "width": 5, "depth": 5, "height": 0.5, "isGoal": true, "tooltip": "终点，站定5秒过关" }
+  ],
+  "walls": [
+    { "x": 10, "y": 1.5, "z": 2, "width": 4, "height": 3, "depth": 0.5 },
+    { "x": 4, "y": 4.5, "z": 1, "width": 3, "height": 3, "depth": 0.5 },
+    { "x": 0, "y": 7.5, "z": 1, "width": 3, "height": 3, "depth": 0.5 }
+  ],
+  "decorations": [
+    { "type": "arrow", "x": 2, "y": 1, "z": 3, "orientation": "forward", "scale": 0.6 },
+    { "type": "arrow", "x": 8, "y": 4, "z": 2, "orientation": "forward", "scale": 0.5 },
+    { "type": "arrow", "x": -4, "y": 10, "z": -6, "orientation": "right", "scale": 0.5 },
+    { "type": "arrow", "x": 4, "y": 10, "z": -13, "orientation": "right", "scale": 0.5 },
+    { "type": "arrow", "x": 8, "y": 14, "z": -10, "orientation": "forward", "scale": 0.5 }
+  ]
+}
