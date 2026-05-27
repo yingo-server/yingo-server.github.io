@@ -1,0 +1,23 @@
+{
+  "name": "荒芜戈壁",
+  "startPosition": { "x": 0, "y": 2, "z": 0 },
+  "platforms": [
+    { "x": 0, "y": -1, "z": 0, "width": 14, "depth": 14, "height": 0.5, "tooltip": "出发" },
+    { "x": 16, "y": -1, "z": -12, "width": 4, "depth": 4, "height": 0.5, "tooltip": "小心跳跃" },
+    { "x": 28, "y": -1, "z": -24, "width": 6, "depth": 6, "height": 0.5, "tooltip": "休息点" },
+    { "x": 28, "y": -1, "z": -40, "width": 2, "depth": 14, "height": 0.5, "tooltip": "独木桥" },
+    { "x": 40, "y": 0.5, "z": -48, "width": 5, "depth": 5, "height": 0.5, "speed": 0.45, "x": [38, 46], "tooltip": "移动平台" },
+    { "x": 52, "y": -1, "z": -54, "width": 8, "depth": 8, "height": 0.5, "tooltip": "中心区" },
+    { "x": 64, "y": -1, "z": -64, "width": 3, "depth": 14, "height": 0.5, "tooltip": "最后窄桥" },
+    { "x": 76, "y": -1, "z": -72, "width": 10, "depth": 10, "height": 0.5, "isGoal": true, "tooltip": "终点！" }
+  ],
+  "walls": [
+    { "x": 28, "y": 1, "z": -34, "width": 12, "height": 5, "depth": 0.5 },
+    { "x": 52, "y": 1, "z": -48, "width": 8, "height": 5, "depth": 0.5 }
+  ],
+  "decorations": [
+    { "type": "arrow", "x": 0, "y": -0.49, "z": -4, "scale": 0.9, "orientation": "forward" },
+    { "type": "arrow", "x": 28, "y": -0.49, "z": -36, "scale": 0.7, "orientation": "up" },
+    { "type": "arrow", "x": 52, "y": -0.49, "z": -58, "scale": 0.7, "orientation": "forward" }
+  ]
+}
