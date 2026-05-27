@@ -1,0 +1,20 @@
+{
+  "name": "之字攀墙",
+  "startPosition": { "x": 0, "y": 2, "z": 0 },
+  "platforms": [
+    { "x": 0, "y": 0, "z": 0, "width": 5, "depth": 5, "height": 0.5 },
+    { "x": 8, "y": 0, "z": 8, "width": 3, "depth": 3, "height": 0.5 },
+    { "x": 0, "y": 4, "z": 16, "width": 3, "depth": 3, "height": 0.5 },
+    { "x": 8, "y": 8, "z": 24, "width": 3, "depth": 3, "height": 0.5 },
+    { "x": 0, "y": 12, "z": 32, "width": 5, "depth": 5, "height": 0.5, "isGoal": true }
+  ],
+  "walls": [
+    { "x": 4, "y": 2, "z": 4, "width": 1, "height": 4, "depth": 3 },
+    { "x": 4, "y": 6, "z": 12, "width": 1, "height": 4, "depth": 3 },
+    { "x": 4, "y": 10, "z": 20, "width": 1, "height": 4, "depth": 3 }
+  ],
+  "decorations": [
+    { "type": "arrow", "x": 4, "y": 3, "z": 2, "orientation": "forward", "scale": 0.5 },
+    { "type": "arrow", "x": 6, "y": 1, "z": 6, "orientation": "right", "scale": 0.5 }
+  ]
+}
