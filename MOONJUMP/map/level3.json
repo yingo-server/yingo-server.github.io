@@ -1,0 +1,29 @@
+{
+  "name": "暗影矿井",
+  "startPosition": { "x": 0, "y": 6, "z": 0 },
+  "platforms": [
+    { "x": 0, "y": 3, "z": 0, "width": 8, "depth": 8, "height": 0.5, "tooltip": "井口" },
+    { "x": -10, "y": 5, "z": -12, "width": 3, "depth": 3, "height": 0.5, "tooltip": "左路" },
+    { "x": 10, "y": 5, "z": -12, "width": 3, "depth": 3, "height": 0.5, "tooltip": "右路" },
+    { "x": -18, "y": [4, 8], "z": -24, "width": 3, "depth": 3, "height": 0.5, "speed": 0.4, "tooltip": "升降左" },
+    { "x": 18, "y": [4, 8], "z": -24, "width": 3, "depth": 3, "height": 0.5, "speed": 0.4, "tooltip": "升降右" },
+    { "x": -22, "y": 8, "z": -36, "width": 4, "depth": 4, "height": 0.5, "tooltip": "" },
+    { "x": 22, "y": 8, "z": -36, "width": 4, "depth": 4, "height": 0.5, "tooltip": "" },
+    { "x": [-20, 20], "y": 10, "z": -48, "width": 6, "depth": 6, "height": 0.5, "speed": 0.5, "tooltip": "横向移动" },
+    { "x": 0, "y": 12, "z": -60, "width": 5, "depth": 5, "height": 0.5, "tooltip": "" },
+    { "x": -10, "y": 14, "z": -74, "width": 2, "depth": 12, "height": 0.5, "tooltip": "窄桥" },
+    { "x": 10, "y": 14, "z": -74, "width": 2, "depth": 12, "height": 0.5, "tooltip": "" },
+    { "x": 0, "y": 16, "z": -88, "width": 8, "depth": 8, "height": 0.5, "isGoal": true, "tooltip": "" }
+  ],
+  "walls": [
+    { "x": -18, "y": 4, "z": -24, "width": 4, "height": 6, "depth": 0.5 },
+    { "x": 18, "y": 4, "z": -24, "width": 4, "height": 6, "depth": 0.5 },
+    { "x": 0, "y": 10, "z": -48, "width": 8, "height": 5, "depth": 0.5 },
+    { "x": -10, "y": 14, "z": -74, "width": 2, "height": 4, "depth": 0.5 },
+    { "x": 10, "y": 14, "z": -74, "width": 2, "height": 4, "depth": 0.5 }
+  ],
+  "decorations": [
+    { "type": "arrow", "x": -10, "y": 5.25, "z": -14, "scale": 0.6, "orientation": "forward" },
+    { "type": "arrow", "x": 10, "y": 5.25, "z": -14, "scale": 0.6, "orientation": "forward" }
+  ]
+}
