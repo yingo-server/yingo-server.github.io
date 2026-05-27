@@ -1,0 +1,24 @@
+{
+  "name": "深渊回廊",
+  "startPosition": { "x": 0, "y": 2, "z": 0 },
+  "platforms": [
+    { "x": 0, "y": -1, "z": 0, "width": 12, "depth": 12, "height": 0.5, "tooltip": "起点" },
+    { "x": 16, "y": -1, "z": -6, "width": 4, "depth": 4, "height": 0.5, "tooltip": "第一跳" },
+    { "x": 26, "y": -1, "z": -16, "width": 6, "depth": 6, "height": 0.5, "tooltip": "分岔口" },
+    { "x": 36, "y": -1, "z": -26, "width": 3, "depth": 14, "height": 0.5, "tooltip": "左路长桥" },
+    { "x": 26, "y": -1, "z": -30, "width": 3, "depth": 10, "height": 0.5, "tooltip": "右路短桥" },
+    { "x": 46, "y": -1, "z": -34, "width": 8, "depth": 8, "height": 0.5, "tooltip": "左路终点前" },
+    { "x": 36, "y": -1, "z": -38, "width": 6, "depth": 6, "height": 0.5, "tooltip": "右路终点前" },
+    { "x": 56, "y": 0, "z": -40, "width": 4, "depth": 4, "height": 0.5, "speed": 0.5, "y": [-1, 2], "tooltip": "升降平台" },
+    { "x": 66, "y": -1, "z": -46, "width": 10, "depth": 10, "height": 0.5, "isGoal": true, "tooltip": "终点！" }
+  ],
+  "walls": [
+    { "x": 26, "y": 1, "z": -22, "width": 10, "height": 5, "depth": 0.5 },
+    { "x": 46, "y": 1, "z": -30, "width": 8, "height": 5, "depth": 0.5 }
+  ],
+  "decorations": [
+    { "type": "arrow", "x": 0, "y": -0.49, "z": -4, "scale": 0.8, "orientation": "forward" },
+    { "type": "arrow", "x": 26, "y": -0.49, "z": -20, "scale": 0.7, "orientation": "up" },
+    { "type": "arrow", "x": 46, "y": -0.49, "z": -36, "scale": 0.6, "orientation": "forward" }
+  ]
+}
