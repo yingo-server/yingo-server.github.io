@@ -1,0 +1,16 @@
+{
+  "name": "岩壁试炼",
+  "startPosition": { "x": 0, "y": 2, "z": 0 },
+  "platforms": [
+    { "x": 0, "y": 0, "z": 0, "width": 4, "depth": 4, "height": 0.5, "isGoal": false, "tooltip": "按住 W 面向墙壁自动攀爬" },
+    { "x": 0, "y": 3, "z": 10, "width": 3, "depth": 3, "height": 0.5, "isGoal": false, "tooltip": "落地时注意缓冲" },
+    { "x": 0, "y": 6, "z": 20, "width": 4, "depth": 4, "height": 0.5, "isGoal": true, "tooltip": "站稳 5 秒过关" }
+  ],
+  "walls": [
+    { "x": 0, "y": 1.5, "z": 5, "width": 3, "height": 3, "depth": 0.5 },
+    { "x": 0, "y": 4.5, "z": 15, "width": 3, "height": 3, "depth": 0.5 }
+  ],
+  "decorations": [
+    { "type": "arrow", "x": 0, "y": 1, "z": 3, "orientation": "forward", "scale": 0.8 }
+  ]
+}
