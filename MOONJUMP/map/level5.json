@@ -1,0 +1,24 @@
+{
+  "name": "高空孤塔",
+  "startPosition": { "x": 0, "y": 5, "z": 0 },
+  "platforms": [
+    { "x": 0, "y": 2, "z": 0, "width": 8, "depth": 8, "height": 0.5, "tooltip": "塔底" },
+    { "x": 8, "y": 3.5, "z": -9, "width": 3, "depth": 3, "height": 0.5, "tooltip": "" },
+    { "x": 14, "y": 5, "z": -18, "width": 4, "depth": 4, "height": 0.5, "tooltip": "" },
+    { "x": [10, 18], "y": 6.5, "z": -28, "width": 3, "depth": 3, "height": 0.5, "speed": 0.5, "tooltip": "移动平台" },
+    { "x": 22, "y": 8, "z": -36, "width": 5, "depth": 5, "height": 0.5, "tooltip": "" },
+    { "x": 28, "y": [7, 10], "z": -44, "width": 3, "depth": 3, "height": 0.5, "speed": 0.45, "tooltip": "升降台" },
+    { "x": 34, "y": 10, "z": -50, "width": 4, "depth": 4, "height": 0.5, "tooltip": "" },
+    { "x": 40, "y": 11, "z": -60, "width": 2, "depth": 12, "height": 0.5, "tooltip": "最后窄桥" },
+    { "x": 46, "y": 12, "z": -72, "width": 8, "depth": 8, "height": 0.5, "isGoal": true, "tooltip": "" }
+  ],
+  "walls": [
+    { "x": 14, "y": 4, "z": -22, "width": 6, "height": 5, "depth": 0.5 },
+    { "x": 28, "y": 7, "z": -44, "width": 4, "height": 5, "depth": 0.5 },
+    { "x": 40, "y": 11, "z": -56, "width": 12, "height": 4, "depth": 0.5 }
+  ],
+  "decorations": [
+    { "type": "arrow", "x": 0, "y": 2.25, "z": -4, "scale": 0.8, "orientation": "forward" },
+    { "type": "arrow", "x": 22, "y": 8.25, "z": -38, "scale": 0.7, "orientation": "up" }
+  ]
+}
