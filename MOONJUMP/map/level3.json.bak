@@ -1,0 +1,25 @@
+{
+  "name": "遗忘废墟",
+  "startPosition": { "x": 0, "y": 2, "z": 0 },
+  "platforms": [
+    { "x": 0, "y": -1, "z": 0, "width": 12, "depth": 12, "height": 0.5, "tooltip": "出发" },
+    { "x": -16, "y": -1, "z": -14, "width": 4, "depth": 4, "height": 0.5, "tooltip": "左翼" },
+    { "x": 16, "y": -1, "z": -14, "width": 4, "depth": 4, "height": 0.5, "tooltip": "右翼" },
+    { "x": -16, "y": 0.5, "z": -28, "width": 4, "depth": 4, "height": 0.5, "speed": 0.5, "y": [-1, 2], "tooltip": "左升降" },
+    { "x": 16, "y": 0.5, "z": -28, "width": 4, "depth": 4, "height": 0.5, "speed": 0.5, "y": [-1, 2], "tooltip": "右升降" },
+    { "x": -24, "y": -1, "z": -40, "width": 6, "depth": 6, "height": 0.5, "tooltip": "左平台" },
+    { "x": 24, "y": -1, "z": -40, "width": 6, "depth": 6, "height": 0.5, "tooltip": "右平台" },
+    { "x": 0, "y": -1, "z": -52, "width": 10, "depth": 10, "height": 0.5, "tooltip": "中心" },
+    { "x": 0, "y": -1, "z": -70, "width": 3, "depth": 18, "height": 0.5, "tooltip": "最后长桥" },
+    { "x": 0, "y": -1, "z": -88, "width": 8, "depth": 8, "height": 0.5, "isGoal": true, "tooltip": "终点！" }
+  ],
+  "walls": [
+    { "x": -16, "y": 1, "z": -20, "width": 10, "height": 4, "depth": 0.5 },
+    { "x": 16, "y": 1, "z": -20, "width": 10, "height": 4, "depth": 0.5 }
+  ],
+  "decorations": [
+    { "type": "arrow", "x": 0, "y": -0.49, "z": -4, "scale": 0.8, "orientation": "forward" },
+    { "type": "arrow", "x": -16, "y": -0.49, "z": -34, "scale": 0.6, "orientation": "forward" },
+    { "type": "arrow", "x": 16, "y": -0.49, "z": -34, "scale": 0.6, "orientation": "forward" }
+  ]
+}
