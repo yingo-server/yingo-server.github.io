@@ -1,0 +1,25 @@
+{
+  "name": "风暴之眼",
+  "startPosition": { "x": 0, "y": 2, "z": 0 },
+  "platforms": [
+    { "x": 0, "y": -1, "z": 0, "width": 14, "depth": 14, "height": 0.5, "tooltip": "起点" },
+    { "x": 0, "y": -1, "z": -18, "width": 5, "depth": 5, "height": 0.5, "tooltip": "跳点" },
+    { "x": -18, "y": -1, "z": -30, "width": 6, "depth": 6, "height": 0.5, "tooltip": "左侧路线" },
+    { "x": 18, "y": -1, "z": -30, "width": 6, "depth": 6, "height": 0.5, "tooltip": "右侧路线" },
+    { "x": -18, "y": 0, "z": -44, "width": 3, "depth": 12, "height": 0.5, "tooltip": "左窄桥" },
+    { "x": 18, "y": 0, "z": -44, "width": 3, "depth": 12, "height": 0.5, "tooltip": "右窄桥" },
+    { "x": -30, "y": 0.5, "z": -56, "width": 4, "depth": 4, "height": 0.5, "speed": 0.5, "x": [-34, -26], "tooltip": "左移动" },
+    { "x": 30, "y": 0.5, "z": -56, "width": 4, "depth": 4, "height": 0.5, "speed": 0.5, "x": [26, 34], "tooltip": "右移动" },
+    { "x": 0, "y": -1, "z": -68, "width": 10, "depth": 10, "height": 0.5, "tooltip": "汇合点" },
+    { "x": 0, "y": -1, "z": -86, "width": 8, "depth": 8, "height": 0.5, "isGoal": true, "tooltip": "终点！" }
+  ],
+  "walls": [
+    { "x": -18, "y": 1, "z": -36, "width": 10, "height": 4, "depth": 0.5 },
+    { "x": 18, "y": 1, "z": -36, "width": 10, "height": 4, "depth": 0.5 }
+  ],
+  "decorations": [
+    { "type": "arrow", "x": 0, "y": -0.49, "z": -4, "scale": 0.8, "orientation": "forward" },
+    { "type": "arrow", "x": -18, "y": -0.49, "z": -38, "scale": 0.7, "orientation": "forward" },
+    { "type": "arrow", "x": 18, "y": -0.49, "z": -38, "scale": 0.7, "orientation": "forward" }
+  ]
+}
