@@ -1,0 +1,21 @@
+{
+  "name": "长桥",
+  "startPosition": { "x": 0, "y": 3, "z": 0 },
+  "platforms": [
+    { "x": 0, "y": 0.5, "z": 0, "width": 8, "depth": 8, "height": 1, "tooltip": "起点" },
+    { "x": 9, "y": 1.5, "z": -9, "width": 4, "depth": 4, "height": 1, "tooltip": "" },
+    { "x": 16, "y": 2.5, "z": -17, "width": 5, "depth": 5, "height": 1, "tooltip": "" },
+    { "x": [14, 22], "y": 4, "z": -25, "width": 4, "depth": 4, "height": 1, "speed": 0.45, "tooltip": "移动平台" },
+    { "x": 26, "y": 4, "z": -31, "width": 4, "depth": 4, "height": 1, "tooltip": "" },
+    { "x": 32, "y": [3, 6], "z": -39, "width": 4, "depth": 4, "height": 1, "speed": 0.4, "tooltip": "升降台" },
+    { "x": 38, "y": 6, "z": -45, "width": 6, "depth": 6, "height": 1, "tooltip": "" },
+    { "x": 44, "y": 6, "z": -55, "width": 3, "depth": 14, "height": 1, "tooltip": "独木桥" },
+    { "x": 50, "y": 6, "z": -65, "width": 7, "depth": 7, "height": 1, "isGoal": true, "tooltip": "" }
+  ],
+  "walls": [
+    { "x": 16, "y": 2, "z": -21, "width": 8, "height": 5, "depth": 1 },
+    { "x": 32, "y": 3, "z": -39, "width": 6, "height": 5, "depth": 1 },
+    { "x": 44, "y": 6, "z": -50, "width": 14, "height": 5, "depth": 1 }
+  ],
+  "decorations": []
+}
