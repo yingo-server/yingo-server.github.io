@@ -1,0 +1,23 @@
+{
+  "name": "长阶",
+  "startPosition": { "x": 0, "y": 4, "z": 0 },
+  "platforms": [
+    { "x": 0, "y": 1, "z": 0, "width": 6, "depth": 6, "height": 0.5, "tooltip": "起始" },
+    { "x": 6, "y": 2, "z": -8, "width": 3, "depth": 3, "height": 0.5, "tooltip": "" },
+    { "x": 12, "y": 3, "z": -16, "width": 4, "depth": 4, "height": 0.5, "tooltip": "" },
+    { "x": 18, "y": 4, "z": -24, "width": 3, "depth": 3, "height": 0.5, "tooltip": "" },
+    { "x": [16, 22], "y": 5, "z": -32, "width": 3, "depth": 3, "height": 0.5, "speed": 0.45, "tooltip": "移动平台" },
+    { "x": 26, "y": 5, "z": -38, "width": 3, "depth": 3, "height": 0.5, "tooltip": "" },
+    { "x": 32, "y": [4, 7], "z": -46, "width": 3, "depth": 3, "height": 0.5, "speed": 0.4, "tooltip": "升降" },
+    { "x": 38, "y": 7, "z": -52, "width": 4, "depth": 4, "height": 0.5, "tooltip": "" },
+    { "x": 44, "y": 7, "z": -62, "width": 2, "depth": 12, "height": 0.5, "tooltip": "窄桥" },
+    { "x": 50, "y": 7, "z": -72, "width": 6, "depth": 6, "height": 0.5, "isGoal": true, "tooltip": "" }
+  ],
+  "walls": [
+    { "x": 18, "y": 3, "z": -28, "width": 6, "height": 4, "depth": 0.5 },
+    { "x": 44, "y": 7, "z": -58, "width": 12, "height": 4, "depth": 0.5 }
+  ],
+  "decorations": [
+    { "type": "arrow", "x": 6, "y": 2.25, "z": -10, "scale": 0.7, "orientation": "forward" }
+  ]
+}
