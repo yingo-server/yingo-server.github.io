@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess · Admin Tool</title>
+  <style>
+    :root { --bg:#1e1e1e; --panel:#252526; --border:#3c3c3c; --text:#ccc; --accent:#007acc; }
+    body { background:var(--bg); color:var(--text); font-family:system-ui; padding:20px; }
+    button { background:var(--accent); border:none; color:#fff; padding:6px 12px; border-radius:4px; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; margin-top:16px; }
+    th,td { padding:8px; border-bottom:1px solid var(--border); text-align:left; }
+  </style>
+</head>
+<body>
+  <h1>房间管理</h1>
+  <button onclick="refresh()">刷新</button>
+  <button onclick="clean()">清理过期房间</button>
+  <table id="rooms"><thead><tr><th>房间号</th><th>状态</th><th>最后活动</th><th>操作</th></tr></thead><tbody></tbody></table>
+
+  <script>
+    const TOKEN = '36079a70cc1fbac56f6846d99653405a';
+    async function fetchDir() {
+      const res = await fetch('https://gitee.com/api/v5/repos/yingo-server/chess/contents/rooms', {
+        headers: { 'Authorization': `token ${TOKEN}` }
+      });
+      return res.json();
+    }
+    async function refresh() {
+      const dirs = await fetchDir();
+      const tbody = document.querySelector('#rooms tbody');
+      tbody.innerHTML = '';
+      for (const d of dirs) {
+        if (d.type !== 'dir') continue;
+        try {
+          const dataRes = await fetch(`https://gitee.com/api/v5/repos/yingo-server/chess/contents/rooms/${d.name}/data.json`, {
+            headers: { 'Authorization': `token ${TOKEN}` }
+          });
+          const dataJson = await dataRes.json();
+          const data = JSON.parse(atob(dataJson.content));
+          const row = tbody.insertRow();
+          row.innerHTML = `<td>${d.name}</td><td>${data.status}</td><td>${new Date(data.lastMoveTime).toLocaleString()}</td><td><button onclick="deleteRoom('${d.name}')">删除</button></td>`;
+        } catch(e) {}
+      }
+    }
+    async function deleteRoom(roomId) {
+      const files = ['data.json','white.lock','black.lock'];
+      for (const f of files) {
+        try {
+          const info = await fetch(`https://gitee.com/api/v5/repos/yingo-server/chess/contents/rooms/${roomId}/${f}`, {
+            headers: { 'Authorization': `token ${TOKEN}` }
+          }).then(r => r.json());
+          if (info.sha) {
+            await fetch(`https://gitee.com/api/v5/repos/yingo-server/chess/contents/rooms/${roomId}/${f}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `token ${TOKEN}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sha: info.sha, message: 'admin delete' })
+            });
+          }
+        } catch(e) {}
+      }
+      refresh();
+    }
+    async function clean() {
+      const dirs = await fetchDir();
+      for (const d of dirs) {
+        if (d.type !== 'dir') continue;
+        try {
+          const dataRes = await fetch(`https://gitee.com/api/v5/repos/yingo-server/chess/contents/rooms/${d.name}/data.json`, {
+            headers: { 'Authorization': `token ${TOKEN}` }
+          });
+          const dataJson = await dataRes.json();
+          const data = JSON.parse(atob(dataJson.content));
+          if (data.status !== 'playing' && new Date() - new Date(data.lastMoveTime) > 30*60*1000) {
+            await deleteRoom(d.name);
+          }
+        } catch(e) {}
+      }
+      refresh();
+    }
+    refresh();
+  </script>
+</body>
+</html>
