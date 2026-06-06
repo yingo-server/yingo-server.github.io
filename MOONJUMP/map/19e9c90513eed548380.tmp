@@ -1,0 +1,21 @@
+{
+  "ver": "2.0",
+  "name": "原点",
+  "startPosition": { "x": 0, "y": 3, "z": 0 },
+  "platforms": [
+    { "id": "1", "x": 0, "y": 1, "z": 0, "width": 6, "depth": 6, "height": 1, "tooltip": "你在这里。", "tooltip_en": "You are here." },
+    { "id": "2", "x": 8, "y": 2, "z": -6, "width": 3, "depth": 3, "height": 1, "tooltip": "然后呢？", "tooltip_en": "And then?" },
+    { "id": "3", "x": 14, "y": 3.5, "z": -12, "width": 4, "depth": 4, "height": 1, "tooltip": "没有指示。", "tooltip_en": "No instructions." },
+    { "id": "4", "x": [12, 20], "y": 5, "z": -20, "width": 3, "depth": 3, "height": 1, "speed": 0.5, "tooltip": "地面在移动。", "tooltip_en": "The ground moves." },
+    { "id": "5", "x": 24, "y": 6, "z": -26, "width": 4, "depth": 4, "height": 1, "tooltip": "你适应了。", "tooltip_en": "You adapt." },
+    { "id": "6", "x": 30, "y": [5, 9], "z": -34, "width": 3, "depth": 3, "height": 1, "speed": 0.45, "tooltip": "或上或下。", "tooltip_en": "Up or down." },
+    { "id": "7", "x": 36, "y": 9, "z": -40, "width": 5, "depth": 5, "height": 1, "tooltip": "一处暂歇。", "tooltip_en": "A pause." },
+    { "id": "8", "x": 42, "y": 9, "z": -48, "width": 2, "depth": 10, "height": 1, "tooltip": "路收窄了。", "tooltip_en": "The path tightens." },
+    { "id": "9", "x": 48, "y": 10, "z": -54, "width": 4, "depth": 4, "height": 1, "tooltip": "你没有停下。", "tooltip_en": "You didn't stop." },
+    { "id": "10", "x": 54, "y": 10, "z": -62, "width": 6, "depth": 6, "height": 1, "isGoal": true, "tooltip": "谁写了这些？", "tooltip_en": "Who wrote this?" }
+  ],
+  "walls": [
+    { "id": "11", "x": 24, "y": 6, "z": -28, "width": 6, "height": 4, "depth": 0.5 }
+  ],
+  "decorations": []
+}
