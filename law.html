@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关于发布《班级电脑设备管理法典》的通知</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f5f5f5;
+            --card-bg: #ffffff;
+            --text: #1a1a1a;
+            --text-secondary: #4a4a4a;
+            --border: #d0d0d0;
+            --accent: #b31b1b;
+            --link: #1a56db;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Times New Roman', '宋体', 'SimSun', 'NSimSun', 'FangSong', serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            padding: 40px 20px 60px;
+        }
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+        /* 页眉 */
+        .page-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 12px;
+        }
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin: 0;
+            font-family: inherit;
+        }
+        .page-header .date {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        /* 卡片通用设计，完全直角，无圆角 */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border);
+            background: #fafafa;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .card-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2c2c2c;
+            margin: 0;
+            font-family: inherit;
+            letter-spacing: 1px;
+        }
+        .card-header .meta {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .preview-box {
+            padding: 20px 24px;
+            max-height: 420px;
+            overflow-y: auto;
+            font-family: 'Times New Roman', '宋体', 'SimSun', serif;
+            font-size: 0.92rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            background: #fefefe;
+            color: #222;
+            border-bottom: 1px solid var(--border);
+            user-select: text;
+            word-break: break-word;
+        }
+        /* 红头文件预览特殊样式：标题红色 */
+        .preview-box.red-head-preview {
+            font-family: '宋体', 'SimSun', serif;
+        }
+        .card-actions {
+            padding: 16px 24px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: #fcfcfc;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            font-family: inherit;
+            border: 1.5px solid var(--border);
+            background: #ffffff;
+            color: #1a1a1a;
+            line-height: 1.4;
+        }
+        .btn-primary {
+            background: #b22222;
+            border-color: #b22222;
+            color: white;
+            font-weight: 700;
+        }
+        .btn-primary:hover {
+            background: #8b1a1a;
+            border-color: #8b1a1a;
+        }
+        .btn-outline {
+            background: #ffffff;
+            border-color: #5a5a5a;
+            color: #2d2d2d;
+        }
+        .btn-outline:hover {
+            background: #f0f0f0;
+            border-color: #1a1a1a;
+        }
+        .btn-sm {
+            padding: 8px 20px;
+            font-size: 0.95rem;
+            letter-spacing: 0.4px;
+        }
+        /* 分隔线 */
+        .divider {
+            border: none;
+            border-top: 2px solid #cc0000;
+            margin: 8px 0;
+            opacity: 0.8;
+        }
+        /* 响应式 */
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 12px;
+            }
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .preview-box {
+                max-height: 300px;
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页眉区域 -->
+        <div class="page-header">
+            <h1>班级设备管理规范汇编</h1>
+            <span class="date">2026年6月7日 发布</span>
+        </div>
+
+        <!-- 红头文件通知卡片 -->
+        <div class="card" id="redhead-card">
+            <div class="card-header">
+                <h2>关于发布《班级电脑设备管理法典》的通知</h2>
+                <span class="meta">班委发〔2026〕1号</span>
+            </div>
+            <div class="preview-box red-head-preview" id="redhead-preview">
+                <!-- 动态填充红头文件预览内容 -->
+            </div>
+            <div class="card-actions">
+                <button class="btn btn-primary" id="downloadRedheadBtn">下载红头文件 (.docx)</button>
+                <span style="color:#666;font-size:0.9rem;">正式通知，含发文字号与落款</span>
+            </div>
+        </div>
+
+        <!-- 法典正文卡片 -->
+        <div class="card" id="law-card">
+            <div class="card-header">
+                <h2>班级电脑设备管理法典（最终修订版）</h2>
+                <span class="meta">含权责一致·民主评议·代理制度</span>
+            </div>
+            <div class="preview-box" id="law-preview">
+                <!-- 动态填充法典全文预览 -->
+            </div>
+            <div class="card-actions">
+                <button class="btn btn-outline" id="downloadLawBtn">下载法典全文 (.docx)</button>
+                <span style="color:#666;font-size:0.9rem;">标准公文格式，兼容 Word / WPS</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- 红头文件通知文本 ----------
+            const redHeadText = `班 级 电 脑 设 备 管 理 法 典 实 施 通 知
+
+班级委员会文件
+
+班委发〔2026〕1号
+
+——————————————————————————————
+
+关于发布《班级电脑设备管理法典》的通知
+
+全体同学：
+
+《班级电脑设备管理法典》已经班级民主程序表决通过，现予发布，自2026年6月8日起施行。
+
+该法典对班级电脑设备的使用、管理、责任划分、违规处理及救济程序等作了全面规范，是保障教学秩序、维护设备安全、保护学生合法权益的基本准则。请全体同学认真学习并严格遵守。
+
+附件：班级电脑设备管理法典（最终修订版）
+
+班级委员会
+2026年6月7日`;
+
+            // ---------- 法典正文（与之前一致，已修订）----------
+            const lawText = `班级电脑设备管理法典（最终修订版）
+
+第一编 总 则
+
+第一章 任务、基本原则和适用范围
+
+第一条 【立法目的与依据】
+为规范班级电脑设备的使用与管理，保障正常教学秩序，维护设备财产安全，保护学生合法权益，依据校纪校规，结合本班实际，制定本法典。
+
+第二条 【设备定义】
+本法典所称电脑设备，系指班级教室内配置的计算机主机、显示器、键盘、鼠标、音响设备、投影连接设备、电源设备及相关附属设施。安装于上述设备中的操作系统、应用软件及存储数据，视为本法典所称“设备”的组成部分。
+
+第三条 【适用主体】
+本班全体学生及在本班教室内使用、接触电脑设备的其他人员，均适用本法典。
+
+第四条 【基本原则】
+本法典的实施，应当遵循以下原则：
+（一）教学优先原则。任何设备使用行为，不得妨碍正常教学活动的开展。
+（二）权责一致原则（初始形态）。使用设备者对其行为承担相应责任；管理设备者对其管理职责承担相应责任。
+（三）疑罚从无原则。事实不清、证据不足的，不作违规认定；主观状态无法查明的，不作故意认定。
+（四）过罚相当原则。处理措施应当与违规行为的性质、情节、后果相适应。
+（五）主观能动原则。执行本法典时，应当结合具体情况合理判断，不得机械适用条文；自由裁量应当附具理由。具体适用规则由第四编第三十一条规定。
+（六）程序正当原则。对任何违规行为的处理，均应严格遵循本法典规定的程序。任何人均不得受到本法典规定程序之外的处理。未经听取陈述与申辩，不得作出处理决定。同一违规行为已经处理完毕的，不得基于同一事实再次追究。但本法典另有规定的除外。
+（七）权责一致原则（权限义务关联）。享有本班电脑设备使用、管理、指令权限的主体，同时负有相应的规范使用、安全保管、有效监督的义务。权限因义务的不履行而中止或丧失。具体规则由本法典相关章节规定。
+（八）程序代理原则。在本法典规定的民主评议、调查、申辩等程序中，当事人有权委托一名本班同学作为代理人，代为行使陈述、申辩、举证、质询等程序性权利。任何组织或个人不得强制当事人本人出席，亦不得因当事人委托代理人而对其作出不利推定。
+
+第五条 【禁止行为推定】
+本法典未明文禁止的行为，不作违规处理。若因该行为造成重大影响确需规范的，应当在本法典修订后方可据以处理。修订不溯及既往。
+
+第六条 【施行与效力】
+本法典经班级民主程序表决通过后施行，对本班全体学生具有约束力。通过前，本法典仅具建议性质，不具强制效力。
+
+第七条 【与其他规范的关系及教师指令限制】
+本法典的规定与校纪校规不一致的，以校纪校规为准。
+本法典的规定与教师现场指令不一致的，以教师现场指令为准；但该指令明显可能导致设备损坏、人身危险、严重扰乱教学秩序或严重侵害他人合法权益的除外。
+发出指令的教师，应当对所指令范围内的设备使用行为承担监管义务。教师未尽监管义务，致使设备被用于与教学无关的活动且造成后果的，不得援引本款前段主张指令优先，并应依本法典相关规定承担管理责任。
+对于教师发出的与教学无关的、或可能违反本规定的指令，任何学生或电教委员有权以合理方式拒绝执行，并要求指令发出者予以书面确认。如指令发出者拒绝书面确认，该指令不具优先效力，拒绝执行不视为违规。学生或电教委员提出前述要求的，指令发出者不得因此对其施加任何不利对待。
+
+第二章 术语定义
+
+第八条 【术语定义】
+本法典下列术语的含义：
+（一）故意：明知自己的行为会发生违规后果，并且希望或者放任该后果发生的心理状态。
+（二）过失：应当预见自己的行为可能发生违规后果，因疏忽大意而未预见，或者已经预见而轻信能够避免的心理状态。
+（三）教唆：以劝说、利诱、授意、怂恿、收买、威胁等方法，使他人产生违规意图的行为。
+（四）共犯：二人以上共同故意实施违规行为。
+（五）累犯：本法典生效后曾因违规行为受过书面警告及以上处理，再次实施同类或类似违规行为的。
+（六）授权：经班主任、科任教师或电教委员明示许可，在指定范围内操作设备。默示许可不构成授权。
+（七）主观恶意：行为人出于不正当目的，或明知行为后果而执意为之的心理状态。过失行为不具主观恶意。
+
+第二编 责任主体与责任划分
+
+第一章 责任主体
+
+第九条 【电教委员的职责与责任】
+电教委员是班级电脑设备的直接管理责任人，享有下列职权，承担下列义务：
+（一）依规操作设备，妥善保管设备及配件；
+（二）定期检查设备状况，每周五向班主任提交报告；
+（三）拒绝执行明显违反本法典或校纪的指令或请求；
+（四）发现设备故障或违规行为，及时采取必要措施并向班主任报告；
+（五）就任何涉及设备管理、使用规范及指令冲突的事项，有权独立地、不受干扰地向班主任提交书面报告。该报告独立于其日常职责报告，任何组织或个人不得要求查阅、修改或扣压。
+电教委员对自身操作行为承担主要责任。依教师明示指令执行操作的，由发出指令者承担责任；但指令明显违规，电教委员明知而仍执行的，与指令发出者承担连带责任，其具体份额依第十一条第三款处理。
+电教委员怠于履行职责，致使设备损坏或违规行为得以实施的，按其主观状态承担故意或过失责任。
+
+第十条 【普通使用者的责任】
+非电教委员的学生，未经授权不得操作电脑设备。经授权在指定范围内操作的，超出授权范围的部分承担相应责任。
+
+第十一条 【教唆、胁迫与共犯】
+教唆他人实施违规行为的，教唆者与被教唆者均为责任人。
+一般情形下，教唆者承担百分之四十的责任份额，执行者承担百分之六十的责任份额。教唆者利用他人无过错或不知情实施违规行为的，教唆者承担全部责任。教唆电教委员实施违规行为的，教唆者承担百分之六十的责任份额，电教委员承担百分之四十的责任份额；电教委员系被胁迫且未造成严重后果的，可免除其责任。
+二人以上共同故意实施违规行为的，均为主犯，各自对全部后果承担连带责任。有明显主从关系的，从犯可予减轻处理。
+被胁迫参加违规行为的，按其胁迫程度减轻或免除处理。胁迫者承担主要或全部责任。
+本条规定的责任份额，首先适用于财产损失的赔偿分担，并作为量罚轻重的参考。
+
+第十二条 【责任能力】
+行为人因不可归责于自身的原因，不能辨认或控制自己行为的，不予追究。但故意使自己陷入该状态后实施违规行为的，按故意处理。
+
+第三编 行为与后果
+
+第一章 扰乱教学秩序
+
+第十三条 【严重扰乱课堂秩序】
+利用电脑设备实施下列行为之一，致使正常教学活动完全无法进行的，为严重扰乱课堂秩序：
+（一）播放与教学无关的音频、视频；
+（二）显示与教学无关的图像或文字；
+（三）运行与教学无关的程序或游戏；
+（四）反复开关设备或制造设备异常声响；
+（五）其他足以导致课堂中断的行为。
+主观故意的，按情节严重处理。有下列情形之一的，认定为情节极其严重恶劣：
+（一）明知故犯；
+（二）曾因类似行为受过处理（累犯）；
+（三）三人以上共同实施或有组织、有预谋实施；
+（四）教唆他人，特别是教唆电教委员实施；
+（五）实施后采取欺瞒手段掩盖事实（欺瞒情节优先适用第十七条）。
+教唆他人实施本行为的，教唆者的责任按第十一条处理；教唆电教委员的，同时适用第十一条第三款。教唆者实施欺瞒行为掩盖事实的，另按第十七条从重。
+主观过失造成同等后果的，认定为情节严重，可比照故意情形减轻处理。
+
+第十四条 【一般扰乱课堂秩序】
+实施前条所列行为，致使教学进度明显停滞或教学效果显著降低，但未达到完全无法进行程度的，为一般扰乱课堂秩序。
+主观故意的，按情节非常严重恶劣处理。主观过失的，按情节比较严重处理。
+
+第十五条 【轻微不良行为】
+实施与教学无关的操作，未对课堂秩序造成实质干扰，但产生下列情形之一的，按情节比较严重至不良行为处理：
+（一）引起师生注意力分散；
+（二）产生不良示范效应；
+（三）造成其他负面影响。
+
+第二章 欺瞒行为
+
+第十六条 【实施中的欺瞒行为】
+在实施违规行为过程中，采取欺骗、隐瞒手段逃避监管的，为实施中的欺瞒行为。包括：
+（一）使用他人账号操作以隐瞒身份；
+（二）篡改或删除使用日志、操作记录；
+（三）使用技术手段规避权限设置；
+（四）其他足以隐瞒违规事实的手段。
+实施中的欺瞒行为，不单独处理，作为所伴随违规行为的从重情节。本法典其他条款明确指向本条的，从其规定。
+
+第十七条 【调查中的欺瞒行为】
+在接受调查处理过程中，实施下列行为的，为调查中的欺瞒行为：
+（一）故意作虚假陈述；
+（二）伪造、篡改、销毁证据；
+（三）指使、教唆他人作虚假证明；
+（四）串通他人统一口径、隐瞒事实；
+（五）其他足以干扰调查的行为。
+调查中的欺瞒行为，按情节比较严重独立处理。欺瞒行为人与原违规行为人系同一人的，与原违规行为并罚，按本法典第三十二条至第三十五条的规定处理。欺瞒行为人与原违规行为人系不同人的，各自承担责任；教唆他人实施欺瞒行为的，适用第十一条的责任份额。
+电教委员实施调查中欺瞒行为的，从重处理。
+
+第十八条 【虚假报告与诬告】
+故意捏造违规事实，向班主任或电教委员虚假报告的，按不良行为处理。捏造事实意图使他人受到处理的，按情节比较严重以上处理。
+明知他人未实施违规行为而故意诬告的，按情节非常严重恶劣处理。诬告者教唆他人配合虚假陈述的，教唆者与被教唆者的责任按第十一条处理。
+
+第三章 损坏设备财产
+
+第十九条 【故意损坏设备】
+故意实施下列行为之一，致使设备功能全部或部分丧失的，为故意损坏设备：
+（一）对设备实施物理性破坏；
+（二）删除、篡改系统文件；
+（三）植入恶意程序；
+（四）故意使设备接触液体、高温或其他致损物质；
+（五）其他足以损害设备的行为。
+造成设备完全无法使用的，为情节极其严重。造成部分功能丧失或产生较大维修费用的，为情节非常严重。虽未造成实际功能障碍但实施了明显破坏行为的，为情节比较严重。
+教唆、组织他人实施本行为的，从重处理。实施后采取欺瞒手段掩盖的，同时适用第十六条或第十七条。
+
+第二十条 【过失损坏设备】
+因疏忽大意或过于自信，致使设备损坏的，为过失损坏设备。
+造成严重损坏的，按情节比较严重处理。损坏较轻且主动报告、积极补救、照价赔偿的，按不良行为处理或免予追究。
+
+第二十一条 【擅自安装与卸载软件】
+未经许可，实施下列行为的，按相应情形处理：
+（一）安装与教学无关的软件、插件、游戏的，首次予以书面警告；再次实施的，按不良行为处理；
+（二）卸载教学必需软件的，按情节比较严重处理；
+（三）安装恶意软件或导致系统故障的，参照第十九条处理。
+
+第二十二条 【私接外接设备】
+未经许可，将个人存储设备、通讯设备或其他外接设备连接至班级电脑，导致病毒传播、系统异常或数据泄露的，按后果参照第十九条、第二十一条处理。
+
+第四章 数据与信息安全
+
+第二十三条 【篡改教学文件】
+故意删除、修改、隐藏、加密教学课件、资料、作业文件或其他教学数据的，视后果处理：
+（一）导致教学无法进行的，按第十三条处理；
+（二）造成数据混乱但未影响教学的，按情节比较严重处理。
+
+第二十四条 【不当获取或泄露信息】
+利用班级电脑，实施下列行为的，按相应情形处理：
+（一）窥探教师或同学个人文件、账号信息的，按不良行为处理；
+（二）将前述信息传播、扩散的，按情节比较严重以上处理；
+（三）造成恶劣影响的，按情节非常严重恶劣以上从重处理。
+
+第五章 其他违规行为
+
+第二十五条 【擅自移动设备】
+未经许可，擅自移动、拆卸电脑设备或其配件的，按后果处理。造成损坏的，参照第十九条、第二十条处理；未造成损坏的，首次书面警告，再次按不良行为处理。
+
+第二十六条 【盗用或出借权限】
+盗用他人账号或管理权限操作设备的，按操作后果处理。情节轻者按不良行为处理，造成严重后果者按相应条款从重处理。
+出借电教委员权限供他人使用的，电教委员与使用者承担连带责任，具体份额依第十一条第三款确定。
+
+第二十七条 【不予配合检查】
+电教委员或班主任依本法典进行例行检查时，无正当理由拒绝、阻碍的，按不良行为处理。以暴力、威胁方式阻碍的，按情节比较严重以上处理。
+
+第二十八条 【不作为责任】
+电教委员或其他有管理职责的人员，明知或应当知道设备正在被违规使用，有能力制止而不制止的，按其主观状态承担相应的过失或故意责任，依其所不制止的违规行为的相应条款，减轻或同等处理。
+
+第四编 处 断
+
+第一章 情节等级
+
+第二十九条 【情节等级体系】
+违规行为的情节等级，由重至轻依次为：
+第一级 极其严重恶劣
+第二级 非常严重恶劣
+第三级 比较严重
+第四级 不良行为
+“严重”系对客观后果的程度评价；“恶劣”系对主观恶性的加重评价。
+
+第三十条 【情节裁量规则】
+裁量情节时，应当综合考量下列因素：
+（一）主观状态（故意或过失、预谋或偶发、有无主观恶意）；
+（二）客观后果（损害程度、影响范围、是否可挽回）；
+（三）事后态度（是否认错、补救、赔偿、配合调查）；
+（四）既往记录（是否初犯、累犯）；
+（五）是否存在欺瞒情节（优先适用第十六条、第十七条）；
+（六）是否涉及教唆、组织、胁迫（优先适用第十一条）。
+
+第三十一条 【主观能动性的适用规则】
+依本法典第四条第五项行使主观能动裁量时，应当遵循以下规则：
+（一）不得突破本法典明文规定的处理等级上限；
+（二）从轻或减轻处理，应当有本法典规定的从轻减轻情节为依据；
+（三）从重或加重处理，应当有本法典规定的从重加重情节为依据；
+（四）无明文规定的情节，可参照最相类似的规定，但应当在处理决定中充分说明理由；
+（五）同一情节不得在裁量中被重复评价（如已在行为定性中考虑的主观恶意，不得在裁量中再次作为从重因素）。
+
+第二章 竞合与并罚
+
+第三十二条 【竞合与并罚：一般规则】
+一行为同时符合多项条款构成要件的（想象竞合），按其中最重的一项处理，不实行并罚。但处理决定中应当载明该行为所触犯的全部条款。
+数行为分别触犯不同条款的，应当合并处理。
+
+第三十三条 【牵连关系】
+为实现某一违规目的，其手段行为或结果行为又触犯其他条款的（牵连关系），按其中最重的一项从重处理，不实行并罚。
+但有下列情形之一的，应当分别处理：
+（一）手段行为或结果行为明显超出通常牵连范围的；
+（二）手段行为或结果行为侵害了新的、独立的法益的。
+
+第三十四条 【吸收关系】
+实施较重违规行为的过程中，必然或通常伴随较轻违规行为的，由较重行为吸收较轻行为，按较重行为处理。但较轻行为具有独立主观目的或超出通常伴随范围的，应当分别处理。
+
+第三十五条 【数行为并罚规则】
+数行为分别触犯不同条款，且不构成牵连或吸收关系的，按以下规则处理：
+（一）数行为中有一行为达到极其严重恶劣等级的，按极其严重恶劣处理；
+（二）数行为情节等级相同的，在该等级范围内酌情从重；
+（三）数行为造成财产损失的，赔偿责任应当累计计算。
+
+第三十六条 【连续行为】
+基于同一主观故意，连续实施数个性质相同的行为的，按一个违规行为从重处理。
+
+第三十七条 【一事不再理及其例外】
+同一行为已经作出处理决定的，不得基于同一事实再次追究。
+有下列情形之一的除外：
+（一）原处理决定被复议撤销的；
+（二）发现原处理决定遗漏重要事实，且该事实可能影响情节等级的；
+（三）同一行为持续或继续到处理决定生效之后的，就已生效之后的部分另行处理；
+（四）发现行为人在调查中实施欺瞒行为，导致原处理决定错误的，重新追究，并对欺瞒行为依第十七条独立处理。
+
+第三十八条 【新旧条文适用：从旧兼从轻】
+行为发生在本法典修订之前的，适用行为时的规定。修订后的规定对该行为处理较轻的，适用修订后的规定。行为跨越修订时点的，分别适用各时点的规定。
+
+第三章 处理方式
+
+第三十九条 【处理方式种类】
+处理方式，由轻至重依次为：
+（一）口头警告；
+（二）书面警告，记录在案；
+（三）限制设备使用权限（限期）；
+（四）取消设备使用权限；
+（五）照价赔偿或承担修复费用；
+（六）向全班作公开检讨；
+（七）提交班主任并建议校纪处分。
+以上方式可以单独适用，也可以合并适用。处理应遵循比例原则。
+本法典中凡单独称“警告”而未加说明的，均指口头警告。
+
+第四章 裁量情节
+
+第四十条 【从轻、减轻情节】
+有下列情形之一的，可以从轻或减轻处理：
+（一）主动报告，如实说明情况，积极补救的（自首）；
+（二）被指出后立即停止，并积极补救的；
+（三）初次违规，情节轻微的；
+（四）行为目的正当，但手段失当的；
+（五）紧急避险超过必要限度造成损害的；
+（六）被胁迫参加，作用较小的；
+（七）经查证，行为人系因合理信赖有权主体的错误或失职指令而实施违规行为的；
+（八）其他应当从轻、减轻的情形。
+
+第四十一条 【从重、加重情节】
+有下列情形之一的，应当从重或加重处理：
+（一）明知故犯；
+（二）曾因类似行为受过处理的（累犯）；
+（三）二人以上共同实施或有组织实施的；
+（四）教唆、胁迫他人实施的；
+（五）教唆电教委员实施的；
+（六）实施中或调查中存在欺瞒行为的（优先适用第十六条、第十七条；但已依第十六条作为从重情节的，不再重复适用本项）；
+（七）造成恶劣影响的；
+（八）其他应当从重、加重的情形。
+
+第五章 处理程序
+
+第四十二条 【决定权限与时效】
+最终处理决定，由班主任一人作出，并承担相应管理责任。决定前，应当听取当事人陈述，核实相关证据。
+班主任应当在民主评议会召开后三日内，或在没有召开评议会时自收到书面监督申请后五日内，作出书面处理决定。逾期未作出的，申请人有权要求班主任说明理由，并可提交班级民主程序进行监督。
+
+第四十三条 【记录与备案】
+处理决定应当记录下列事项：
+（一）违规事实；
+（二）适用依据；
+（三）裁量理由（涉及主观能动裁量的，应当特别说明）；
+（四）处理结果；
+（五）作出日期。
+书面警告及更重处理，应当留存记录备查。
+当事人委托代理人的，其代理人有权查阅与待决行为相关的、不涉及第三方个人隐私的使用日志、操作记录等证据材料，并有权抄录、复制。电教委员及班委会应为代理人查阅提供必要便利。
+
+第四十四条 【权利保障与复议】
+当事人有权进行陈述与申辩。对处理决定不服的，可依第五编第三章申请复议。
+
+第六章 规范冲突的解决
+
+第四十五条 【特别规定优先】
+同一行为同时触犯本法典一般规定与特别规定的，优先适用特别规定。本法典所称特别规定，系指对特定主体、特定情境或特定行为类型设有专门条款的情形。
+例如：教唆电教委员的，优先适用第十一条第三款的专门责任份额。
+
+第四十六条 【法条明确指引规则】
+本法典各条款中，凡注明“适用某条”“参照某条”“按某条处理”“同时适用某条”的，应当优先依照该指引处理。多条指引同时存在的，按以下顺序优先适用：
+（一）特别条款优先于一般条款的指引；
+（二）从重条款优先于从轻条款的指引（在数行为并罚时）；
+（三）程序条款优先于实体条款的指引。
+
+第四十七条 【原则冲突的价值次序】
+本法典所确立的基本原则发生冲突时，按以下价值次序适用：
+人身安全与财产重大保护 ＞ 学生重大人格权益（含隐私） ＞ 教学优先 ＞ 设备财产安全 ＞ 管理效率
+前项价值不得为后项价值而牺牲。后项价值在具体情形中明显更为重大的，可以作为例外，并应当在处理决定中充分说明理由。
+
+第四十八条 【规则与原则冲突的解决】
+条文规则的适用将导致与基本原则明显抵触结果的，应当优先适用基本原则。此种情形视为特殊处理，应当由班主任提出，并在处理决定中充分说明理由。
+
+第四十九条 【权限冲突的解决】
+关于同一设备操作的权限发生争议时，按以下顺序确定优先权限：
+（一）正在进行的课堂教学的教师；
+（二）班主任；
+（三）电教委员；
+（四）其他经授权人员。
+前项人员在场并行使其权限时，后项人员不得作出与之相抵触的操作决定。但前项人员的指令明显可能导致设备损坏、教学秩序严重损害或严重侵害他人合法权益的，后项人员有权拒绝执行并即时报告班主任。此种拒绝不视为违规。
+前款享有优先权限的人员，未尽到本法典所规定的相应监管义务的，在其义务违反的范围内，不适用前款优先规则。
+
+第五十条 【义务冲突的解决】
+行为人同时面临两项以上相互冲突的法定义务，必须违反其中一项方能履行另一项的，应当优先履行价值位阶更高的义务。行为人因此未履行较低位阶义务的，不予追究。
+但行为人对义务冲突的发生有过错的，或怠于寻求合理替代方案的，不适用前款规定。
+
+第五十一条 【解释冲突的裁决】
+对本法典条文理解产生分歧，且不同理解可能导致不同处理结果的，由班主任行使最终解释权。班主任行使解释权时，应当遵循第四十四条的程序要求，并作出书面解释决定。
+书面解释决定应当公开，此后同类情形应当参照执行，不得任意变更。确需变更的，应当说明理由并重新作出书面解释。
+
+第五十二条 【冲突解决的兜底条款】
+本法典未规定之冲突类型，参照本法典基本原则及社会一般认知予以解决。所作处理决定应当充分说明理由并留存备查。
+
+第五编 程序与救济
+
+第一章 事前预防机制
+
+第五十三条 【日常巡检制度】
+电教委员应当在每个教学日课前及课后对电脑设备进行例行检查。检查事项包括：
+（一）设备外观是否完好，连接线是否松动；
+（二）开机运行是否正常，系统有无异常提示；
+（三）投影、音响等附属设备是否就绪；
+（四）上次使用记录有无异常情况。
+检查发现异常的，应当立即向班主任报告，并在使用日志中记录。
+
+第五十四条 【使用日志制度】
+班级电脑设备应当建立使用日志。使用日志由电教委员负责保管与记录，记载下列事项：
+（一）每次使用的日期、时间；
+（二）使用者姓名及授权人；
+（三）使用目的及所运行的程序或文件；
+（四）设备运行状况及异常情况；
+（五）交接时设备状态确认。
+使用日志是认定违规事实的重要证据。故意篡改、销毁使用日志的，适用第十七条（调查中的欺瞒行为）处理。
+
+第五十五条 【权限分级管理】
+班级电脑设备的操作权限，按以下等级设置：
+（一）管理员权限：归属班主任及经班主任授权的电教委员；
+（二）教学使用权限：归属全体学生，须经教师或电教委员授权；
+（三）访客权限：归属非本班人员，须经班主任特别授权。
+权限的具体范围，由班主任会同电教委员设定。
+
+第五十六条 【使用前告知义务】
+使用者首次使用班级电脑设备前，电教委员或班主任应当向其告知本法典的主要内容、设备操作注意事项及违规行为的后果。告知可以个别进行，也可以班会形式集体进行。告知情况应当记录备查。
+
+第五十七条 【风险提示标识】
+班级电脑设备或其附近显著位置，应当张贴简明使用规范及注意事项。
+
+第五十八条 【应急预案】
+发生下列情形之一的，按相应程序处置：
+（一）设备突发故障影响教学的，电教委员应当立即报告任课教师，教师有权决定改用其他教学方式；
+（二）设备出现冒烟、异响、异味等危险征兆的，在场人员应当立即切断电源，疏散人员，报告班主任及学校相关部门；
+（三）发现恶意程序或系统异常的，应当立即断网并停止使用，报修处理。
+
+第二章 民主评议与代理
+
+第五十九条 【民主评议与代理规则】
+任何学生（申请人）均可就设备使用中的违规或失职行为，向班主任或班委会提出召开民主评议会的书面申请。申请应载明事由及初步证据。
+民主评议会由班主任或其指定的一名班委会成员主持，成员包括：
+（一）申请人或其代理人；
+（二）被监督人（行为相对人）或其代理人；
+（三）电教委员或其代理人（如电教委员系当事人，则回避）；
+（四）由班级民主推选产生的二至三名中立学生代表。
+申请人或被监督人有权委托一名本班同学担任其代理人，全权参与评议会。代理人由当事人自主选定，不受干涉。当事人本人出席的，亦可同时委托一名代理人辅助。
+下列人员不得担任代理人：
+（一）与待评议事项有直接利害冲突的；
+（二）已被确定为证人的。
+当事人委托代理人的，评议会不得强制要求当事人本人出席。但评议会为查明事实，可请当事人本人到场说明；当事人拒绝的，不构成违规，亦不得因此作出不利推定。
+评议会应公开举行，允许旁听，涉及个人隐私的除外。流程如下：
+（一）申请人或其代理人陈述事由，出示证据；
+（二）被监督人或其代理人答辩，出示反证；
+（三）中立代表及电教委员进行询问；
+（四）各方总结陈述。
+评议结束后，中立学生代表应独立形成书面评议意见，明确是否存在违规、情节轻重及建议处理措施。评议意见对最终处理决定具有重要参考效力。班主任如作出与评议意见明显相反的决定，应当在书面处理决定中特别说明理由。
+
+第三章 复议程序
+
+第六十条 【复议申请与处理】
+当事人对处理决定不服的，可在收到决定后三日内以书面形式向班委会申请复议。申请书应载明不服理由及依据。
+班委会应当在收到复议申请后两日内组织复议，邀请未参与原决定的班主任、电教委员及学生代表参加，听取申请人或其代理人陈述。复议认为原决定认定事实不清、适用依据错误或程序严重违法的，可以建议班主任撤销或变更原决定。
+班主任应当认真考虑复议意见，并在三日内作出书面复议决定。复议决定为最终决定，不再复议。
+
+第六编 附 则
+
+第六十一条 【解释权】
+本法典由班主任会同班委会负责解释。个案适用中的分歧解释，按第五十一条处理。
+
+第六十二条 【修订程序】
+本法典的修订，由班主任或三分之一以上学生提议，经班级民主程序（参与表决人数不少于全班三分之二，赞成票超过参与人数半数）讨论通过后生效。修订文本应当明确施行日期，修订内容不溯及既往。
+
+第六十三条 【施行日期】
+本法典自班级表决通过之日起施行。`;
+
+            // 预览渲染
+            document.getElementById('redhead-preview').textContent = redHeadText;
+            document.getElementById('law-preview').textContent = lawText;
+
+            // ---------- 生成DOCX通用函数 ----------
+            function buildParagraphXml(text, options = {}) {
+                const {
+                    bold = false,
+                        fontSize = '21', // 五号
+                        color = '000000',
+                        align = 'left',
+                        spacingAfter = '120',
+                        fontFamily = '宋体'
+                } = options;
+                const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+                const rPr = `<w:rPr><w:rFonts w:ascii="${fontFamily}" w:hAnsi="${fontFamily}" w:eastAsia="${fontFamily}"/><w:sz w:val="${fontSize}"/><w:szCs w:val="${fontSize}"/><w:color w:val="${color}"/>${bold ? '<w:b/><w:bCs/>' : ''}<w:lang w:val="zh-CN"/></w:rPr>`;
+                const pPr = `<w:pPr><w:jc w:val="${align}"/><w:spacing w:after="${spacingAfter}" w:line="276" w:lineRule="auto"/></w:pPr>`;
+                return `<w:p>${pPr}<w:r>${rPr}<w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
+            }
+
+            function createDocxBase(paragraphsXmlArray) {
+                const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:o="urn:schemas-microsoft-com:office:office"
+                    xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+                    xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"
+                    xmlns:v="urn:schemas-microsoft-com:vml"
+                    xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+                    xmlns:w10="urn:schemas-microsoft-com:office:word"
+                    xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+                    xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml">
+          <w:body>${paragraphsXmlArray.join('')}</w:body>
+        </w:document>`;
+
+                const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+          <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+          <Default Extension="xml" ContentType="application/xml"/>
+          <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+          <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+          <Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
+        </Types>`;
+
+                const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+          <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+        </Relationships>`;
+
+                const docRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+          <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+          <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>
+        </Relationships>`;
+
+                const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+          <w:style w:type="paragraph" w:styleId="Normal">
+            <w:name w:val="Normal"/>
+            <w:rPr><w:rFonts w:ascii="宋体" w:hAnsi="宋体" w:eastAsia="宋体"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="zh-CN"/></w:rPr>
+          </w:style>
+        </w:styles>`;
+
+                const settings = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+          <w:defaultTabStop w:val="420"/>
+          <w:characterSpacingControl w:val="compressPunctuation"/>
+        </w:settings>`;
+
+                const zip = new JSZip();
+                zip.file('[Content_Types].xml', contentTypes);
+                zip.folder('_rels').file('.rels', rels);
+                zip.folder('word').folder('_rels').file('document.xml.rels', docRels);
+                zip.folder('word').file('document.xml', documentXml);
+                zip.folder('word').file('styles.xml', styles);
+                zip.folder('word').file('settings.xml', settings);
+                return zip;
+            }
+
+            function downloadDocx(zip, filename) {
+                zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+                    .then(blob => saveAs(blob, filename));
+            }
+
+            // 生成红头文件DOCX
+            function generateRedHeadDocx() {
+                const lines = redHeadText.split('\n');
+                const paraXmls = [];
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    const trimmed = line.trim();
+                    if (trimmed === '') {
+                        // 空行
+                        paraXmls.push('<w:p><w:pPr><w:spacing w:after="60"/></w:pPr></w:p>');
+                        continue;
+                    }
+                    let opts = { fontSize: '21', bold: false, color: '000000', align: 'left', spacingAfter: '120' };
+                    if (i === 0) {
+                        // 红头大标题
+                        opts = { fontSize: '36', bold: true, color: 'CC0000', align: 'center', spacingAfter: '200', fontFamily: '宋体' };
+                    } else if (i === 1) {
+                        opts = { fontSize: '24', bold: true, color: '000000', align: 'center', spacingAfter: '60' };
+                    } else if (i === 2) {
+                        opts = { fontSize: '21', bold: false, color: '000000', align: 'center', spacingAfter: '60' };
+                    } else if (trimmed.startsWith('——————————————————————————————')) {
+                        paraXmls.push('<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="宋体" w:hAnsi="宋体" w:eastAsia="宋体"/><w:sz w:val="12"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r></w:p>');
+                        continue;
+                    } else if (trimmed.startsWith('关于发布')) {
+                        opts = { fontSize: '28', bold: true, color: '000000', align: 'center', spacingAfter: '200' };
+                    } else if (trimmed === '班级委员会' || trimmed === '2026年6月7日') {
+                        opts = { fontSize: '21', bold: false, color: '000000', align: 'right', spacingAfter: '80' };
+                    }
+                    paraXmls.push(buildParagraphXml(line, opts));
+                }
+                const zip = createDocxBase(paraXmls);
+                downloadDocx(zip, '关于发布《班级电脑设备管理法典》的通知.docx');
+            }
+
+            // 生成法典DOCX
+            function generateLawDocx() {
+                const lines = lawText.split('\n');
+                const paraXmls = [];
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (trimmed === '') {
+                        paraXmls.push('<w:p><w:pPr><w:spacing w:after="60"/></w:pPr></w:p>');
+                        continue;
+                    }
+                    const isMainTitle = /^第[一二三四五六]编/.test(trimmed);
+                    const isChapterTitle = /^第[一二三四五六七八九十]+章/.test(trimmed);
+                    const isArticle = /^第[一二三四五六七八九十百]+条/.test(trimmed);
+                    let opts = { fontSize: '21', bold: false, align: 'left', spacingAfter: '120' };
+                    if (isMainTitle) {
+                        opts = { fontSize: '32', bold: true, align: 'center', spacingAfter: '200', fontFamily: '宋体' };
+                    } else if (isChapterTitle) {
+                        opts = { fontSize: '28', bold: true, align: 'center', spacingAfter: '160', fontFamily: '宋体' };
+                    } else if (isArticle) {
+                        opts = { fontSize: '24', bold: true, align: 'left', spacingAfter: '100', fontFamily: '宋体' };
+                    }
+                    paraXmls.push(buildParagraphXml(line, opts));
+                }
+                const zip = createDocxBase(paraXmls);
+                downloadDocx(zip, '班级电脑设备管理法典.docx');
+            }
+
+            // 绑定下载事件
+            document.getElementById('downloadRedheadBtn').addEventListener('click', generateRedHeadDocx);
+            document.getElementById('downloadLawBtn').addEventListener('click', generateLawDocx);
+        })();
+    </script>
+</body>
+</html>
