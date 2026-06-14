@@ -1,0 +1,245 @@
+'use strict';
+
+const Play = (() => {
+    const audio = new Audio();
+    let playlist = [];
+    let curIdx = -1;
+    let mode = 0;
+    let playing = false;
+    let timer = null;
+    let lyrics = [];
+    let lyricIdx = -1;
+    let autoPageListId = null;
+    let autoPage = 1;
+    let autoMaxPage = 1;
+    let loadingMore = false;
+
+    function init() {}
+
+    async function loadAndPlay(songs, idx, listId, maxPage) {
+        playlist = songs;
+        curIdx = idx;
+        autoPageListId = listId || null;
+        autoPage = 1;
+        autoMaxPage = maxPage || 1;
+        loadingMore = false;
+        await playIdx(idx);
+    }
+
+    async function playIdx(idx) {
+        if (idx < 0 || idx >= playlist.length) return;
+        curIdx = idx;
+        const song = playlist[idx];
+        const hash = song.hash || song.FileHash || (song.HQ && song.HQ.Hash) ||
+                     song.hash_320 || song.hash_128 || '';
+        if (!hash) { Tool.toast('缺少歌曲标识'); return; }
+
+        const albumAudioId = song.album_audio_id || song.mixsongid || song.Audioid || '';
+        if (!albumAudioId) console.warn('缺少 album_audio_id');
+
+        const cacheKey = `song_url_${hash}_${albumAudioId}`;
+        let url = await Tool.cachedFetch(cacheKey, async () => {
+            let res, u = '';
+            res = await Net.get('/song/url', { hash, quality: '320', album_audio_id: albumAudioId });
+            u = Net.extractUrl(res);
+            if (u) return u;
+            res = await Net.get('/song/url', { hash, quality: '128', album_audio_id: albumAudioId });
+            u = Net.extractUrl(res);
+            if (u) return u;
+            res = await Net.get('/song/url', { hash, quality: '64', album_audio_id: albumAudioId });
+            u = Net.extractUrl(res);
+            if (u) return u;
+            res = await Net.get('/song/url/new', { hash });
+            u = Net.extractUrl(res);
+            if (u) return u;
+            throw new Error('No playable URL');
+        }, 7200000);
+
+        if (!url) { Tool.toast('无法获取播放地址'); return; }
+
+        Tool.$('#playerLyricPage').innerHTML = '';
+        Tool.$('#minibarLyric').textContent = '点击播放音乐';
+        lyrics = [];
+
+        audio.crossOrigin = null;
+        audio.src = url;
+        audio.onended = () => {
+            if (mode === 1) {
+                audio.currentTime = 0;
+                audio.play();
+            } else {
+                next();
+            }
+        };
+        audio.play().then(() => {
+            playing = true;
+            updateUI(song);
+            startTimer();
+            loadLyric(hash);
+        }).catch(err => {
+            Tool.toast('播放失败: ' + (err.message || ''));
+        });
+
+        if (autoPageListId && idx >= playlist.length - 3 && autoPage <= autoMaxPage && !loadingMore) {
+            loadingMore = true;
+            const res2 = await Net.get('/playlist/track/all/new', { listid: autoPageListId, page: autoPage, pagesize: 50 });
+            const rows = (res2.data && res2.data.info) || [];
+            if (rows.length) {
+                const normalizedRows = rows.map(raw => ({
+                    name: raw.name || raw.songname || '未知',
+                    hash: raw.hash || '',
+                    author_name: raw.singerinfo?.[0]?.name || '',
+                    album_audio_id: raw.album_audio_id || raw.mixsongid || raw.Audioid || '',
+                    mixsongid: raw.mixsongid || raw.album_audio_id || raw.Audioid || '',
+                    Image: raw.cover || (raw.trans_param && raw.trans_param.union_cover) || ''
+                }));
+                playlist.push(...normalizedRows);
+                autoPage++;
+            }
+            loadingMore = false;
+        }
+    }
+
+    function toggle() {
+        if (!audio.src) return;
+        if (playing) { audio.pause(); playing = false; stopTimer(); }
+        else { audio.play().then(() => { playing = true; startTimer(); }).catch(() => {}); }
+        updatePlayBtn();
+    }
+
+    function prev() {
+        if (!playlist.length) return;
+        let idx = mode === 2 ? Math.floor(Math.random() * playlist.length) : curIdx - 1;
+        if (idx < 0) idx = playlist.length - 1;
+        playIdx(idx);
+    }
+
+    function next() {
+        if (!playlist.length) return;
+        let idx = mode === 2 ? Math.floor(Math.random() * playlist.length) : curIdx + 1;
+        if (idx >= playlist.length) idx = 0;
+        playIdx(idx);
+    }
+
+    function cycleMode() {
+        mode = (mode + 1) % 3;
+        const btn = Tool.$('#playerModeBtn');
+        if (btn) btn.classList.toggle('active', mode !== 0);
+    }
+
+    function updateUI(song) {
+        const name = song.songname || song.name || song.SongName || '未知';
+        const author = song.author_name || song.author || song.SingerName || '';
+        const titleEl = Tool.$('#minibarTitle');
+        if (titleEl) {
+            titleEl.textContent = name + (author ? ' - ' + author : '');
+            const wrap = titleEl.parentNode;
+            if (titleEl.scrollWidth > wrap.clientWidth) wrap.classList.add('overflow');
+            else wrap.classList.remove('overflow');
+        }
+        const cover = Tool.coverUrl(song);
+        Tool.setImageWithFallback(Tool.$('#minibarCover'), cover);
+        Tool.setImageWithFallback(Tool.$('#playerCover'), cover);
+        updatePlayBtn();
+    }
+
+    function updatePlayBtn() {
+        const playIcon = '<svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21" fill="currentColor" stroke="none"/></svg>';
+        const pauseIcon = '<svg viewBox="0 0 24 24"><rect x="5" y="3" width="5" height="18" fill="currentColor" stroke="none"/><rect x="14" y="3" width="5" height="18" fill="currentColor" stroke="none"/></svg>';
+        const mini = Tool.$('#minibarPlayBtn');
+        const main = Tool.$('#playerMainPlay');
+        if (mini) mini.innerHTML = playing ? pauseIcon : playIcon;
+        if (main) main.innerHTML = playing
+            ? '<svg viewBox="0 0 24 24" width="36" height="36"><rect x="5" y="3" width="5" height="18" fill="currentColor" stroke="none"/><rect x="14" y="3" width="5" height="18" fill="currentColor" stroke="none"/></svg>'
+            : '<svg viewBox="0 0 24 24" width="36" height="36"><polygon points="5,2 22,12 5,22" fill="currentColor" stroke="none"/></svg>';
+    }
+
+    function startTimer() {
+        stopTimer();
+        timer = setInterval(() => {
+            if (!audio.duration) return;
+            const cur = audio.currentTime;
+            Tool.$('#playerTimeCur').textContent = Tool.formatTime(cur);
+            Tool.$('#playerTimeTotal').textContent = Tool.formatTime(audio.duration);
+            Tool.$('#playerProgressFill').style.width = (cur / audio.duration * 100) + '%';
+            updateLyricHighlight(cur);
+        }, 200);
+    }
+
+    function stopTimer() { if (timer) clearInterval(timer); timer = null; }
+
+    function seekProgress(e) {
+        const bar = Tool.$('#playerProgressBar');
+        const rect = bar.getBoundingClientRect();
+        audio.currentTime = audio.duration * ((e.clientX - rect.left) / rect.width);
+    }
+
+    async function loadLyric(hash) {
+        try {
+            let candidates = [];
+            let res = await Net.get('/search/lyric', { hash });
+            candidates = (res.data && res.data.candidates) || [];
+            if (!candidates.length) {
+                const s = playlist[curIdx];
+                if (s) {
+                    res = await Net.get('/search/lyric', { keywords: s.songname || s.name || '' });
+                    candidates = (res.data && res.data.candidates) || [];
+                }
+            }
+            if (!candidates.length) return;
+            const { id, accesskey } = candidates[0];
+            if (!id || !accesskey) return;
+            res = await Net.get('/lyric', { id, accesskey, fmt: 'lrc', decode: 'true' });
+            const content = (res.data && res.data.content) || '';
+            if (!content) return;
+            lyrics = parseLRC(content);
+            renderLyrics();
+        } catch(e) { console.error('Lyric loading error', e); }
+    }
+
+    function parseLRC(lrc) {
+        const result = [];
+        const re = /\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\]/g;
+        lrc.split('\n').forEach(line => {
+            const m = line.match(re);
+            if (!m) return;
+            const text = line.replace(re, '').trim();
+            if (!text) return;
+            m.forEach(mm => {
+                const p = mm.match(/\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\]/);
+                if (p) result.push({
+                    time: parseInt(p[1])*60 + parseInt(p[2]) + (p[3] ? parseInt(p[3].padEnd(3,'0'))/1000 : 0),
+                    text
+                });
+            });
+        });
+        result.sort((a,b) => a.time - b.time);
+        return result;
+    }
+
+    function renderLyrics() {
+        const page = Tool.$('#playerLyricPage');
+        if (!page) return;
+        page.innerHTML = '';
+        lyrics.forEach((l, i) => page.appendChild(Tool.create('div', { class: 'lyric-line', 'data-idx': i }, [l.text])));
+    }
+
+    function updateLyricHighlight(cur) {
+        if (!lyrics.length) return;
+        let idx = -1;
+        for (let i = 0; i < lyrics.length; i++) { if (lyrics[i].time <= cur) idx = i; else break; }
+        if (idx !== lyricIdx) {
+            const lines = Tool.$$('.lyric-line', Tool.$('#playerLyricPage'));
+            lines.forEach((l, i) => l.classList.toggle('active', i === idx));
+            const active = Tool.$('#playerLyricPage').children[idx];
+            if (active) active.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            lyricIdx = idx;
+            if (idx >= 0) Tool.$('#minibarLyric').textContent = lyrics[idx].text;
+        }
+    }
+
+    function getPlaylist() { return playlist; }
+    function getCurIdx() { return curIdx; }
+
+    return { init, loadAndPlay, playIdx, toggle, prev, next, cycleMode, seekProgress, getPlaylist, getCurIdx };
+})();
