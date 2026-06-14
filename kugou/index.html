@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正在为您跳转...</title>
+    <script>
+        (function() {
+            // 获取用户代理字符串并转为小写
+            var userAgent = navigator.userAgent.toLowerCase();
+            
+            // 判断是否为移动设备
+            var isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            
+            // 根据设备类型跳转到对应路径
+            if (isMobile) {
+                window.location.href = './mobile';
+            } else {
+                window.location.href = './pc';
+            }
+        })();
+    </script>
+</head>
+<body>
+    <p>页面跳转中，请稍候...</p>
+    <p>如果没有自动跳转，请点击：</p>
+    <p>
+        <a href="./pc">电脑版</a> | 
+        <a href="./mobile">手机版</a>
+    </p>
+</body>
+</html>
