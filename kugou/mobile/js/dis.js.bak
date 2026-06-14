@@ -1,0 +1,589 @@
+'use strict';
+
+const App = (() => {
+    let currentView = '';
+    let loginTab = 0;
+    let cdTimer = null, cdNum = 0;
+    let qrTimer = null, qrKey = null;
+    let plPage = 1, plMaxPage = 1, plListid = null, loadingMore = false;
+    let songsAll = [];
+    let plTotalCount = 0;
+
+    function normalizeSong(raw) {
+        const name = raw.SongName || raw.songname || raw.name || raw.FileName || '未知';
+        let author = raw.SingerName || raw.author_name || raw.singer || raw.author || '';
+        if (!author && raw.authors && raw.authors.length) {
+            author = raw.authors[0].author_name || '';
+        }
+        const hash = raw.FileHash || raw.hash || (raw.HQ && raw.HQ.Hash) || raw.hash_320 || raw.hash_128 || '';
+        const cover = raw.Image || raw.album_sizable_cover || raw.cover || raw.imgurl ||
+                      (raw.trans_param && raw.trans_param.union_cover) || '';
+        const albumAudioId = raw.album_audio_id || raw.mixsongid || raw.Audioid || '';
+        return {
+            songname: name, SongName: name, name: name,
+            author_name: author, SingerName: author,
+            hash: hash, FileHash: hash,
+            Image: cover, album_sizable_cover: cover,
+            album_audio_id: albumAudioId,
+            mixsongid: raw.mixsongid || raw.album_audio_id || raw.Audioid || '',
+            Audioid: raw.Audioid || ''
+        };
+    }
+
+    function init() {
+        Net.get('/register/dev').then(r => { if (r.data && r.data.dfid) Net.saveDfid(r.data.dfid); });
+        buildShell();
+        currentView = '';
+        switchView('home');
+        loadHome();
+        if (!Net.isLogin()) setTimeout(() => showLogin(), 400);
+    }
+
+    function buildShell() {
+        const app = Tool.$('#app');
+        app.innerHTML = '';
+
+        ['home', 'my', 'playlist'].forEach(id => {
+            const div = Tool.create('div', { class: 'page', id: id + 'Page' });
+            if (id === 'home') div.classList.add('active');
+            app.appendChild(div);
+        });
+
+        const tab = Tool.create('div', { class: 'tabbar' });
+        tab.appendChild(createTabItem('home', '首页', '<svg viewBox="0 0 24 24"><polygon points="12,2 2,10 6,10 6,21 10,21 10,14 14,14 14,21 18,21 18,10 22,10"/></svg>'));
+        tab.appendChild(createTabItem('my', '我的', '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 22c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>'));
+        app.appendChild(tab);
+
+        buildMinibar(app);
+        buildFullPlayer(app);
+        buildSearchPage(app);
+        buildLogin(app);
+        buildHomePage();
+
+        bindTab();
+    }
+
+    function createTabItem(page, label, icon) {
+        const el = Tool.create('div', { class: 'tabbar-item', 'data-page': page });
+        el.innerHTML = `<span class="tab-icon">${icon}</span><span>${label}</span>`;
+        return el;
+    }
+
+    function bindTab() {
+        Tool.$$('.tabbar-item').forEach(t => {
+            t.addEventListener('click', () => switchView(t.dataset.page));
+        });
+    }
+
+    function switchView(view) {
+        hideFullPlayer();
+        Tool.$$('.tabbar-item').forEach(t => t.classList.toggle('active', t.dataset.page === view));
+        if (view === currentView) return;
+        currentView = view;
+        Tool.$$('#app > .page').forEach(p => p.classList.remove('active'));
+        const target = Tool.$('#' + view + 'Page');
+        if (target) target.classList.add('active');
+        if (view === 'my') loadMyPage();
+        else if (view === 'home') loadHome();
+    }
+
+    function showFullPlayer() {
+        const el = Tool.$('#fullPlayer');
+        if (el) el.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+    function hideFullPlayer() {
+        const el = Tool.$('#fullPlayer');
+        if (el) el.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    /* ========== 首页 ========== */
+    function buildHomePage() {
+        const hp = Tool.$('#homePage');
+        hp.innerHTML = '';
+        const sb = Tool.create('div', { class: 'home-search-bar', onclick: () => { Tool.$('#searchPage').classList.add('show'); setTimeout(() => Tool.$('#searchInput').focus(), 150); } });
+        sb.innerHTML = '<span class="search-icon"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/><line x1="16" y1="16" x2="21" y2="21"/></svg></span><span>搜索音乐</span>';
+        hp.appendChild(sb);
+        hp.appendChild(Tool.create('div', { class: 'section', innerHTML: '<div class="section-title">每日推荐</div><div class="scroll-h" id="dailyScroll"></div>' }));
+        hp.appendChild(Tool.create('div', { class: 'section', innerHTML: '<div class="section-title">猜你喜欢</div><div class="song-list-v" id="fmList"></div>' }));
+        hp.appendChild(Tool.create('div', { class: 'section', innerHTML: '<div class="section-title">新歌速递</div><div class="song-list-v" id="hotList"></div>' }));
+    }
+
+    function loadHome() {
+        loadDaily();
+        loadFM();
+        loadHot();
+    }
+
+    async function loadDaily() {
+        const el = Tool.$('#dailyScroll'); if (!el) return;
+        el.innerHTML = '<span style="color:var(--text-hint);padding:20px;">加载中...</span>';
+        try {
+            const data = await Tool.cachedFetch('daily', () => Net.get('/everyday/recommend', { platform: 'ios' }), 600000);
+            const songs = (data.data && data.data.song_list) || [];
+            if (!songs.length) { el.innerHTML = '<span style="color:var(--text-hint);padding:20px;">暂无推荐</span>'; return; }
+            el.innerHTML = '';
+            songs.forEach(s => {
+                const ns = normalizeSong(s);
+                const c = Tool.create('div', { class: 'song-card-h', onclick: () => Play.loadAndPlay(songs.map(normalizeSong), songs.indexOf(s)) });
+                c.innerHTML = `<div class="card-cover">${Tool.coverUrl(ns) ? `<img src="${Tool.coverUrl(ns)}" onerror="this.style.display='none';this.parentElement.textContent='---'">` : '---'}</div><div class="card-name">${ns.songname}</div><div class="card-author">${ns.author_name||''}</div>`;
+                el.appendChild(c);
+            });
+        } catch(e) { console.error(e); el.innerHTML = '<span style="color:var(--text-hint);padding:20px;">加载失败</span>'; }
+    }
+
+    async function loadFM() {
+        const el = Tool.$('#fmList'); if (!el) return;
+        el.innerHTML = '<span style="color:var(--text-hint);padding:20px;">加载中...</span>';
+        try {
+            const data = await Tool.cachedFetch('fm', () => Net.get('/personal/fm', { mode: 'normal' }), 600000);
+            const songs = (data.data && data.data.song_list) || [];
+            renderSongList(el, songs, '暂无推荐');
+        } catch(e) { console.error(e); el.innerHTML = '<span style="color:var(--text-hint);padding:20px;">加载失败</span>'; }
+    }
+
+    async function loadHot() {
+        const el = Tool.$('#hotList'); if (!el) return;
+        el.innerHTML = '<span style="color:var(--text-hint);padding:20px;">加载中...</span>';
+        try {
+            const data = await Tool.cachedFetch('hot', () => Net.get('/top/song'), 600000);
+            const songs = (data.data || []).slice(0, 20);
+            renderSongList(el, songs, '暂无新歌');
+        } catch(e) { console.error(e); el.innerHTML = '<span style="color:var(--text-hint);padding:20px;">加载失败</span>'; }
+    }
+
+    function renderSongList(container, songs, emptyText = '暂无数据') {
+        if (!songs || !songs.length) {
+            container.innerHTML = `<span style="color:var(--text-hint);padding:20px;">${emptyText}</span>`;
+            return;
+        }
+        const normalized = songs.map(normalizeSong);
+        container.innerHTML = '';
+        normalized.forEach((s, i) => {
+            const it = Tool.create('div', { class: 'song-item-v', onclick: () => Play.loadAndPlay(normalized, i) });
+            it.innerHTML = `<div class="item-index">${i+1}</div><div class="item-info"><div class="item-name">${s.songname}</div><div class="item-author">${s.author_name||''}</div></div>`;
+            container.appendChild(it);
+        });
+    }
+
+    /* ========== 我的页面 ========== */
+    async function loadMyPage() {
+        if (!Net.isLogin()) { showLogin(); return; }
+        const mp = Tool.$('#myPage');
+        mp.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-hint);">加载中...</div>';
+
+        const delay = Tool.delay;
+        const userDetailPromise = Net.get('/user/detail').then(r => { delay(1000); return r; });
+        const vipDetailPromise = Net.get('/user/vip/detail').then(r => { delay(1000); return r; });
+        const playlistPromise = Net.get('/user/playlist').then(r => { delay(1000); return r; });
+
+        const [detailRes, vipRes, plRes] = await Promise.all([userDetailPromise, vipDetailPromise, playlistPromise]);
+
+        const u = (detailRes.data) || {};
+        const v = (vipRes.data) || {};
+        const auth = Net.getAuth();
+        const pls = (plRes.data && plRes.data.info) || [];
+
+        mp.innerHTML = '';
+
+        const header = Tool.create('div', { class: 'my-header' });
+        const avatarUrl = Tool.imgUrl(u.pic || auth.pic, 120);
+        header.innerHTML = `
+            <div class="my-avatar">${avatarUrl ? `<img src="${avatarUrl}" onerror="this.style.display='none';this.parentElement.textContent='---'">` : '---'}</div>
+            <div class="my-info">
+                <div class="my-nickname">${u.nickname||auth.nickname||'用户'}</div>
+                <div class="my-meta">关注 ${u.follows||0}  |  粉丝 ${u.fans||0}</div>
+                ${renderVipBadge(v)}
+            </div>`;
+        mp.appendChild(header);
+
+        const detailWrap = Tool.create('div', { class: 'my-detail-wrap' });
+        const toggle = Tool.create('div', { class: 'my-detail-toggle', id: 'detailToggle', innerHTML: '详细信息 <svg viewBox="0 0 24 24"><polyline points="6,9 12,15 18,9"/></svg>' });
+        const content = Tool.create('div', { class: 'my-detail-content', id: 'detailContent' });
+
+        const detailRows = [
+            ['昵称', u.nickname || '--'],
+            ['所在地', u.loc || u.province || u.city || '未知'],
+            ['性别', u.gender === 1 ? '男' : u.gender === 2 ? '女' : '未设置'],
+            ['简介', u.descri || '无'],
+            ['认证', u.auth_info || '无'],
+            ['VIP类型', getVipTypeName(v.vip_type || 0)],
+            ['VIP到期', v.vip_end_time || u.su_vip_end_time || '--'],
+            ['超级VIP等级', 'Lv.' + (v.svip_level || u.svip_level || 0)],
+            ['超级VIP到期', v.su_vip_end_time || u.su_vip_end_time || '--'],
+            ['音乐包', v.m_type ? '已开通' : '未开通'],
+            ['豪华VIP', v.y_type ? '已开通' : '未开通'],
+            ['概念VIP', (v.busi_vip && v.busi_vip.length && v.busi_vip[0].is_vip) ? '已开通' : '未开通'],
+            ['听歌时长(秒)', u.duration || 0]
+        ];
+
+        detailRows.forEach(([l, val]) => {
+            content.appendChild(Tool.create('div', { class: 'detail-row', innerHTML: `<span class="detail-label">${l}</span><span class="detail-value">${val}</span>` }));
+        });
+
+        toggle.addEventListener('click', () => {
+            content.classList.toggle('show');
+            toggle.classList.toggle('expanded');
+        });
+        detailWrap.appendChild(toggle);
+        detailWrap.appendChild(content);
+        mp.appendChild(detailWrap);
+
+        const plCont = Tool.create('div', { class: 'my-playlist' });
+        plCont.appendChild(Tool.create('div', { class: 'section-title', style: 'padding-top:8px' }, ['我的歌单']));
+        if (!pls.length) {
+            plCont.appendChild(Tool.create('div', { style: 'padding:20px;color:var(--text-hint);text-align:center' }, ['暂无歌单']));
+        } else {
+            pls.forEach(pl => {
+                const it = Tool.create('div', { class: 'my-playlist-item' });
+                const coverUrl = pl.pic ? Tool.imgUrl(pl.pic, 100) : '';
+                it.innerHTML = `<div class="my-playlist-cover">${coverUrl ? `<img src="${coverUrl}" onerror="this.style.display='none';this.parentElement.textContent='---'">` : '---'}</div><div class="my-playlist-info"><div class="my-playlist-name">${pl.name||'未命名'}</div><div class="my-playlist-count">${pl.count||0} 首</div></div>`;
+                it.addEventListener('click', () => openPlaylistPreview(pl));
+                plCont.appendChild(it);
+            });
+        }
+        mp.appendChild(plCont);
+    }
+
+    function renderVipBadge(v) {
+        if (!v || !v.is_vip) return '';
+        const level = v.svip_level ? ' SVIP Lv.' + v.svip_level : ' VIP';
+        return `<div class="my-vip-badge">${level}</div>`;
+    }
+
+    function getVipTypeName(type) {
+        const map = { 0: '非会员', 1: 'VIP', 2: '豪华VIP', 3: '超级VIP', 4: '年费VIP', 5: '年费豪华', 6: '年费超级' };
+        return map[type] || 'VIP' + type;
+    }
+
+    /* ========== 歌单预览（从新到旧） ========== */
+    async function openPlaylistPreview(pl) {
+        songsAll = [];
+        plTotalCount = pl.count || 0;
+        plListid = pl.listid;
+        plMaxPage = Math.ceil(plTotalCount / 50);
+        plPage = plMaxPage;
+        loadingMore = false;
+
+        const pp = Tool.$('#playlistPage');
+        pp.innerHTML = `
+            <div style="display:flex;align-items:center;padding:14px 16px;gap:12px;border-bottom:1px solid var(--border-subtle);">
+                <div style="cursor:pointer;font-size:20px;color:var(--text-hint);" id="plBackBtn"><svg viewBox="0 0 24 24" width="20" height="20"><polyline points="15,4 5,12 15,20"/></svg></div>
+                <div style="flex:1;font-weight:520;">${pl.name||'歌单'} (${plTotalCount}首)</div>
+                <div style="color:var(--accent);cursor:pointer;font-size:13px;" id="plPlayAllBtn">全部播放</div>
+            </div>
+            <div class="song-list-v" id="plSongList" style="padding-top:8px;padding-bottom:100px;"></div>
+            <div id="plLoadMore" style="text-align:center;padding:14px;color:var(--text-hint);"></div>`;
+        switchView('playlist');
+
+        Tool.$('#plBackBtn').addEventListener('click', () => switchView('my'));
+
+        Tool.$('#plPlayAllBtn').addEventListener('click', async () => {
+            if (songsAll.length < plTotalCount) {
+                Tool.toast('正在加载全部歌曲...');
+                for (let p = plMaxPage; p >= 1; p--) {
+                    const res = await Net.get('/playlist/track/all/new', { listid: pl.listid, page: p, pagesize: 50 });
+                    const rows = (res.data && res.data.info) || [];
+                    const mapped = rows.map(extractSongInfo).reverse();
+                    songsAll = [...songsAll, ...mapped];
+                }
+            }
+            if (songsAll.length) Play.loadAndPlay(songsAll, 0, pl.listid, plMaxPage);
+        });
+
+        const listEl = Tool.$('#plSongList');
+        listEl.addEventListener('scroll', () => {
+            if (listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - 100 && !loadingMore && plPage > 1) {
+                loadMoreSongs(listEl);
+            }
+        });
+
+        await loadMoreSongs(listEl, true);
+    }
+
+    function extractSongInfo(raw) {
+        const singer = (raw.singerinfo && raw.singerinfo.length) ? raw.singerinfo[0].name : '';
+        const albumAudioId = raw.album_audio_id || raw.mixsongid || raw.Audioid || '';
+        return {
+            name: raw.name || raw.songname || '未知',
+            hash: raw.hash || '',
+            author_name: singer,
+            SingerName: singer,
+            songname: raw.name || raw.songname || '未知',
+            cover: raw.cover || (raw.trans_param && raw.trans_param.union_cover) || '',
+            Image: raw.cover || (raw.trans_param && raw.trans_param.union_cover) || '',
+            album_sizable_cover: raw.cover || (raw.trans_param && raw.trans_param.union_cover) || '',
+            FileHash: raw.hash || '',
+            HQ: { Hash: raw.hash || '' },
+            hash_320: raw.hash_320 || '',
+            hash_128: raw.hash || '',
+            album_audio_id: albumAudioId,
+            mixsongid: raw.mixsongid || raw.album_audio_id || raw.Audioid || ''
+        };
+    }
+
+    async function loadMoreSongs(listEl, isFirst = false) {
+        if (!listEl || loadingMore) return;
+        loadingMore = true;
+        const loadHint = Tool.$('#plLoadMore');
+        if (loadHint) loadHint.textContent = '加载中...';
+
+        const res = await Net.get('/playlist/track/all/new', { listid: plListid, page: plPage, pagesize: 50 });
+        const rows = (res.data && res.data.info) || [];
+        if (rows.length) {
+            const mapped = rows.map(extractSongInfo).reverse();
+            songsAll = [...songsAll, ...mapped];
+            listEl.innerHTML = '';
+            songsAll.forEach((s, i) => {
+                const it = Tool.create('div', { class: 'song-item-v' });
+                const displayName = (s.name || s.songname || '未知').replace(/\.mp3$/i, '');
+                it.innerHTML = `<div class="item-index">${i+1}</div><div class="item-info"><div class="item-name">${displayName}</div><div class="item-author">${s.author_name||s.SingerName||''}</div></div>`;
+                it.addEventListener('click', () => { Play.loadAndPlay(songsAll, i, plListid, plMaxPage); });
+                listEl.appendChild(it);
+            });
+            plPage--;
+        }
+        if (loadHint) loadHint.textContent = plPage < 1 ? '已加载全部' : '上滑加载更多';
+        loadingMore = false;
+    }
+
+    /* ========== 迷你栏与播放器 ========== */
+    function buildMinibar(app) {
+        const mb = Tool.create('div', { class: 'minibar', id: 'minibar', onclick: () => showFullPlayer() });
+        mb.innerHTML = `
+            <div class="minibar-cover" id="minibarCover">---</div>
+            <div class="minibar-info">
+                <div class="minibar-title-wrap"><span class="minibar-title-scroll" id="minibarTitle">未在播放</span></div>
+                <div class="minibar-lyric-wrap"><span class="minibar-lyric-scroll" id="minibarLyric">点击播放音乐</span></div>
+            </div>
+            <div class="minibar-btn" id="minibarPlayBtn"><svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21" fill="currentColor" stroke="none"/></svg></div>`;
+        app.appendChild(mb);
+        Tool.$('#minibarPlayBtn').addEventListener('click', (e) => { e.stopPropagation(); Play.toggle(); });
+    }
+
+    function buildFullPlayer(app) {
+        const fp = Tool.create('div', { class: 'player-full', id: 'fullPlayer' });
+        fp.innerHTML = `
+            <div class="player-close" id="playerClose"><svg viewBox="0 0 24 24"><polyline points="15,4 5,12 15,20"/></svg></div>
+            <div class="player-upper" id="playerUpper">
+                <div class="player-cover" id="playerCover">---</div>
+                <div class="player-lyric-page" id="playerLyricPage"></div>
+            </div>
+            <div class="player-lower">
+                <div class="player-progress-row">
+                    <span class="player-time" id="playerTimeCur">00:00</span>
+                    <div class="player-progress" id="playerProgressBar"><div class="player-progress-fill" id="playerProgressFill"></div></div>
+                    <span class="player-time" id="playerTimeTotal">00:00</span>
+                </div>
+                <div class="player-controls">
+                    <div class="player-ctrl-btn player-mode-btn" id="playerModeBtn"><svg viewBox="0 0 24 24" width="20" height="20"><polyline points="4,4 4,16 8,16"/><polyline points="8,8 20,8 20,20 8,20 8,16"/></svg></div>
+                    <div class="player-ctrl-btn" id="playerPrevBtn"><svg viewBox="0 0 24 24" width="28" height="28"><polygon points="20,3 8,12 20,21"/><rect x="2" y="3" width="4" height="18"/></svg></div>
+                    <div class="player-ctrl-btn main-play" id="playerMainPlay"><svg viewBox="0 0 24 24" width="36" height="36"><polygon points="5,2 22,12 5,22" fill="currentColor" stroke="none"/></svg></div>
+                    <div class="player-ctrl-btn" id="playerNextBtn"><svg viewBox="0 0 24 24" width="28" height="28"><polygon points="4,3 16,12 4,21"/><rect x="18" y="3" width="4" height="18"/></svg></div>
+                    <div class="player-ctrl-btn" id="playerListBtn"><svg viewBox="0 0 24 24" width="22" height="22"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg></div>
+                </div>
+            </div>
+            <div class="playlist-overlay" id="playlistOverlay">
+                <div class="playlist-panel" id="playlistPanel"></div>
+            </div>`;
+        app.appendChild(fp);
+
+        Tool.$('#playerClose').addEventListener('click', hideFullPlayer);
+        Tool.$('#playerModeBtn').addEventListener('click', Play.cycleMode);
+        Tool.$('#playerPrevBtn').addEventListener('click', Play.prev);
+        Tool.$('#playerMainPlay').addEventListener('click', Play.toggle);
+        Tool.$('#playerNextBtn').addEventListener('click', Play.next);
+        Tool.$('#playerListBtn').addEventListener('click', showPlaylistPanel);
+        Tool.$('#playerProgressBar').addEventListener('click', Play.seekProgress);
+        Tool.$('#playlistOverlay').addEventListener('click', (e) => { if (e.target.id === 'playlistOverlay') hidePlaylistPanel(); });
+
+        let tsY = 0;
+        const upper = Tool.$('#playerUpper');
+        upper.addEventListener('touchstart', (e) => { tsY = e.changedTouches[0].clientY; });
+        upper.addEventListener('touchend', (e) => {
+            const dy = tsY - e.changedTouches[0].clientY;
+            if (dy > 60) { Tool.$('#playerCover').style.display = 'none'; Tool.$('#playerLyricPage').classList.add('show'); }
+            else if (dy < -60) { Tool.$('#playerCover').style.display = ''; Tool.$('#playerLyricPage').classList.remove('show'); }
+        });
+    }
+
+    function showPlaylistPanel() {
+        const panel = Tool.$('#playlistPanel');
+        panel.innerHTML = '';
+        const list = Play.getPlaylist();
+        const cur = Play.getCurIdx();
+        list.forEach((s, i) => {
+            const it = Tool.create('div', { class: 'playlist-item' + (i === cur ? ' current' : ''), onclick: () => { Play.playIdx(i); hidePlaylistPanel(); } });
+            it.innerHTML = `<div class="playlist-item-index">${i+1}</div><div class="playlist-item-info"><div class="playlist-item-name">${s.songname||s.name||s.SongName||'未知'}</div><div class="playlist-item-author">${s.author_name||s.author||s.SingerName||''}</div></div>`;
+            panel.appendChild(it);
+        });
+        Tool.$('#playlistOverlay').classList.add('show');
+    }
+
+    function hidePlaylistPanel() { Tool.$('#playlistOverlay').classList.remove('show'); }
+
+    /* ========== 搜索 ========== */
+    function buildSearchPage(app) {
+        const sp = Tool.create('div', { class: 'search-page', id: 'searchPage' });
+        const top = Tool.create('div', { class: 'search-top' });
+        const wrap = Tool.create('div', { class: 'search-input-wrap' });
+        const inp = Tool.create('input', { id: 'searchInput', type: 'text', placeholder: '搜索音乐、歌手、歌词' });
+        inp.addEventListener('input', Tool.debounce(async () => {
+            const kw = inp.value.trim();
+            const resEl = Tool.$('#searchResults');
+            if (!kw) { resEl.innerHTML = ''; return; }
+            resEl.innerHTML = '<span style="color:var(--text-hint);padding:20px;">搜索中...</span>';
+            const cacheKey = `search_${kw}`;
+            const data = await Tool.cachedFetch(cacheKey, () => Net.get('/search', { keywords: kw, type: 'song', page: 1, pagesize: 20 }), 1800000);
+            const songs = (data.data && data.data.lists) || [];
+            renderSongList(resEl, songs, '未找到结果');
+        }, 400));
+        wrap.appendChild(inp);
+        top.appendChild(wrap);
+        top.appendChild(Tool.create('span', { class: 'search-cancel', onclick: () => { sp.classList.remove('show'); inp.value = ''; Tool.$('#searchResults').innerHTML = ''; } }, ['取消']));
+        sp.appendChild(top);
+        sp.appendChild(Tool.create('div', { class: 'search-results song-list-v', id: 'searchResults' }));
+        app.appendChild(sp);
+    }
+
+    /* ========== 登录 ========== */
+    function buildLogin(app) {
+        const overlay = Tool.create('div', { class: 'login-overlay', id: 'loginOverlay' });
+        overlay.innerHTML = `
+            <div class="login-dialog">
+                <div class="login-tabs">
+                    <span class="login-tab active" data-idx="0">验证码登录</span>
+                    <span class="login-tab" data-idx="1">扫码登录</span>
+                    <span class="login-tab" data-idx="2">密码登录</span>
+                    <div class="login-tab-slider" id="loginTabSlider"></div>
+                </div>
+                <div style="position:relative;min-height:200px;">
+                    <div data-panel="0" style="display:flex;flex-direction:column;gap:14px;">
+                        <input class="login-input" id="loginMobileInput" type="tel" placeholder="手机号" maxlength="11" autocomplete="off">
+                        <input class="login-input" id="loginCodeInput" type="text" placeholder="验证码" maxlength="6" autocomplete="off">
+                        <div class="login-send-btn" id="loginSendBtn">获取验证码</div>
+                    </div>
+                    <div data-panel="1" style="display:none;justify-content:center;">
+                        <div class="login-qr" id="loginQrBox">二维码区域<br>请使用酷狗概念版扫码</div>
+                    </div>
+                    <div data-panel="2" style="display:none;flex-direction:column;gap:14px;">
+                        <input class="login-input" id="loginUserInput" type="text" placeholder="手机号 / 用户名" autocomplete="off">
+                        <input class="login-input" id="loginPassInput" type="password" placeholder="密码" autocomplete="off">
+                    </div>
+                </div>
+                <button class="login-submit" id="loginSubmitBtn">登 录</button>
+            </div>`;
+        app.appendChild(overlay);
+
+        Tool.$$('.login-tab', overlay).forEach((t, i) => t.addEventListener('click', () => switchLoginTab(i)));
+        Tool.$('#loginSendBtn').addEventListener('click', sendCode);
+        Tool.$('#loginSubmitBtn').addEventListener('click', handleLogin);
+        requestAnimationFrame(() => updateLoginSlider(false));
+    }
+
+    function switchLoginTab(idx) {
+        loginTab = idx;
+        const ov = Tool.$('#loginOverlay');
+        Tool.$$('.login-tab', ov).forEach((t, i) => t.classList.toggle('active', i === idx));
+        Tool.$$('[data-panel]', ov).forEach(p => p.style.display = parseInt(p.dataset.panel) === idx ? 'flex' : 'none');
+        updateLoginSlider();
+        if (idx === 1) startQR(); else stopQR();
+    }
+
+    function updateLoginSlider(anim = true) {
+        const slider = Tool.$('#loginTabSlider');
+        const tab = Tool.$$('.login-tab')[loginTab];
+        if (!slider || !tab) return;
+        if (!anim) slider.style.transition = 'none';
+        else slider.style.transition = '';
+        slider.style.left = (tab.offsetLeft) + 'px';
+        slider.style.width = tab.offsetWidth + 'px';
+        if (!anim) { void slider.offsetHeight; slider.style.transition = ''; }
+    }
+
+    async function sendCode() {
+        const mobile = Tool.$('#loginMobileInput').value.trim();
+        if (mobile.length !== 11) { Tool.toast('请输入11位手机号码'); return; }
+        const res = await Net.get('/captcha/sent', { mobile });
+        if (Net.ok(res)) { Tool.toast('验证码已发送'); startCD(60); }
+        else Tool.toast(res.message || '发送失败');
+    }
+
+    function startCD(s) {
+        cdNum = s;
+        const btn = Tool.$('#loginSendBtn');
+        btn.disabled = true;
+        if (cdTimer) clearInterval(cdTimer);
+        cdTimer = setInterval(() => {
+            cdNum--;
+            if (cdNum <= 0) { clearInterval(cdTimer); cdTimer = null; btn.disabled = false; btn.textContent = '获取验证码'; }
+            else btn.textContent = cdNum + 's';
+        }, 1000);
+    }
+
+    async function handleLogin() {
+        if (loginTab === 0) {
+            const m = Tool.$('#loginMobileInput').value.trim();
+            const c = Tool.$('#loginCodeInput').value.trim();
+            if (!m || !c) { Tool.toast('请填写完整'); return; }
+            const res = await Net.get('/login/cellphone', { mobile: m, code: c });
+            if (Net.ok(res)) {
+                Net.saveAuth(res.data);
+                Net.get('/register/dev').then(r => { if (r.data && r.data.dfid) Net.saveDfid(r.data.dfid); });
+                Tool.toast('登录成功'); hideLogin(); switchView('home'); loadHome();
+            } else Tool.toast(res.message || '登录失败');
+        } else if (loginTab === 2) {
+            const u = Tool.$('#loginUserInput').value.trim();
+            const p = Tool.$('#loginPassInput').value;
+            if (!u || !p) { Tool.toast('请填写完整'); return; }
+            const res = await Net.get('/login', { username: u, password: encodeURIComponent(p) });
+            if (Net.ok(res)) {
+                Net.saveAuth(res.data);
+                Net.get('/register/dev').then(r => { if (r.data && r.data.dfid) Net.saveDfid(r.data.dfid); });
+                Tool.toast('登录成功'); hideLogin(); switchView('home'); loadHome();
+            } else Tool.toast(res.message || '登录失败');
+        }
+    }
+
+    // 修复：使用 qrcode_img 字段
+    async function startQR() {
+        stopQR();
+        const kr = await Net.get('/login/qr/key');
+        if (!kr.data || !kr.data.key) { Tool.$('#loginQrBox').textContent = '二维码获取失败'; return; }
+        qrKey = kr.data.key;
+        const qr = await Net.get('/login/qr/create', { key: qrKey, qrimg: 1 });
+        console.log('QR response:', qr);
+        if (qr.data && qr.data.qrcode_img) {
+            Tool.$('#loginQrBox').innerHTML = `<img src="${qr.data.qrcode_img}" alt="二维码" style="width:100%;height:auto;">`;
+        } else if (qr.data && qr.data.qrimg) {
+            // 兼容旧版
+            Tool.$('#loginQrBox').innerHTML = `<img src="${qr.data.qrimg}" alt="二维码" style="width:100%;height:auto;">`;
+        } else {
+            Tool.$('#loginQrBox').textContent = '二维码生成失败';
+            console.error('QR data missing qrcode_img/qrimg', qr);
+        }
+        qrTimer = setInterval(async () => {
+            const c = await Net.get('/login/qr/check', { key: qrKey });
+            const s = c.data ? c.data.status : c.status;
+            if (s === 4) {
+                stopQR();
+                if (c.data && c.data.token) Net.saveAuth(c.data);
+                Net.get('/register/dev').then(r => { if (r.data && r.data.dfid) Net.saveDfid(r.data.dfid); });
+                Tool.toast('扫码登录成功'); hideLogin(); switchView('home'); loadHome();
+            } else if (s === 0) { Tool.$('#loginQrBox').textContent = '二维码已过期'; stopQR(); }
+            else if (s === 2) { Tool.$('#loginQrBox').innerHTML = '<span style="color:var(--accent)">已扫码，请确认</span>'; }
+        }, 2000);
+    }
+
+    function stopQR() { if (qrTimer) clearInterval(qrTimer); qrTimer = null; qrKey = null; }
+
+    function showLogin() {
+        stopQR();
+        Tool.$('#loginOverlay').classList.add('show');
+        Net.get('/register/dev').then(r => { if (r.data && r.data.dfid) Net.saveDfid(r.data.dfid); });
+    }
+    function hideLogin() { Tool.$('#loginOverlay').classList.remove('show'); stopQR(); if (cdTimer) clearInterval(cdTimer); }
+
+    return { init, switchView, loadHome };
+})();
