@@ -73,8 +73,8 @@ const BODY_ENABLED = true;
         { name: "Chess", url: "/chess", icon: "chess" },               // 8
         { name: "kugou", url: "/kugou/mobile", icon: "music" }, // 9
         { name: "MCJS", url: "https://www.mcjs.cc/", icon: "craft" }, // 10
-        { name: "", url: "", icon: "" }, // 11
-        { name: "", url: "", icon: "" }, // 12
+        { name: "Kapi", url: "https://kapi.344977.xyz/", icon: "API" }, // 11
+        { name: "CORS代理", url: "https://cors.344977.xyz/", icon: "CORS" }, // 12
         { name: "", url: "", icon: "" }, // 13
         { name: "", url: "", icon: "" }, // 14
         { name: "", url: "", icon: "" }, // 15
