@@ -49,7 +49,7 @@ const BODY_ENABLED = true;
         { name: "单摆", url: "/bai", icon: "monitoring" },
         { name: "Github主页", url: "http://github.com/yingo-server", icon: "code" },
         { name: "网站后台", url: "https://yingo2.netlify.app", icon: "dashboard" },
-        { name: "openlist", url: "https://ctryvzcn.sealosbja.site", icon: "cloud" },
+        { name: "openlist", url: "https://jreepmqo.sealosbja.site/", icon: "cloud" },
         { name: "聊天室", url: "/chat", icon: "forum" },
         { name: "酷狗收藏室", url: "/music", icon: "library_music" },
         { name: "洛伦兹吸引子", url: "/luo", icon: "data_thresholding" },
