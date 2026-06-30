@@ -42,7 +42,8 @@ const BODY_ENABLED = true;
 
     // ---------- 有效项目（18个），已重新匹配图标 ----------
     const VALID_PROJECTS = [
-        { name: "home", url: "https://github.com/yingo-server", icon: "home" },
+        { name: "home", url: "https://344977.xyz/never", icon: "home" },
+        { name: "Github", url: "https://github.com/yingo-server", icon: "menu" },
         { name: "我的三体", url: "/3d", icon: "public" },
         { name: "三体2", url: "/2d", icon: "animation" },
         { name: "永远的单摆", url: "/bai/dev", icon: "show_chart" },
