@@ -10,6 +10,63 @@
 </head>
 <body>
 
+<div class="splash" id="splash">
+    <div class="splash__particles">
+        <span style="--t:8s;--x:12%;--y:18%;--s:1px"></span>
+        <span style="--t:12s;--x:78%;--y:22%;--s:2px"></span>
+        <span style="--t:10s;--x:35%;--y:75%;--s:1px"></span>
+        <span style="--t:14s;--x:62%;--y:68%;--s:1.5px"></span>
+        <span style="--t:9s;--x:88%;--y:55%;--s:1px"></span>
+        <span style="--t:11s;--x:22%;--y:42%;--s:2px"></span>
+        <span style="--t:13s;--x:55%;--y:12%;--s:1px"></span>
+        <span style="--t:15s;--x:45%;--y:85%;--s:1.5px"></span>
+    </div>
+    <div class="splash__vignette"></div>
+    <div class="splash__screen splash__screen--brand" data-screen="brand">
+        <div class="splash__brand">
+            <span class="splash__letter" style="animation-delay: 0s">Y</span>
+            <span class="splash__letter" style="animation-delay: 0.1s">I</span>
+            <span class="splash__letter" style="animation-delay: 0.18s">N</span>
+            <span class="splash__letter" style="animation-delay: 0.28s">G</span>
+            <span class="splash__letter" style="animation-delay: 0.38s">O</span>
+        </div>
+    </div>
+    <div class="splash__screen splash__screen--logo" data-screen="logo">
+        <svg class="splash__logo-svg" viewBox="0 0 200 200">
+            <circle class="splash__logo-ring" cx="100" cy="100" r="85"/>
+            <line class="splash__logo-tick" x1="100" y1="17" x2="100" y2="27"/>
+            <line class="splash__logo-tick" x1="100" y1="173" x2="100" y2="183"/>
+            <line class="splash__logo-tick" x1="17" y1="100" x2="27" y2="100"/>
+            <line class="splash__logo-tick" x1="173" y1="100" x2="183" y2="100"/>
+            <line class="splash__logo-hand splash__logo-hand--hour" x1="100" y1="100" x2="100" y2="50"/>
+            <line class="splash__logo-hand splash__logo-hand--minute" x1="100" y1="100" x2="132" y2="80"/>
+            <circle class="splash__logo-dot" cx="100" cy="100" r="6"/>
+        </svg>
+        <p class="splash__title">逝者如斯夫</p>
+        <p class="splash__subtitle">时间的重量，生命的刻度</p>
+    </div>
+    <div class="splash__screen splash__screen--tutorial" data-screen="tutorial">
+        <div class="tutorial__layout">
+            <div class="tutorial__lines">
+                <div class="tutorial__line tut-line--h-left"></div>
+                <div class="tutorial__line tut-line--h-right"></div>
+                <div class="tutorial__line tut-line--v-top"></div>
+                <div class="tutorial__line tut-line--v-bottom"></div>
+            </div>
+            <div class="tutorial__zone tut-zone--1"><span>预留</span></div>
+            <div class="tutorial__zone tut-zone--2"><span>快速调节</span></div>
+            <div class="tutorial__zone tut-zone--3"><span>配置倒计时</span></div>
+            <div class="tutorial__zone tut-zone--4"><span>暂停/停止</span></div>
+        </div>
+        <div class="tutorial__textbox">
+            <div class="tutorial__label"></div>
+            <div class="tutorial__typer"></div>
+        </div>
+        <div class="tutorial__hint">点击屏幕继续</div>
+        <button class="splash__done">开始使用</button>
+    </div>
+</div>
+
 <video class="bg-video" muted playsinline loop></video>
 <div class="flash-overlay"></div>
 
@@ -148,10 +205,44 @@
     </div>
 </div>
 
+<div class="settings" id="settings">
+    <div class="settings__backdrop"></div>
+    <div class="settings__window">
+        <header class="settings__header">
+            <h2 class="settings__title">设置</h2>
+            <button class="settings__close"></button>
+        </header>
+        <div class="settings__body">
+            <nav class="settings__tabs">
+                <button class="settings__tab is-active" data-tab="clock">时钟</button>
+                <button class="settings__tab" data-tab="timer">计时</button>
+                <button class="settings__tab" data-tab="music">音乐</button>
+                <button class="settings__tab" data-tab="about">关于</button>
+            </nav>
+            <div class="settings__panels">
+                <div class="settings__panel is-active" data-panel="clock">
+                    <p class="settings__placeholder">时钟设置</p>
+                </div>
+                <div class="settings__panel" data-panel="timer">
+                    <p class="settings__placeholder">计时设置</p>
+                </div>
+                <div class="settings__panel" data-panel="music">
+                    <p class="settings__placeholder">音乐设置</p>
+                </div>
+                <div class="settings__panel" data-panel="about">
+                    <p class="settings__placeholder">关于</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/splash/splash.js"></script>
 <script src="js/clock/clock.js"></script>
 <script src="js/runtime/runtime.js"></script>
 <script src="js/setup/setup.js"></script>
 <script src="js/quickadj/quickadj.js"></script>
+<script src="js/settings/settings.js"></script>
 <script>var _b=document.querySelector('.bg-video');if(_b){_b.volume=0;_b.muted=true;fetch('https://server.344977.xyz/d/LocalDisk/home/admin/FILE/TheNightofNobody.mp4').then(function(r){return r.blob();}).then(function(b){_b.src=URL.createObjectURL(b);_b.play();}).catch(function(){})}</script>
 </body>
 </html>
