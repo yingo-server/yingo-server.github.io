@@ -373,11 +373,28 @@
         }
 
         if (CM.clock && CM.clock.onZoneLongPress) {
-            CM.clock.onZoneLongPress(2, openWizard);
-            CM.clock.onZoneLongPress(3, function () {
+            CM.clock.onZoneLongPress(2, function () {
+                if (CM.quickadj && CM.quickadj.open) CM.quickadj.open();
+            }, function () {
+                return CM.runtime && CM.runtime.getPhase() === 'running';
+            });
+            CM.clock.onZoneLongPress(3, openWizard, function () {
+                return CM.runtime && CM.runtime.getPhase() !== 'running';
+            });
+            CM.clock.onZoneLongPress(4, function () {
                 if (CM.runtime) CM.runtime.showPauseDialog();
+            }, function () {
+                return CM.runtime && CM.runtime.getPhase() === 'running';
             });
         }
+
+        document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        document.addEventListener('dragstart', function (e) { e.preventDefault(); });
+        document.addEventListener('selectstart', function (e) {
+            if (!e.target.closest('.summary__text')) e.preventDefault();
+        });
+        document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+        document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
     }
 
     CM.setup = {
