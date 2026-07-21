@@ -146,16 +146,20 @@
         osc.stop(now + 0.12);
     }
 
-    function flashInvert(count) {
+    function flashInvert(count, onDone) {
         var i = 0;
         function step() {
-            if (i >= count) return;
+            if (i >= count) {
+                if (onDone) onDone();
+                return;
+            }
             document.body.classList.add('invert-flash');
             playBeep();
             setTimeout(function () {
                 document.body.classList.remove('invert-flash');
                 i++;
                 if (i < count) setTimeout(step, 1000);
+                else if (onDone) onDone();
             }, 1000);
         }
         step();
@@ -252,14 +256,15 @@
             if (state.reminderPoints && state.reminderPoints.length > 0) {
                 endCount = state.reminderPoints[state.reminderPoints.length - 1].count;
             }
-            flashInvert(endCount);
+            flashInvert(endCount, showInfoDialog);
         } else if (endOpt === '2') {
             silentEnd();
+            setTimeout(showInfoDialog, 10000);
         } else if (endOpt === '3') {
             if (state.config.link) {
                 window.location.href = state.config.link;
             } else {
-                flashInvert(1);
+                flashInvert(1, showInfoDialog);
             }
         }
     }
@@ -272,6 +277,18 @@
         usage.stop();
         document.body.classList.remove('is-counting');
         state.phase = 'idle';
+    }
+
+    function adjustRemaining(deltaSec) {
+        if (state.phase !== 'running') return false;
+        var now = Date.now();
+        state.endTs += deltaSec * 1000;
+        var newRemaining = Math.max(0, Math.round((state.endTs - now) / 1000));
+        state.remainingSec = newRemaining;
+        if (newRemaining <= 0) {
+            endCountdown();
+        }
+        return true;
     }
 
     function createModal(options) {
@@ -413,6 +430,7 @@
     CM.runtime = {
         start: start,
         stop: stop,
+        adjustRemaining: adjustRemaining,
         showPauseDialog: showPauseDialog,
         calcReminderPoints: calcReminderPoints,
         getPhase: function () { return state.phase; },
