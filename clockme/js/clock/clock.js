@@ -21,6 +21,7 @@
 
     var zoneHandlers = {};
     var longPressHandlers = {};
+    var longPressConditions = {};
     var longPressTimer = null;
     var longPressRing = null;
 
@@ -86,10 +87,13 @@
     }
 
     function onZonePointerDown(e) {
+        if (document.body.classList.contains('qa-dial-visible')) return;
         var n = e.currentTarget.getAttribute('data-zone');
         var lpHandler = longPressHandlers[n];
         var handler = zoneHandlers[n];
         if (lpHandler) {
+            var cond = longPressConditions[n];
+            if (cond && !cond()) return;
             createRing(e.clientX, e.clientY);
             longPressTimer = setTimeout(function () {
                 removeRing();
@@ -130,8 +134,13 @@
         zoneHandlers[n] = handler;
     }
 
-    function onZoneLongPress(n, handler) {
+    function onZoneLongPress(n, handler, condition) {
         longPressHandlers[n] = handler;
+        if (condition) {
+            longPressConditions[n] = condition;
+        } else {
+            delete longPressConditions[n];
+        }
     }
 
     function init() {
