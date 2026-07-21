@@ -77,7 +77,8 @@ body {
     z-index: 1;
     background: transparent;
 }
-.zone--top { top: 0; left: 0; width: 100%; height: 50%; }
+.zone--top-left { top: 0; left: 0; width: 50%; height: 50%; }
+.zone--top-right { top: 0; left: 50%; width: 50%; height: 50%; }
 .zone--bottom-left { top: 50%; left: 0; width: 50%; height: 50%; }
 .zone--bottom-right { top: 50%; left: 50%; width: 50%; height: 50%; }
 
@@ -756,6 +757,149 @@ body.is-counting .clock__time .sep {
 @keyframes sep-blink {
     0%, 100% { opacity: 0.82; }
     50% { opacity: 0.2; }
+}
+
+/* === Dial backdrop === */
+
+.qa-dial__backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 997;
+    background: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    pointer-events: auto;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    visibility: hidden;
+}
+.qa-dial__backdrop.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+.platform-win .qa-dial__backdrop {
+    pointer-events: none;
+}
+
+/* ===== Dial quick-adjust ===== */
+
+.quick-adj--dial {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: min(260px, 60vw);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%) scale(0.88);
+    z-index: 998;
+    pointer-events: auto;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.quick-adj--dial.is-visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.qa-dial__bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(35, 35, 40, 0.65);
+    -webkit-backdrop-filter: blur(28px);
+    backdrop-filter: blur(28px);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.06),
+        0 12px 40px rgba(0, 0, 0, 0.55),
+        0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.qa-dial__ring {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    bottom: 18px;
+    border-radius: 50%;
+    pointer-events: none;
+    will-change: transform;
+    transition: transform 0.05s linear;
+}
+
+.qa-dial__tick {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 14px;
+    margin-left: -1px;
+    margin-top: -7px;
+    border-radius: 1px;
+    pointer-events: none;
+    background: rgba(245, 245, 247, 0.16);
+    transform-origin: center center;
+}
+.qa-dial__tick--major {
+    height: 20px;
+    margin-top: -10px;
+    background: rgba(245, 245, 247, 0.4);
+}
+
+.qa-dial__indicator {
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 11px solid var(--w-accent, #4CC2FF);
+    filter: drop-shadow(0 0 8px var(--w-accent, #4CC2FF));
+    pointer-events: none;
+    z-index: 2;
+}
+
+.qa-dial__value {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    font-size: clamp(2.2rem, 8vw, 3.2rem);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: rgba(245, 245, 247, 0.96);
+    text-shadow: 0 0 20px rgba(0, 200, 255, 0.18), 0 0 4px rgba(245, 245, 247, 0.15);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+    pointer-events: none;
+    z-index: 2;
+    transition: color 0.2s ease;
+    text-align: center;
+}
+.qa-dial__value.is-zero {
+    color: rgba(245, 245, 247, 0.3);
+    font-weight: 400;
+}
+.qa-dial__value.is-minus .qa-dial__num { color: rgba(180, 215, 255, 0.92); }
+.qa-dial__value.is-plus .qa-dial__num { color: rgba(255, 200, 130, 0.92); }
+
+.qa-dial__sign {
+    position: absolute;
+    left: 2.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65em;
+    opacity: 0.75;
+    pointer-events: none;
+    z-index: 3;
+}
+.qa-dial__num {
+    display: inline;
+    transition: color 0.2s ease;
 }
 
 /* === 响应式 === */
