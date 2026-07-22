@@ -53,7 +53,7 @@
                 <div class="tutorial__line tut-line--v-top"></div>
                 <div class="tutorial__line tut-line--v-bottom"></div>
             </div>
-            <div class="tutorial__zone tut-zone--1"><span>预留</span></div>
+            <div class="tutorial__zone tut-zone--1"><span>设置</span></div>
             <div class="tutorial__zone tut-zone--2"><span>快速调节</span></div>
             <div class="tutorial__zone tut-zone--3"><span>配置倒计时</span></div>
             <div class="tutorial__zone tut-zone--4"><span>暂停/停止</span></div>
@@ -68,6 +68,8 @@
 </div>
 
 <video class="bg-video" muted playsinline loop></video>
+<img class="bg-img" id="bgImg" style="display:none">
+
 <div class="flash-overlay"></div>
 
 <div class="zone zone--top-left" data-zone="1"></div>
@@ -218,19 +220,158 @@
                 <button class="settings__tab" data-tab="timer">计时</button>
                 <button class="settings__tab" data-tab="music">音乐</button>
                 <button class="settings__tab" data-tab="about">关于</button>
+                <button class="settings__tab" data-tab="dev" id="devTab" style="display:none">开发</button>
             </nav>
             <div class="settings__panels">
                 <div class="settings__panel is-active" data-panel="clock">
-                    <p class="settings__placeholder">时钟设置</p>
+                    <div class="settings__section">
+                        <label class="settings__toggle" data-key="bg_enabled">
+                            <span class="settings__toggle-label">显示背景</span>
+                            <span class="settings__toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="settings__section">
+                        <p class="settings__section-label">选择壁纸</p>
+                        <div class="settings__wallpapers"></div>
+                    </div>
+                    <div class="settings__advanced">
+                        <button class="settings__adv-toggle">高级选项</button>
+                        <div class="settings__adv-body">
+                            <div class="settings__section">
+                                <p class="settings__section-label">在线链接</p>
+                                <input type="url" class="settings__url-input" placeholder="https://...mp4 或 .jpg (需服务器允许 CORS)">
+                                <button class="settings__url-btn">添加链接</button>
+                                <p class="settings__note">若链接无法加载，请先下载文件再通过下方上传</p>
+                            </div>
+                            <div class="settings__section">
+                                <p class="settings__section-label">上传文件</p>
+                                <label class="settings__upload-btn">选择视频或图片<input type="file" accept="video/*,image/*" hidden></label>
+                            </div>
+                            <div class="settings__section">
+                                <p class="settings__section-label">已添加的自定义壁纸</p>
+                                <div class="settings__custom-list"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="settings__panel" data-panel="timer">
-                    <p class="settings__placeholder">计时设置</p>
+                    <div class="settings__section">
+                        <label class="settings__toggle" data-key="timer_showtime">
+                            <span class="settings__toggle-label">暂停时显示真实剩余时间</span>
+                            <span class="settings__toggle-track"></span>
+                        </label>
+                        <p class="settings__note">开启后，从下下次启动的倒计时开始，暂停弹窗会显示真实剩余时间而非 *** 。已运行的倒计时不受影响。设计为延迟生效，避免临时偷懒。</p>
+                    </div>
                 </div>
                 <div class="settings__panel" data-panel="music">
-                    <p class="settings__placeholder">音乐设置</p>
+                    <div class="settings__section">
+                        <label class="settings__toggle" data-key="music_enabled">
+                            <span class="settings__toggle-label">播放音乐</span>
+                            <span class="settings__toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="settings__section">
+                        <label class="settings__toggle" data-key="music_loop">
+                            <span class="settings__toggle-label">单曲循环</span>
+                            <span class="settings__toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="settings__section">
+                        <div class="music__player">
+                            <button class="music__playpause"></button>
+                            <span class="music__trackname">未选择</span>
+                        </div>
+                        <div class="music__playlist"></div>
+                    </div>
+                    <div class="settings__advanced">
+                        <button class="settings__adv-toggle">高级选项</button>
+                        <div class="settings__adv-body">
+                            <div class="settings__section">
+                                <p class="settings__section-label">在线链接</p>
+                                <input type="url" class="settings__url-input music__url-input" placeholder="https://...mp3 或 .flac (需 CORS)">
+                                <button class="settings__url-btn music__url-btn">添加链接</button>
+                                <p class="settings__note">若链接无法加载，请先下载再上传</p>
+                            </div>
+                            <div class="settings__section">
+                                <p class="settings__section-label">上传音频</p>
+                                <label class="settings__upload-btn">选择音频文件<input type="file" accept="audio/*" hidden></label>
+                            </div>
+                            <div class="settings__section">
+                                <p class="settings__section-label">已添加的自定义音频</p>
+                                <div class="settings__custom-list music__custom"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="settings__panel" data-panel="about">
-                    <p class="settings__placeholder">关于</p>
+                    <div class="about__hero">
+                        <p class="about__name">MineClock</p>
+                        <p class="about__ver" id="aboutVer">版本 3.1  ·  内部版本 3.10.76612267</p>
+                    </div>
+                    <div class="settings__advanced">
+                        <button class="settings__adv-toggle">作者</button>
+                        <div class="settings__adv-body">
+                            <div class="about__info">
+                                <p>GitHub <span>yingo-server</span></p>
+                                <p>博客 <span>blog.344977.xyz</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings__advanced">
+                        <button class="settings__adv-toggle">浏览器信息</button>
+                        <div class="settings__adv-body">
+                            <div class="about__info" id="aboutBrowser"></div>
+                        </div>
+                    </div>
+                    <div class="settings__advanced">
+                        <button class="settings__adv-toggle">许可证</button>
+                        <div class="settings__adv-body">
+                            <div class="about__license">
+                                <p class="about__license-title">MineClock</p>
+                                <p class="about__license-note">GNU Affero General Public License v3.0</p>
+                            </div>
+                            <div class="about__license-list">
+                                <p>San Francisco Display<span>Apple Inc. — SIL Open Font License 1.1</span></p>
+                                <p>Web Audio API<span>W3C — 内置于浏览器</span></p>
+                                <p>IndexedDB<span>W3C — 内置于浏览器</span></p>
+                                <p>CSS Backdrop Filter<span>W3C — 内置于浏览器</span></p>
+                                <p>背景视频素材<span>用户自行提供，版权归属原作者</span></p>
+                                <p>音频素材<span>HOYO-MiX — 版权归属 miHoYo</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings__panel" data-panel="dev">
+                    <div class="settings__advanced is-open">
+                        <button class="settings__adv-toggle">样式</button>
+                        <div class="settings__adv-body" style="max-height:none">
+                            <div class="settings__section">
+                                <p class="settings__section-label">示例模板</p>
+                                <a class="settings__url-btn" href="css/style.css" target="_blank" style="display:inline-block;text-decoration:none">查看完整样式文件</a>
+                            </div>
+                            <div class="settings__section">
+                                <p class="settings__section-label">上传自定义 CSS</p>
+                                <label class="settings__upload-btn">选择 CSS 文件<input type="file" accept=".css" hidden id="devCssFile"></label>
+                            </div>
+                            <div class="settings__section">
+                                <p class="settings__section-label">自定义 CSS 预览</p>
+                                <textarea class="dev__code" id="devCssPreview" readonly rows="12" style="font-size:0.68rem;line-height:1.6"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings__advanced">
+                        <button class="settings__adv-toggle">逻辑</button>
+                        <div class="settings__adv-body">
+                            <div class="settings__section">
+                                <p class="settings__section-label">自定义头部脚本</p>
+                                <textarea class="dev__code" id="devHeadCode" placeholder="// 在页面加载前执行的代码" rows="6"></textarea>
+                            </div>
+                            <div class="settings__section">
+                                <p class="settings__section-label">自定义内容脚本</p>
+                                <textarea class="dev__code" id="devBodyCode" placeholder="// 在页面加载后执行的代码" rows="8"></textarea>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -243,6 +384,7 @@
 <script src="js/setup/setup.js"></script>
 <script src="js/quickadj/quickadj.js"></script>
 <script src="js/settings/settings.js"></script>
-<script>var _b=document.querySelector('.bg-video');if(_b){_b.volume=0;_b.muted=true;fetch('https://server.344977.xyz/d/LocalDisk/home/admin/FILE/TheNightofNobody.mp4').then(function(r){return r.blob();}).then(function(b){_b.src=URL.createObjectURL(b);_b.play();}).catch(function(){})}</script>
+<script>document.addEventListener('DOMContentLoaded',function(){if(CM.settings&&CM.settings.applyBG)CM.settings.applyBG();})</script>
+<div class="bg-loader" id="bgLoader"><div class="bg-loader__bar"></div></div>
 </body>
 </html>
