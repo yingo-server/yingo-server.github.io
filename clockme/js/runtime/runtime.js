@@ -189,6 +189,13 @@
 
     function start(config) {
         stop();
+
+        var delayKey = 'clockme_timer_showtime_delay';
+        var delay = parseInt(localStorage.getItem(delayKey), 10) || 0;
+        if (delay > 0) {
+            localStorage.setItem(delayKey, String(delay - 1));
+        }
+
         initAudio();
         if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 
@@ -352,9 +359,21 @@
 
     function showPauseDialog() {
         if (state.phase !== 'running') return;
-        createModal({
+
+        var showTime = CM.settings && CM.settings.getShowTime && CM.settings.getShowTime();
+
+        function buildTimeDisplay() {
+            if (!showTime) return '**:**:**';
+            var h = Math.floor(state.remainingSec / 3600);
+            var m = Math.floor((state.remainingSec % 3600) / 60);
+            var s = state.remainingSec % 60;
+            if (h > 0) return pad(h) + ':' + pad(m) + ':' + pad(s);
+            return pad(m) + ':' + pad(s);
+        }
+
+        var modal = createModal({
             title: '停下来试试？',
-            body: '<div class="star-time">**:**:**</div>',
+            body: '<div class="star-time" id="pauseTime">' + buildTimeDisplay() + '</div>',
             buttons: [
                 { text: '返回', class: 'modal__btn--light' },
                 {
@@ -367,6 +386,15 @@
                 }
             ]
         });
+
+        if (showTime) {
+            var pauseTimer = setInterval(function () {
+                var el = document.getElementById('pauseTime');
+                if (!el) { clearInterval(pauseTimer); return; }
+                if (state.phase !== 'running') { clearInterval(pauseTimer); return; }
+                el.textContent = buildTimeDisplay();
+            }, 1000);
+        }
     }
 
     function pad(n) {
