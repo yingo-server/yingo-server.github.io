@@ -294,7 +294,7 @@
     function onWinFocusClick(e) {
         if (platform !== 'win') return;
         if (!CM.runtime || CM.runtime.getPhase() !== 'running') return;
-        if (document.querySelector('.modal, .wizard.is-active')) return;
+        if (document.querySelector('.modal, .wizard.is-active, .settings.is-active')) return;
         e.preventDefault();
 
         if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
@@ -339,7 +339,7 @@
         if (platform !== 'win') return;
         if (!winFocused) return;
 
-        if (document.querySelector('.modal, .wizard.is-active')) return;
+        if (document.querySelector('.modal, .wizard.is-active, .settings.is-active')) return;
         if (!CM.runtime || CM.runtime.getPhase() !== 'running') return;
         e.preventDefault();
         if (e.deltaY === 0) return;
